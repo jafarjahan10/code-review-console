@@ -58,8 +58,8 @@ export function Combobox({
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
         <Command>
           <CommandInput placeholder={searchPlaceholder} />
-          <CommandEmpty>{noResultsText}</CommandEmpty>
           <CommandList>
+            <CommandEmpty>{noResultsText}</CommandEmpty>
             <CommandGroup>
               {options.map((option) => (
                 <CommandItem
