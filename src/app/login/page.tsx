@@ -51,7 +51,7 @@ export default function CandidateLoginPage() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="access-code">Access Code</Label>
-              <Input id="access-code" type="text" required />
+              <Input id="access-code" type="text" placeholder="Enter your access code" required />
             </div>
             <Button type="submit" className="w-full mt-2">
               Login
