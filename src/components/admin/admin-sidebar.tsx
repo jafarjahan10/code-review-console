@@ -1,7 +1,7 @@
 
 "use client"
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Home, FileCode, Users, BookCopy, LogOut, Settings } from "lucide-react";
 import Logo from "@/components/logo";
 import { cn } from "@/lib/utils";
@@ -16,10 +16,17 @@ const navItems = [
 
 export default function AdminSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
 
   // Don't render sidebar on the login page
   if (pathname === '/admin/login' || pathname === '/admin') {
     return null;
+  }
+
+  const handleSignOut = () => {
+    // In a real app, you'd handle the sign-out logic here.
+    // For this prototype, we'll just navigate to the login page.
+    router.push('/admin/login');
   }
 
   return (
@@ -49,11 +56,9 @@ export default function AdminSidebar() {
             Settings
           </Link>
         </Button>
-        <Button variant="ghost" className="w-full justify-start" asChild>
-          <Link href="/">
-            <LogOut className="mr-2 h-4 w-4" />
-            Candidate View
-          </Link>
+        <Button variant="ghost" className="w-full justify-start" onClick={handleSignOut}>
+          <LogOut className="mr-2 h-4 w-4" />
+          Sign Out
         </Button>
       </div>
     </aside>
