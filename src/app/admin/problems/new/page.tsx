@@ -133,7 +133,7 @@ export default function NewProblemPage() {
                   />
                 </TabsContent>
                 <TabsContent value="preview" className="mt-2">
-                  <div className="prose prose-sm dark:prose-invert p-4 rounded-md border min-h-[300px]">
+                  <div className="prose max-w-none prose-sm dark:prose-invert p-4 rounded-md border min-h-[300px]">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{description || "Nothing to preview..."}</ReactMarkdown>
                   </div>
                 </TabsContent>
