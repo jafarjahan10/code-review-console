@@ -23,7 +23,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useTimer } from "@/context/TimerContext";
 
 const initialHtml = `<h1>Code Challenge</h1>
 <p>Implement your solution below and see the live preview.</p>
@@ -64,11 +63,9 @@ export default function CodeEditor() {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { toast } = useToast();
-  const { stopTimer } = useTimer();
 
   const handleSubmit = () => {
     setShowConfirmDialog(false);
-    stopTimer();
     console.log({ html, css, js });
     toast({
       title: "Submission Successful!",

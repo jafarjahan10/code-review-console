@@ -5,7 +5,6 @@ import Link from "next/link";
 import Logo from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
-import Timer from "@/components/candidate/timer";
 import { usePathname } from "next/navigation";
 import { TimerProvider } from "@/context/TimerContext";
 
@@ -26,7 +25,7 @@ export default function CandidateLayout({
             <Logo />
           </Link>
           <div className="flex-1">
-            {isProblemPage && <Timer />}
+            
           </div>
           <Button variant="ghost" size="icon" asChild>
             <Link href="/login">
