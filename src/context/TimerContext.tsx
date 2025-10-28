@@ -24,6 +24,10 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }, [isRunning]);
 
     const stopTimer = useCallback(() => {
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+        }
         setIsRunning(false);
     }, []);
 
@@ -32,11 +36,9 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             intervalRef.current = setInterval(() => {
                 setTime(prevTime => prevTime + 1);
             }, 1000);
-        } else {
-            if (intervalRef.current) {
-                clearInterval(intervalRef.current);
-                intervalRef.current = null;
-            }
+        } else if(intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
         }
 
         return () => {

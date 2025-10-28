@@ -67,13 +67,13 @@ export default function CodeEditor() {
   const { stopTimer } = useTimer();
 
   const handleSubmit = () => {
+    setShowConfirmDialog(false);
     stopTimer();
     console.log({ html, css, js });
     toast({
       title: "Submission Successful!",
       description: "Your code has been submitted for review.",
     });
-    setShowConfirmDialog(false);
     setIsSubmitted(true);
   };
 
