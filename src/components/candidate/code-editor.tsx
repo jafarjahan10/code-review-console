@@ -1,3 +1,4 @@
+
 "use client"
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,7 +13,16 @@ import "prismjs/components/prism-javascript";
 import "prismjs/components/prism-css";
 import "prismjs/components/prism-markup";
 import 'prismjs/themes/prism-tomorrow.css';
-import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const initialHtml = `<h1>Code Challenge</h1>
 <p>Implement your solution below and see the live preview.</p>
@@ -50,6 +60,7 @@ export default function CodeEditor() {
   const [html, setHtml] = useState(initialHtml);
   const [css, setCss] = useState(initialCss);
   const [js, setJs] = useState(initialJs);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const { toast } = useToast();
 
   const handleSubmit = () => {
@@ -58,6 +69,7 @@ export default function CodeEditor() {
       title: "Submission Successful!",
       description: "Your code has been submitted for review.",
     });
+    setShowConfirmDialog(false);
   };
 
   const editorStyles = {
@@ -73,54 +85,73 @@ export default function CodeEditor() {
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <Card className="flex-1 flex flex-col">
-        <Tabs defaultValue="javascript" className="flex-1 flex flex-col">
-          <CardHeader className="flex-row items-center justify-between gap-4">
-            <TabsList className="grid w-full max-w-xs grid-cols-3">
-              <TabsTrigger value="html">HTML</TabsTrigger>
-              <TabsTrigger value="css">CSS</TabsTrigger>
-              <TabsTrigger value="javascript">JS</TabsTrigger>
-            </TabsList>
-            <Button onClick={handleSubmit} className="!space-y-0 h-[40px] !m-0">
-                <Send className="mr-2 h-4 w-4" />
-                Submit Solution
-            </Button>
-          </CardHeader>
-          <div className="flex-1 p-1 pt-0">
-            <TabsContent value="html" className="h-full m-0">
-              <Editor
-                value={html}
-                onValueChange={(code) => setHtml(code)}
-                highlight={(code) => highlight(code, languages.markup, "markup")}
-                padding={10}
-                style={editorStyles}
-                className="font-code h-full resize-none text-sm"
-              />
-            </TabsContent>
-            <TabsContent value="css" className="h-full m-0">
-              <Editor
-                value={css}
-                onValueChange={(code) => setCss(code)}
-                highlight={(code) => highlight(code, languages.css, "css")}
-                padding={10}
-                style={editorStyles}
-                className="font-code h-full resize-none text-sm"
-              />
-            </TabsContent>
-            <TabsContent value="javascript" className="h-full m-0">
-              <Editor
-                value={js}
-                onValueChange={(code) => setJs(code)}
-                highlight={(code) => highlight(code, languages.js, "javascript")}
-                padding={10}
-                style={editorStyles}
-                className="font-code h-full resize-none text-sm"
-              />
-            </TabsContent>
-          </div>
-        </Tabs>
-      </Card>
-    </div>
+    <>
+      <div className="h-full flex flex-col">
+        <Card className="flex-1 flex flex-col">
+          <Tabs defaultValue="javascript" className="flex-1 flex flex-col">
+            <CardHeader className="flex-row items-center justify-between gap-4">
+              <TabsList className="grid w-full max-w-xs grid-cols-3">
+                <TabsTrigger value="html">HTML</TabsTrigger>
+                <TabsTrigger value="css">CSS</TabsTrigger>
+                <TabsTrigger value="javascript">JS</TabsTrigger>
+              </TabsList>
+              <Button onClick={() => setShowConfirmDialog(true)} className="!space-y-0 h-[40px] !m-0">
+                  <Send className="mr-2 h-4 w-4" />
+                  Submit Solution
+              </Button>
+            </CardHeader>
+            <div className="flex-1 p-1 pt-0">
+              <TabsContent value="html" className="h-full m-0">
+                <Editor
+                  value={html}
+                  onValueChange={(code) => setHtml(code)}
+                  highlight={(code) => highlight(code, languages.markup, "markup")}
+                  padding={10}
+                  style={editorStyles}
+                  className="font-code h-full resize-none text-sm"
+                />
+              </TabsContent>
+              <TabsContent value="css" className="h-full m-0">
+                <Editor
+                  value={css}
+                  onValueChange={(code) => setCss(code)}
+                  highlight={(code) => highlight(code, languages.css, "css")}
+                  padding={10}
+                  style={editorStyles}
+                  className="font-code h-full resize-none text-sm"
+                />
+              </TabsContent>
+              <TabsContent value="javascript" className="h-full m-0">
+                <Editor
+                  value={js}
+                  onValueChange={(code) => setJs(code)}
+                  highlight={(code) => highlight(code, languages.js, "javascript")}
+                  padding={10}
+                  style={editorStyles}
+                  className="font-code h-full resize-none text-sm"
+                />
+              </TabsContent>
+            </div>
+          </Tabs>
+        </Card>
+      </div>
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you ready to submit?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. You will not be able to edit your
+              code after submitting.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSubmit}>
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
