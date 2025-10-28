@@ -21,7 +21,8 @@ export default function CandidateLoginPage() {
   const handleLogin = (event: React.FormEvent) => {
     event.preventDefault();
     // In a real app, you'd handle candidate authentication here.
-    // For this prototype, we'll navigate to the main candidate page.
+    // For this prototype, we'll set a session item and navigate.
+    sessionStorage.setItem('authenticated', 'true');
     router.push('/');
   };
 

@@ -15,11 +15,15 @@ const useAuth = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // In a real app, you'd check for a valid session token.
-    // Here we'll simulate a check. For the prototype, we assume the user is "logged in" if they aren't on the login page.
-    // To properly test the login flow, you'd implement a real auth check here.
-    // For now, let's just assume they are authenticated if they land here.
-    setIsAuthenticated(true);
+    // In a real app, this would check for a session token.
+    // For this prototype, we'll simulate an unauthenticated user by default.
+    // To proceed to the main content, the user must "log in" via the /login page.
+    const session = sessionStorage.getItem('authenticated');
+    if (session) {
+      setIsAuthenticated(true);
+    } else {
+      setIsAuthenticated(false);
+    }
     setIsLoading(false);
   }, []);
 
@@ -40,7 +44,6 @@ export default function Home() {
   if (isLoading || !isAuthenticated) {
     return (
        <div className="flex min-h-screen items-center justify-center">
-        {/* You can replace this with a proper loading spinner component */}
         <p>Loading...</p>
       </div>
     )
@@ -55,7 +58,7 @@ export default function Home() {
         <div className="flex-1 text-center">
         </div>
         <Button variant="ghost" size="icon" asChild>
-          <Link href="/login">
+          <Link href="/login" onClick={() => sessionStorage.removeItem('authenticated')}>
             <LogOut className="h-5 w-5" />
             <span className="sr-only">Log Out</span>
           </Link>
