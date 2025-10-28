@@ -147,9 +147,11 @@ export default function ProblemsPage() {
                             Edit
                           </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <File className="mr-2 h-4 w-4" />
-                          View
+                        <DropdownMenuItem asChild>
+                          <Link href={`/admin/problems/${problem.id}`}>
+                            <File className="mr-2 h-4 w-4" />
+                            View
+                          </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem className="text-destructive">
                           <Trash2 className="mr-2 h-4 w-4" />
