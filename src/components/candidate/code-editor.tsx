@@ -11,7 +11,7 @@ import "prismjs/components/prism-clike";
 import "prismjs/components/prism-javascript";
 import "prismjs/components/prism-css";
 import "prismjs/components/prism-markup";
-import "prismjs/themes/prism-tomorrow.css";
+import 'prismjs/themes/prism-tomorrow.css';
 
 const initialHtml = `<h1>Code Challenge</h1>
 <p>Implement your solution below and see the live preview.</p>
@@ -76,13 +76,11 @@ export default function CodeEditor() {
       <Card className="flex-1 flex flex-col">
         <Tabs defaultValue="javascript" className="flex-1 flex flex-col">
           <CardHeader className="flex-row items-center justify-between">
-            <div className="flex items-center gap-4">
-                <TabsList className="grid w-full max-w-xs grid-cols-3">
-                  <TabsTrigger value="html">HTML</TabsTrigger>
-                  <TabsTrigger value="css">CSS</TabsTrigger>
-                  <TabsTrigger value="javascript">JS</TabsTrigger>
-                </TabsList>
-            </div>
+            <TabsList className="grid w-full max-w-xs grid-cols-3">
+              <TabsTrigger value="html">HTML</TabsTrigger>
+              <TabsTrigger value="css">CSS</TabsTrigger>
+              <TabsTrigger value="javascript">JS</TabsTrigger>
+            </TabsList>
             <Button onClick={handleSubmit}>
                 <Send className="mr-2 h-4 w-4" />
                 Submit Solution
@@ -102,7 +100,7 @@ export default function CodeEditor() {
             <TabsContent value="css" className="h-full m-0">
               <Editor
                 value={css}
-                onValueChange={(code) => setCss(code)}
+                onValue-change={(code) => setCss(code)}
                 highlight={(code) => highlight(code, languages.css, "css")}
                 padding={10}
                 style={editorStyles}
