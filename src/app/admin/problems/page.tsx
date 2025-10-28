@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -17,6 +18,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import Link from "next/link";
 
 // Mock data for problems
 const problems = [
@@ -70,9 +72,11 @@ export default function ProblemsPage() {
           </p>
         </div>
         <div className="flex items-center space-x-2">
-          <Button>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Add Problem
+          <Button asChild>
+            <Link href="/admin/problems/new">
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Add Problem
+            </Link>
           </Button>
         </div>
       </div>
