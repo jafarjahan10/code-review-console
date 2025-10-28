@@ -19,7 +19,7 @@ const MOCK_PROBLEM = {
 
 export default function ProblemPage() {
   return (
-    <div className="grid md:grid-cols-2 gap-4 p-4 h-full" style={{maxHeight: 'calc(100vh - 4rem)'}}>
+    <div className="grid md:grid-cols-2 gap-4 p-4" style={{height: 'calc(100vh - 4rem)'}}>
       <Card className="flex flex-col">
         <CardHeader>
           <CardTitle className="font-headline text-2xl">{MOCK_PROBLEM.title}</CardTitle>
