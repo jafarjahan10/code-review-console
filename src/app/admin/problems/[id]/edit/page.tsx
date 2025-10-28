@@ -192,7 +192,7 @@ export default function EditProblemPage() {
                     highlight={(code) => highlight(code, languages.js, "javascript")}
                     padding={10}
                     style={editorStyles}
-                    className="font-code h-full resize-none text-sm"
+                    className="font-code h-full resize-none text-sm !p-0"
                   />
                 </TabsContent>
                 <TabsContent value="preview" className="mt-2">
