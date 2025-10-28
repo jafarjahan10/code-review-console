@@ -1,11 +1,17 @@
 "use client"
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Send } from "lucide-react";
+import Editor from "react-simple-code-editor";
+import { highlight, languages } from "prismjs/components/prism-core";
+import "prismjs/components/prism-clike";
+import "prismjs/components/prism-javascript";
+import "prismjs/components/prism-css";
+import "prismjs/components/prism-markup";
+import "prismjs/themes/prism-tomorrow.css";
 
 const initialHtml = `<h1>Code Challenge</h1>
 <p>Implement your solution below and see the live preview.</p>
@@ -46,12 +52,23 @@ export default function CodeEditor() {
   const { toast } = useToast();
 
   const handleSubmit = () => {
-    // Here you would call a server action to submit the code.
     console.log({ html, css, js });
     toast({
       title: "Submission Successful!",
       description: "Your code has been submitted for review.",
     });
+  };
+
+  const editorStyles = {
+    fontFamily: '"Source Code Pro", "Fira Mono", "Courier New", Courier, monospace',
+    fontSize: 14,
+    backgroundColor: "hsl(var(--card))",
+    color: "hsl(var(--foreground))",
+    borderRadius: "var(--radius)",
+    padding: "1rem",
+    minHeight: "100%",
+    outline: "none",
+    border: "1px solid hsl(var(--border))",
   };
 
   return (
@@ -73,26 +90,32 @@ export default function CodeEditor() {
           </CardHeader>
           <div className="flex-1 p-1 pt-0">
             <TabsContent value="html" className="h-full m-0">
-              <Textarea
+              <Editor
                 value={html}
-                onChange={(e) => setHtml(e.target.value)}
-                placeholder="HTML code"
+                onValueChange={(code) => setHtml(code)}
+                highlight={(code) => highlight(code, languages.markup, "markup")}
+                padding={10}
+                style={editorStyles}
                 className="font-code h-full resize-none text-sm"
               />
             </TabsContent>
             <TabsContent value="css" className="h-full m-0">
-              <Textarea
+              <Editor
                 value={css}
-                onChange={(e) => setCss(e.target.value)}
-                placeholder="CSS code"
+                onValueChange={(code) => setCss(code)}
+                highlight={(code) => highlight(code, languages.css, "css")}
+                padding={10}
+                style={editorStyles}
                 className="font-code h-full resize-none text-sm"
               />
             </TabsContent>
             <TabsContent value="javascript" className="h-full m-0">
-              <Textarea
+              <Editor
                 value={js}
-                onChange={(e) => setJs(e.target.value)}
-                placeholder="JavaScript code"
+                onValueChange={(code) => setJs(code)}
+                highlight={(code) => highlight(code, languages.js, "javascript")}
+                padding={10}
+                style={editorStyles}
                 className="font-code h-full resize-none text-sm"
               />
             </TabsContent>
