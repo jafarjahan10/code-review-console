@@ -90,7 +90,7 @@ export default function SubmissionsPage() {
             <TableBody>
               {submissions.map((submission) => (
                 <TableRow key={submission.id}>
-                  <TableCell>
+                  <TableCell className="whitespace-nowrap">
                     <div className="flex items-center gap-3">
                       <Avatar className="hidden h-9 w-9 sm:flex">
                         <AvatarImage src={`https://avatar.vercel.sh/${submission.candidateEmail}.png`} alt="Avatar" />
@@ -104,13 +104,13 @@ export default function SubmissionsPage() {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>{submission.problemTitle}</TableCell>
+                  <TableCell className="whitespace-nowrap">{submission.problemTitle}</TableCell>
                   <TableCell>
                     <Badge variant={submission.status === 'Reviewed' ? 'default' : 'destructive'}>
                       {submission.status}
                     </Badge>
                   </TableCell>
-                  <TableCell>{submission.submittedAt}</TableCell>
+                  <TableCell className="whitespace-nowrap">{submission.submittedAt}</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
