@@ -1,3 +1,4 @@
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -53,6 +54,17 @@ const submissions = [
 export default function SubmissionsPage() {
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+      <div className="flex items-center justify-between space-y-2">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight font-headline">
+            Submissions
+          </h2>
+          <p className="text-muted-foreground">
+            Review and manage all candidate submissions.
+          </p>
+        </div>
+      </div>
+
       <Card>
         <CardContent className="pt-6">
           <Table>

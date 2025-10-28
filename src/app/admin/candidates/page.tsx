@@ -63,6 +63,14 @@ export default function CandidatesPage() {
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight font-headline">
+            Candidates
+          </h2>
+          <p className="text-muted-foreground">
+            Manage your candidates and their invitations.
+          </p>
+        </div>
         <div className="flex items-center space-x-2">
           <Button>
             <PlusCircle className="mr-2 h-4 w-4" />
@@ -72,7 +80,7 @@ export default function CandidatesPage() {
       </div>
 
       <Card>
-        <CardContent className="pt-0">
+        <CardContent className="pt-6">
           <Table>
             <TableHeader>
               <TableRow>
