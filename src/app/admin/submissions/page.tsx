@@ -81,7 +81,7 @@ export default function SubmissionsPage() {
                 <TableHead>Candidate</TableHead>
                 <TableHead>Problem</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Submitted At</TableHead>
+                <TableHead className="whitespace-nowrap">Submitted At</TableHead>
                 <TableHead>
                   <span className="sr-only">Actions</span>
                 </TableHead>
