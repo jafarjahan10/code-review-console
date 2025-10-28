@@ -82,7 +82,7 @@ export default function CodeEditor() {
               <TabsTrigger value="css">CSS</TabsTrigger>
               <TabsTrigger value="javascript">JS</TabsTrigger>
             </TabsList>
-            <Button onClick={handleSubmit}>
+            <Button onClick={handleSubmit} className="!space-y-0 h-[40px] !m-0">
                 <Send className="mr-2 h-4 w-4" />
                 Submit Solution
             </Button>
