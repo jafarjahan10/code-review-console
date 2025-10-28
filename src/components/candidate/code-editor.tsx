@@ -60,7 +60,6 @@ export default function CodeEditor() {
         <Tabs defaultValue="javascript" className="flex-1 flex flex-col">
           <CardHeader className="flex-row items-center justify-between">
             <div className="flex items-center gap-4">
-                <CardTitle className="font-headline text-lg">Code Editor</CardTitle>
                 <TabsList className="grid w-full max-w-xs grid-cols-3">
                   <TabsTrigger value="html">HTML</TabsTrigger>
                   <TabsTrigger value="css">CSS</TabsTrigger>
