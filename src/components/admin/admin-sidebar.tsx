@@ -12,6 +12,7 @@ const navItems = [
   { href: "/admin/problems", icon: FileCode, label: "Problems" },
   { href: "/admin/candidates", icon: Users, label: "Candidates" },
   { href: "/admin/submissions", icon: BookCopy, label: "Submissions" },
+  { href: "/admin/settings", icon: Settings, label: "Settings" },
 ];
 
 export default function AdminSidebar() {
@@ -50,12 +51,6 @@ export default function AdminSidebar() {
         ))}
       </nav>
       <div className="p-4 border-t mt-auto space-y-2">
-        <Button variant="ghost" className="w-full justify-start" asChild>
-          <Link href="#">
-            <Settings className="mr-2 h-4 w-4" />
-            Settings
-          </Link>
-        </Button>
         <Button variant="ghost" className="w-full justify-start" onClick={handleSignOut}>
           <LogOut className="mr-2 h-4 w-4" />
           Sign Out
