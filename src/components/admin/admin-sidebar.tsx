@@ -1,3 +1,4 @@
+
 "use client"
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -16,6 +17,11 @@ const navItems = [
 export default function AdminSidebar() {
   const pathname = usePathname();
 
+  // Don't render sidebar on the login page
+  if (pathname === '/admin/login' || pathname === '/admin') {
+    return null;
+  }
+
   return (
     <aside className="w-64 flex-shrink-0 border-r bg-card text-card-foreground flex flex-col">
       <div className="p-4 border-b">
@@ -25,7 +31,7 @@ export default function AdminSidebar() {
         {navItems.map((item) => (
           <Button
             key={item.href}
-            variant={pathname.startsWith(item.href) ? "secondary" : "ghost"}
+            variant={pathname === item.href || (item.href !== "/admin/dashboard" && pathname.startsWith(item.href)) ? "secondary" : "ghost"}
             className="w-full justify-start"
             asChild
           >
@@ -46,7 +52,7 @@ export default function AdminSidebar() {
         <Button variant="ghost" className="w-full justify-start" asChild>
           <Link href="/">
             <LogOut className="mr-2 h-4 w-4" />
-            Log Out
+            Candidate View
           </Link>
         </Button>
       </div>

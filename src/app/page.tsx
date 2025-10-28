@@ -1,62 +1,74 @@
+
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, Code, User, Shield } from 'lucide-react';
-import Logo from '@/components/logo';
+import Logo from "@/components/logo";
+import { Button } from "@/components/ui/button";
+import { LogOut, User } from "lucide-react";
+import ProblemDisplay from "@/components/candidate/problem-display";
+import { useRouter } from 'next/navigation';
+
+// Mock authentication state
+const useAuth = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // In a real app, you'd check for a valid session token.
+    // Here we'll simulate a check. For the prototype, we assume the user is "logged in" if they aren't on the login page.
+    // To properly test the login flow, you'd implement a real auth check here.
+    // For now, let's just assume they are authenticated if they land here.
+    setIsAuthenticated(true);
+    setIsLoading(false);
+  }, []);
+
+  return { isAuthenticated, isLoading };
+};
+
 
 export default function Home() {
+  const router = useRouter();
+  const {isAuthenticated, isLoading} = useAuth();
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push('/login');
+    }
+  }, [isAuthenticated, isLoading, router]);
+
+  if (isLoading || !isAuthenticated) {
+    return (
+       <div className="flex min-h-screen items-center justify-center">
+        {/* You can replace this with a proper loading spinner component */}
+        <p>Loading...</p>
+      </div>
+    )
+  }
+
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen p-4 md:p-8 bg-background">
-      <div className="text-center mb-12">
-        <Logo className="justify-center mb-4" />
-        <p className="max-w-2xl mx-auto text-lg text-muted-foreground">
-          The seamless platform for administering coding challenges and reviewing submissions with AI-powered insights.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl">
-        <Card className="hover:shadow-lg transition-shadow duration-300">
-          <CardHeader>
-            <div className="flex items-center gap-4">
-              <Shield className="w-10 h-10 text-primary" />
-              <div>
-                <CardTitle className="font-headline text-2xl">Admin Portal</CardTitle>
-                <CardDescription>Manage problems, invite candidates, and review submissions.</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Button asChild className="w-full">
-              <Link href="/admin/dashboard">
-                Enter Admin Portal <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow duration-300">
-          <CardHeader>
-            <div className="flex items-center gap-4">
-              <User className="w-10 h-10 text-primary" />
-              <div>
-                <CardTitle className="font-headline text-2xl">Candidate Portal</CardTitle>
-                <CardDescription>Access your assigned coding challenge and submit your solution.</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Button asChild className="w-full">
-              <Link href="/candidate/dashboard">
-                Enter Candidate Portal <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-      
-      <footer className="mt-16 text-center text-muted-foreground text-sm">
-        <p>Copyright © {new Date().getFullYear()} CodeReview Console. All rights reserved.</p>
-      </footer>
-    </main>
+    <div className="flex flex-col min-h-screen">
+       <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
+        <Link href="/">
+          <Logo />
+        </Link>
+        <div className="flex-1 text-center">
+          <span className="font-semibold">Candidate Portal</span>
+        </div>
+        <Button variant="ghost" size="icon">
+          <User className="h-5 w-5" />
+          <span className="sr-only">Profile</span>
+        </Button>
+        <Button variant="ghost" size="icon" asChild>
+          <Link href="/login">
+            <LogOut className="h-5 w-5" />
+            <span className="sr-only">Log Out</span>
+          </Link>
+        </Button>
+      </header>
+      <main className="flex-1 bg-muted/40 flex items-center justify-center p-4">
+        <ProblemDisplay />
+      </main>
+    </div>
   );
 }
