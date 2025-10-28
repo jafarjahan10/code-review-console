@@ -38,7 +38,7 @@ export default function AdminSidebar() {
         {navItems.map((item) => (
           <Button
             key={item.href}
-            variant={pathname === item.href || (item.href !== "/admin/dashboard" && pathname.startsWith(item.href)) ? "secondary" : "ghost"}
+            variant={pathname === item.href || (item.href !== "/admin/dashboard" && String(pathname).startsWith(item.href)) ? "secondary" : "ghost"}
             className="w-full justify-start"
             asChild
           >
