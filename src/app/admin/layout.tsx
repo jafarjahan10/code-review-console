@@ -19,7 +19,7 @@ export default function AdminLayout({
   return (
     <div className="flex" style={{height: '100dvh'}}>
       <AdminSidebar />
-      <main className="flex-1 bg-background overflow-y-auto">
+      <main className="flex-1 bg-background overflow-y-auto no-scrollbar">
         {children}
       </main>
     </div>
