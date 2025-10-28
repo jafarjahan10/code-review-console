@@ -1,5 +1,4 @@
 import type { FC } from 'react';
-import { FileCode } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type LogoProps = {
@@ -8,10 +7,9 @@ type LogoProps = {
 
 const Logo: FC<LogoProps> = ({ className }) => {
   return (
-    <div className={cn("flex items-center gap-2", className)}>
-      <FileCode className="h-8 w-8 text-primary" />
+    <div className={cn("flex items-center", className)}>
       <h1 className="text-2xl font-bold font-headline tracking-tighter">
-        CodeReview Console
+        CodeReveiw
       </h1>
     </div>
   );

@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'CodeReview Console',
+  title: 'CodeReveiw',
   description: 'A platform for managing and taking coding challenges.',
 };
 
