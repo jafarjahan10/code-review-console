@@ -67,8 +67,8 @@ export default function CodeEditor() {
   const { stopTimer } = useTimer();
 
   const handleSubmit = () => {
-    console.log({ html, css, js });
     stopTimer();
+    console.log({ html, css, js });
     toast({
       title: "Submission Successful!",
       description: "Your code has been submitted for review.",
