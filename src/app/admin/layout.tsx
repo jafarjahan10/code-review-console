@@ -17,9 +17,11 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex" style={{height: '100dvh'}}>
       <AdminSidebar />
-      <main className="flex-1 bg-background">{children}</main>
+      <main className="flex-1 bg-background overflow-y-auto">
+        {children}
+      </main>
     </div>
   );
 }
