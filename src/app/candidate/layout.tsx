@@ -21,9 +21,7 @@ export default function CandidateLayout({
     <TimerProvider>
       <div className="flex flex-col min-h-screen">
         <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
-          <Link href="/">
-            <Logo />
-          </Link>
+          <Logo />
           <div className="flex-1">
             
           </div>

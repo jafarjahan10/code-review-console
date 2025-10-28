@@ -18,11 +18,13 @@ const useAuth = () => {
     // In a real app, this would check for a session token.
     // For this prototype, we'll simulate an unauthenticated user by default.
     // To proceed to the main content, the user must "log in" via the /login page.
-    const session = sessionStorage.getItem('authenticated');
-    if (session) {
-      setIsAuthenticated(true);
-    } else {
-      setIsAuthenticated(false);
+    if (typeof window !== 'undefined') {
+      const session = sessionStorage.getItem('authenticated');
+      if (session) {
+        setIsAuthenticated(true);
+      } else {
+        setIsAuthenticated(false);
+      }
     }
     setIsLoading(false);
   }, []);
@@ -52,9 +54,7 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
        <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
-        <Link href="/">
-          <Logo />
-        </Link>
+        <Logo />
         <div className="flex-1 text-center">
         </div>
         <Button variant="ghost" size="icon" asChild>
