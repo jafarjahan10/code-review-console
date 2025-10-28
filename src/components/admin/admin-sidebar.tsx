@@ -36,19 +36,25 @@ export default function AdminSidebar() {
         <Logo />
       </div>
       <nav className="flex-1 p-4 space-y-2">
-        {navItems.map((item) => (
-          <Button
-            key={item.href}
-            variant={pathname === item.href || (item.href !== "/admin/dashboard" && String(pathname).startsWith(item.href)) ? "secondary" : "ghost"}
-            className="w-full justify-start"
-            asChild
-          >
-            <Link href={item.href}>
-              <item.icon className="mr-2 h-4 w-4" />
-              {item.label}
-            </Link>
-          </Button>
-        ))}
+        {navItems.map((item) => {
+           const isActive = pathname === item.href || (item.href !== "/admin/dashboard" && String(pathname).startsWith(item.href));
+           return (
+            <Button
+              key={item.href}
+              variant="ghost"
+              className={cn(
+                "w-full justify-start",
+                isActive && "bg-accent text-accent-foreground hover:bg-accent/80 hover:text-accent-foreground"
+              )}
+              asChild
+            >
+              <Link href={item.href}>
+                <item.icon className="mr-2 h-4 w-4" />
+                {item.label}
+              </Link>
+            </Button>
+           )
+        })}
       </nav>
       <div className="p-4 border-t mt-auto space-y-2">
         <Button variant="ghost" className="w-full justify-start" onClick={handleSignOut}>
