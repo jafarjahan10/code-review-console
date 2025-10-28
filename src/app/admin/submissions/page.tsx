@@ -53,17 +53,6 @@ const submissions = [
 export default function SubmissionsPage() {
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between space-y-2">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight font-headline">
-            Submissions
-          </h2>
-          <p className="text-muted-foreground">
-            Review and manage candidate submissions.
-          </p>
-        </div>
-      </div>
-
       <Card>
         <CardContent className="pt-6">
           <Table>
@@ -97,7 +86,10 @@ export default function SubmissionsPage() {
                   </TableCell>
                   <TableCell className="whitespace-nowrap">{submission.problemTitle}</TableCell>
                   <TableCell className="whitespace-nowrap">
-                    <Badge variant={submission.status === 'Reviewed' ? 'default' : 'destructive'}>
+                    <Badge 
+                      variant={submission.status === 'Reviewed' ? 'default' : 'destructive'}
+                      className={submission.status === 'Reviewed' ? 'bg-green-600 hover:bg-green-600/80' : ''}
+                    >
                       {submission.status}
                     </Badge>
                   </TableCell>
