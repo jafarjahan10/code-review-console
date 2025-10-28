@@ -52,7 +52,7 @@ export default function AdminLoginPage() {
               <div className="flex items-center">
                 <Label htmlFor="password">Password</Label>
               </div>
-              <Input id="password" type="password" required defaultValue="password" />
+              <Input id="password" type="password" required placeholder="Enter your password" />
             </div>
             <Button type="submit" className="w-full mt-2">
               Login
