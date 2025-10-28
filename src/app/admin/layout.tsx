@@ -2,7 +2,7 @@
 'use client';
 import AdminSidebar from "@/components/admin/admin-sidebar";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
 import { usePathname } from "next/navigation";
 
@@ -34,6 +34,10 @@ export default function AdminLayout({
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="p-0 w-64">
+                <SheetHeader className="sr-only">
+                    <SheetTitle>Admin Menu</SheetTitle>
+                    <SheetDescription>Navigation links for the admin dashboard.</SheetDescription>
+                </SheetHeader>
               <AdminSidebar />
             </SheetContent>
           </Sheet>
