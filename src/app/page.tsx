@@ -53,7 +53,6 @@ export default function Home() {
           <Logo />
         </Link>
         <div className="flex-1 text-center">
-          <span className="font-semibold">Candidate Portal</span>
         </div>
         <Button variant="ghost" size="icon">
           <User className="h-5 w-5" />
