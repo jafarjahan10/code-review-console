@@ -19,11 +19,6 @@ export default function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
 
-  // Don't render sidebar on the login page
-  if (pathname === '/admin/login' || pathname === '/admin') {
-    return null;
-  }
-
   const handleSignOut = () => {
     // In a real app, you'd handle the sign-out logic here.
     // For this prototype, we'll just navigate to the login page.
