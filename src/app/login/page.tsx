@@ -57,12 +57,6 @@ export default function CandidateLoginPage() {
               Login
             </Button>
           </form>
-           <div className="mt-4 text-center text-sm">
-            Are you an administrator?{' '}
-            <Link href="/admin" className="underline">
-              Admin Login
-            </Link>
-          </div>
         </CardContent>
       </Card>
     </div>
