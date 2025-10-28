@@ -1,3 +1,4 @@
+
 import CodeEditor from "@/components/candidate/code-editor";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -19,7 +20,7 @@ const MOCK_PROBLEM = {
 
 export default function ProblemPage() {
   return (
-    <div className="grid md:grid-cols-2 gap-4 p-4 no-scrollbar" style={{height: 'calc(100dvh - 64px)', overflowY: "scroll"}}>
+    <div className="grid md:grid-cols-2 gap-4 p-4 no-scrollbar overflow-y-auto" style={{height: 'calc(100dvh - 64px)'}}>
       <Card className="flex flex-col">
         <CardHeader>
           <CardTitle className="font-headline text-2xl">{MOCK_PROBLEM.title}</CardTitle>

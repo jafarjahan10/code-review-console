@@ -74,7 +74,7 @@ export default function CandidatesPage() {
         <div className="flex items-center space-x-2">
           <Button>
             <PlusCircle className="mr-2 h-4 w-4" />
-            Invite Candidate
+            <span className="hidden md:inline">Invite Candidate</span>
           </Button>
         </div>
       </div>
@@ -85,9 +85,9 @@ export default function CandidatesPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="whitespace-nowrap">Candidate</TableHead>
-                <TableHead className="whitespace-nowrap">Status</TableHead>
-                <TableHead className="whitespace-nowrap">Problem Assigned</TableHead>
-                <TableHead className="whitespace-nowrap">Invited At</TableHead>
+                <TableHead className="whitespace-nowrap hidden md:table-cell">Status</TableHead>
+                <TableHead className="whitespace-nowrap hidden md:table-cell">Problem Assigned</TableHead>
+                <TableHead className="whitespace-nowrap hidden md:table-cell">Invited At</TableHead>
                 <TableHead>
                   <span className="sr-only">Actions</span>
                 </TableHead>
@@ -107,10 +107,26 @@ export default function CandidatesPage() {
                         <p className="text-sm text-muted-foreground hidden md:inline">
                           {candidate.email}
                         </p>
+                        <div className="md:hidden text-sm text-muted-foreground">
+                          <p>{candidate.problemAssigned}</p>
+                          <Badge variant={
+                              candidate.status === 'Completed' ? 'default' :
+                              candidate.status === 'Pending' ? 'default' :
+                              candidate.status === 'In Progress' ? 'default' : 'secondary'
+                            }
+                            className={`mt-1 ${
+                              candidate.status === 'Completed' ? 'bg-green-600 hover:bg-green-600/80' :
+                              candidate.status === 'Pending' ? 'bg-orange-600 hover:bg-orange-600/80' :
+                              candidate.status === 'In Progress' ? 'bg-blue-600 hover:bg-blue-600/80' : ''
+                            }`}
+                            >
+                            {candidate.status}
+                          </Badge>
+                        </div>
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="whitespace-nowrap">
+                  <TableCell className="whitespace-nowrap hidden md:table-cell">
                     <Badge variant={
                         candidate.status === 'Completed' ? 'default' :
                         candidate.status === 'Pending' ? 'default' :
@@ -125,8 +141,8 @@ export default function CandidatesPage() {
                       {candidate.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="whitespace-nowrap">{candidate.problemAssigned}</TableCell>
-                  <TableCell className="whitespace-nowrap">{candidate.invitedAt}</TableCell>
+                  <TableCell className="whitespace-nowrap hidden md:table-cell">{candidate.problemAssigned}</TableCell>
+                  <TableCell className="whitespace-nowrap hidden md:table-cell">{candidate.invitedAt}</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

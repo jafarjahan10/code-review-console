@@ -71,9 +71,9 @@ export default function SubmissionsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="whitespace-nowrap">Candidate</TableHead>
-                <TableHead className="whitespace-nowrap">Problem</TableHead>
-                <TableHead className="whitespace-nowrap">Status</TableHead>
-                <TableHead className="whitespace-nowrap">Submitted At</TableHead>
+                <TableHead className="whitespace-nowrap hidden md:table-cell">Problem</TableHead>
+                <TableHead className="whitespace-nowrap hidden md:table-cell">Status</TableHead>
+                <TableHead className="whitespace-nowrap hidden md:table-cell">Submitted At</TableHead>
                 <TableHead>
                   <span className="sr-only">Actions</span>
                 </TableHead>
@@ -93,11 +93,20 @@ export default function SubmissionsPage() {
                         <p className="text-sm text-muted-foreground hidden md:inline">
                           {submission.candidateEmail}
                         </p>
+                         <div className="md:hidden text-sm text-muted-foreground">
+                          <p>{submission.problemTitle}</p>
+                           <Badge 
+                              variant={submission.status === 'Reviewed' ? 'default' : 'destructive'}
+                              className={`mt-1 ${submission.status === 'Reviewed' ? 'bg-green-600 hover:bg-green-600/80' : ''}`}
+                            >
+                              {submission.status}
+                            </Badge>
+                        </div>
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="whitespace-nowrap">{submission.problemTitle}</TableCell>
-                  <TableCell className="whitespace-nowrap">
+                  <TableCell className="whitespace-nowrap hidden md:table-cell">{submission.problemTitle}</TableCell>
+                  <TableCell className="whitespace-nowrap hidden md:table-cell">
                     <Badge 
                       variant={submission.status === 'Reviewed' ? 'default' : 'destructive'}
                       className={submission.status === 'Reviewed' ? 'bg-green-600 hover:bg-green-600/80' : ''}
@@ -105,7 +114,7 @@ export default function SubmissionsPage() {
                       {submission.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="whitespace-nowrap">{submission.submittedAt}</TableCell>
+                  <TableCell className="whitespace-nowrap hidden md:table-cell">{submission.submittedAt}</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

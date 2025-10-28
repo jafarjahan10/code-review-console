@@ -116,6 +116,7 @@ export default function ProblemsPage() {
 
         <Card>
           <CardContent className="pt-6">
+            <div className="hidden md:block">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -200,6 +201,72 @@ export default function ProblemsPage() {
                 ))}
               </TableBody>
             </Table>
+            </div>
+             <div className="md:hidden space-y-4">
+              {problems.map((problem) => (
+                <Card key={problem.id} className="p-4">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-medium">{problem.title}</p>
+                      <p className="text-sm text-muted-foreground">Submissions: {problem.submissions}</p>
+                      <p className="text-sm text-muted-foreground">Created: {problem.createdAt}</p>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          aria-haspopup="true"
+                          size="icon"
+                          variant="ghost"
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Toggle menu</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuItem asChild>
+                          <Link href={`/admin/problems/${problem.id}/edit`}>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Edit
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href={`/admin/problems/${problem.id}`}>
+                            <File className="mr-2 h-4 w-4" />
+                            View
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() => setProblemToDelete(problem)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                   <Badge
+                      variant={
+                        problem.difficulty === "Easy"
+                          ? "default"
+                          : problem.difficulty === "Medium"
+                          ? "default"
+                          : "destructive"
+                      }
+                      className={`mt-2 ${
+                        problem.difficulty === "Easy"
+                          ? "bg-green-600 hover:bg-green-600/80"
+                          : problem.difficulty === "Medium"
+                          ? "bg-orange-600 hover:bg-orange-600/80"
+                          : ""
+                      }`}
+                    >
+                      {problem.difficulty}
+                    </Badge>
+                </Card>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </div>

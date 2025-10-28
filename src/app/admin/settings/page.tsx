@@ -44,7 +44,7 @@ export default function SettingsPage() {
       </div>
 
       <Tabs defaultValue="account" className="space-y-4">
-        <TabsList>
+        <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="account">Account</TabsTrigger>
           <TabsTrigger value="interview-panel">Interview Panel</TabsTrigger>
         </TabsList>
@@ -118,12 +118,12 @@ export default function SettingsPage() {
                     <CardDescription>Invite a new interviewer to the panel by email.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <form className="flex items-end gap-4">
-                        <div className="flex-1 space-y-2">
+                    <form className="flex flex-col md:flex-row items-end gap-4">
+                        <div className="flex-1 w-full space-y-2">
                             <Label htmlFor="interviewer-email">Email</Label>
                             <Input id="interviewer-email" type="email" placeholder="interviewer@example.com" />
                         </div>
-                        <Button type="submit">
+                        <Button type="submit" className="w-full md:w-auto">
                             <PlusCircle className="mr-2 h-4 w-4" />
                             Add Interviewer
                         </Button>
@@ -140,7 +140,7 @@ export default function SettingsPage() {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Name</TableHead>
-                                <TableHead>Email</TableHead>
+                                <TableHead className="hidden md:table-cell">Email</TableHead>
                                 <TableHead><span className="sr-only">Actions</span></TableHead>
                             </TableRow>
                         </TableHeader>
@@ -153,10 +153,13 @@ export default function SettingsPage() {
                                                 <AvatarImage src={`https://avatar.vercel.sh/${interviewer.email}.png`} alt="Avatar" />
                                                 <AvatarFallback>{interviewer.name.charAt(0)}</AvatarFallback>
                                             </Avatar>
-                                            <p className="font-medium">{interviewer.name}</p>
+                                            <div>
+                                              <p className="font-medium">{interviewer.name}</p>
+                                              <p className="text-sm text-muted-foreground md:hidden">{interviewer.email}</p>
+                                            </div>
                                         </div>
                                     </TableCell>
-                                    <TableCell>{interviewer.email}</TableCell>
+                                    <TableCell className="hidden md:table-cell">{interviewer.email}</TableCell>
                                     <TableCell className="text-right">
                                         <Button variant="ghost" size="icon" className="text-destructive">
                                             <Trash2 className="h-4 w-4" />

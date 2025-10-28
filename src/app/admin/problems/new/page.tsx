@@ -34,7 +34,7 @@ export default function NewProblemPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const [description, setDescription] = useState('# Hello\n');
   const [difficulty, setDifficulty] = useState('');
 
   const handleSubmit = (event: React.FormEvent) => {
@@ -103,7 +103,7 @@ export default function NewProblemPage() {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="difficulty">Difficulty</Label>
-                <Select onValueChange={setDifficulty} value={difficulty}>
+                <Select onValuechange={setDifficulty} value={difficulty}>
                   <SelectTrigger id="difficulty">
                     <SelectValue placeholder="Select a difficulty" />
                   </SelectTrigger>
