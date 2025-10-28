@@ -1,3 +1,4 @@
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -62,14 +63,6 @@ export default function CandidatesPage() {
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight font-headline">
-            Candidates
-          </h2>
-          <p className="text-muted-foreground">
-            Invite and manage candidates for your coding challenges.
-          </p>
-        </div>
         <div className="flex items-center space-x-2">
           <Button>
             <PlusCircle className="mr-2 h-4 w-4" />
@@ -79,7 +72,7 @@ export default function CandidatesPage() {
       </div>
 
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="pt-0">
           <Table>
             <TableHeader>
               <TableRow>
@@ -111,10 +104,16 @@ export default function CandidatesPage() {
                   </TableCell>
                   <TableCell className="whitespace-nowrap">
                     <Badge variant={
-                        candidate.status === 'Completed' ? 'default' : 
-                        candidate.status === 'Pending' ? 'destructive' :
-                        candidate.status === 'In Progress' ? 'outline' : 'secondary'
-                      }>
+                        candidate.status === 'Completed' ? 'default' :
+                        candidate.status === 'Pending' ? 'default' :
+                        candidate.status === 'In Progress' ? 'default' : 'secondary'
+                      }
+                      className={
+                        candidate.status === 'Completed' ? 'bg-green-600 hover:bg-green-600/80' :
+                        candidate.status === 'Pending' ? 'bg-orange-600 hover:bg-orange-600/80' :
+                        candidate.status === 'In Progress' ? 'bg-blue-600 hover:bg-blue-600/80' : ''
+                      }
+                      >
                       {candidate.status}
                     </Badge>
                   </TableCell>
