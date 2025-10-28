@@ -127,7 +127,7 @@ export default function NewProblemPage() {
                     value={description}
                     onValueChange={(code) => setDescription(code)}
                     highlight={(code) => highlight(code, languages.js, "javascript")}
-                    padding={0}
+                    padding={10}
                     style={editorStyles}
                     className="font-code h-full resize-none text-sm"
                   />
