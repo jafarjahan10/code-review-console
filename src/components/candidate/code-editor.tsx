@@ -100,7 +100,7 @@ export default function CodeEditor() {
             <TabsContent value="css" className="h-full m-0">
               <Editor
                 value={css}
-                onValue-change={(code) => setCss(code)}
+                onValueChange={(code) => setCss(code)}
                 highlight={(code) => highlight(code, languages.css, "css")}
                 padding={10}
                 style={editorStyles}
