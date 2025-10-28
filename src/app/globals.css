@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --background: 60 2% 11%;
+    --background: 60 2% 9%;
     --foreground: 60 9% 98%;
 
     --card: 60 2% 13%;
@@ -42,7 +42,7 @@
   }
  
   .dark {
-    --background: 60 2% 11%;
+    --background: 60 2% 9%;
     --foreground: 60 9% 98%;
  
     --card: 60 2% 13%;
@@ -85,6 +85,27 @@
   .no-scrollbar {
     -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;     /* Firefox */
+  }
+
+  /* Custom Scrollbar Styles */
+  /* For Webkit-based browsers (Chrome, Safari) */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--secondary));
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary));
   }
 }
  
