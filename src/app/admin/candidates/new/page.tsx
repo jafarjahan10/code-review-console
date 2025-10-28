@@ -6,17 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import { Combobox } from '@/components/ui/combobox';
 
 // Mock data for problems - in a real app, this would be fetched from an API
 const problems = [
@@ -50,6 +44,8 @@ export default function InviteCandidatePage() {
     });
     router.push('/admin/candidates');
   };
+
+  const problemOptions = problems.map(p => ({ value: p.id, label: p.title }));
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -96,18 +92,14 @@ export default function InviteCandidatePage() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="problem">Assign Problem</Label>
-              <Select onValueChange={setProblemId} value={problemId}>
-                <SelectTrigger id="problem">
-                  <SelectValue placeholder="Select a coding problem" />
-                </SelectTrigger>
-                <SelectContent>
-                  {problems.map((problem) => (
-                    <SelectItem key={problem.id} value={problem.id}>
-                      {problem.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+               <Combobox
+                options={problemOptions}
+                value={problemId}
+                onChange={setProblemId}
+                placeholder="Select a coding problem..."
+                searchPlaceholder="Search problems..."
+                noResultsText="No problems found."
+              />
             </div>
           </CardContent>
           <CardFooter>
