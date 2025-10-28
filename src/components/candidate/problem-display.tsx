@@ -24,8 +24,8 @@ const MOCK_CANDIDATE_DATA = {
     difficulty: "Medium",
     description: "Your task is to implement a debounce function in JavaScript. The function should delay invoking a passed-in function until after `wait` milliseconds have elapsed since the last time it was invoked.",
   },
-  // Set scheduled time to 2 minutes in the future for demonstration
-  scheduledTime: new Date(Date.now() + 2 * 60 * 1000).toISOString(),
+  // Set scheduled time to 20 seconds in the future for demonstration
+  scheduledTime: new Date(Date.now() + 20 * 1000).toISOString(),
 };
 
 type AccessState = 'loading' | 'denied' | 'granted' | 'error';
