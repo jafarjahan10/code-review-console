@@ -1,4 +1,6 @@
 
+'use client';
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,6 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { MoreHorizontal, Eye, MessageSquare } from "lucide-react";
+import Link from "next/link";
 
 // Mock data for submissions
 const submissions = [
@@ -125,9 +128,11 @@ export default function SubmissionsPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>
-                          <Eye className="mr-2 h-4 w-4" />
-                          View Submission
+                        <DropdownMenuItem asChild>
+                          <Link href={`/admin/submissions/${submission.id}`}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            View Submission
+                          </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem>
                           <MessageSquare className="mr-2 h-4 w-4" />
