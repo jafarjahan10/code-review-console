@@ -21,14 +21,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import Editor from "react-simple-code-editor";
-import { highlight, languages } from "prismjs/components/prism-core";
-import "prismjs/components/prism-clike";
-import "prismjs/components/prism-javascript";
-import 'prismjs/components/prism-css';
-import "prismjs/components/prism-markup";
-import "prismjs/components/prism-markdown";
-import 'prismjs/themes/prism-tomorrow.css';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function NewProblemPage() {
   const router = useRouter();
@@ -56,17 +49,6 @@ export default function NewProblemPage() {
     router.push('/admin/problems');
   };
   
-  const editorStyles = {
-    fontFamily: '"Source Code Pro", "Fira Mono", "Courier New", Courier, monospace',
-    fontSize: 14,
-    backgroundColor: "hsl(var(--card))",
-    color: "hsl(var(--foreground))",
-    borderRadius: "var(--radius)",
-    padding: "1rem",
-    minHeight: "300px",
-    outline: "none",
-    border: "1px solid hsl(var(--input))",
-  };
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -116,14 +98,12 @@ export default function NewProblemPage() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="description">Description (Markdown)</Label>
-               <Editor
-                value={description}
-                onValueChange={(code) => setDescription(code)}
-                highlight={(code) => highlight(code, languages.markdown, "markdown")}
-                padding={10}
-                style={editorStyles}
-                className="font-code h-full resize-none text-sm focus-visible:ring-2 focus-visible:ring-ring focus-within:ring-2 focus-within:ring-ring rounded-md"
+               <Textarea
+                id="description"
                 placeholder="Enter problem description here. You can use Markdown for formatting."
+                className="min-h-[300px] font-code"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
               />
             </div>
           </CardContent>
