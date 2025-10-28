@@ -7,7 +7,7 @@ type LogoProps = {
 
 const Logo: FC<LogoProps> = ({ className }) => {
   return (
-    <div className={cn("flex items-center", className)}>
+    <div className={cn("flex items-center justify-center", className)}>
       <h1 className="text-2xl font-bold font-headline tracking-tighter">
         CodeReveiw
       </h1>
