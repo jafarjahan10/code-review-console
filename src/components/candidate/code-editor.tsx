@@ -43,22 +43,7 @@ export default function CodeEditor() {
   const [html, setHtml] = useState(initialHtml);
   const [css, setCss] = useState(initialCss);
   const [js, setJs] = useState(initialJs);
-  const [srcDoc, setSrcDoc] = useState("");
   const { toast } = useToast();
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      setSrcDoc(`
-        <html>
-          <body>${html}</body>
-          <style>${css}</style>
-          <script>${js}</script>
-        </html>
-      `);
-    }, 500);
-
-    return () => clearTimeout(timeout);
-  }, [html, css, js]);
 
   const handleSubmit = () => {
     // Here you would call a server action to submit the code.
@@ -70,16 +55,22 @@ export default function CodeEditor() {
   };
 
   return (
-    <div className="grid grid-rows-2 gap-4 h-full">
-      <Card className="flex flex-col">
+    <div className="h-full flex flex-col">
+      <Card className="flex-1 flex flex-col">
         <Tabs defaultValue="javascript" className="flex-1 flex flex-col">
           <CardHeader className="flex-row items-center justify-between">
-            <CardTitle className="font-headline text-lg">Code Editor</CardTitle>
-            <TabsList className="grid w-full max-w-xs grid-cols-3">
-              <TabsTrigger value="html">HTML</TabsTrigger>
-              <TabsTrigger value="css">CSS</TabsTrigger>
-              <TabsTrigger value="javascript">JS</TabsTrigger>
-            </TabsList>
+            <div className="flex items-center gap-4">
+                <CardTitle className="font-headline text-lg">Code Editor</CardTitle>
+                <TabsList className="grid w-full max-w-xs grid-cols-3">
+                  <TabsTrigger value="html">HTML</TabsTrigger>
+                  <TabsTrigger value="css">CSS</TabsTrigger>
+                  <TabsTrigger value="javascript">JS</TabsTrigger>
+                </TabsList>
+            </div>
+            <Button onClick={handleSubmit}>
+                <Send className="mr-2 h-4 w-4" />
+                Submit Solution
+            </Button>
           </CardHeader>
           <div className="flex-1 p-1 pt-0">
             <TabsContent value="html" className="h-full m-0">
@@ -108,27 +99,6 @@ export default function CodeEditor() {
             </TabsContent>
           </div>
         </Tabs>
-      </Card>
-      
-      <Card className="flex flex-col">
-        <CardHeader className="flex-row items-center justify-between">
-          <CardTitle className="font-headline text-lg">Live Preview</CardTitle>
-          <Button onClick={handleSubmit}>
-            <Send className="mr-2 h-4 w-4" />
-            Submit Solution
-          </Button>
-        </CardHeader>
-        <CardContent className="flex-1">
-          <iframe
-            srcDoc={srcDoc}
-            title="output"
-            sandbox="allow-scripts"
-            frameBorder="0"
-            width="100%"
-            height="100%"
-            className="bg-white rounded-md"
-          />
-        </CardContent>
       </Card>
     </div>
   );
