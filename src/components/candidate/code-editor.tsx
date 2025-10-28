@@ -61,6 +61,7 @@ export default function CodeEditor() {
   const [css, setCss] = useState(initialCss);
   const [js, setJs] = useState(initialJs);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const { toast } = useToast();
 
   const handleSubmit = () => {
@@ -70,6 +71,7 @@ export default function CodeEditor() {
       description: "Your code has been submitted for review.",
     });
     setShowConfirmDialog(false);
+    setIsSubmitted(true);
   };
 
   const editorStyles = {
@@ -95,10 +97,12 @@ export default function CodeEditor() {
                 <TabsTrigger value="css">CSS</TabsTrigger>
                 <TabsTrigger value="javascript">JS</TabsTrigger>
               </TabsList>
-              <Button onClick={() => setShowConfirmDialog(true)} className="!space-y-0 h-[40px] !m-0">
-                  <Send className="mr-2 h-4 w-4" />
-                  Submit Solution
-              </Button>
+              {!isSubmitted && (
+                <Button onClick={() => setShowConfirmDialog(true)} className="!space-y-0 h-[40px] !m-0">
+                    <Send className="mr-2 h-4 w-4" />
+                    Submit Solution
+                </Button>
+              )}
             </CardHeader>
             <div className="flex-1 p-1 pt-0">
               <TabsContent value="html" className="h-full m-0">
@@ -109,6 +113,7 @@ export default function CodeEditor() {
                   padding={10}
                   style={editorStyles}
                   className="font-code h-full resize-none text-sm"
+                  readOnly={isSubmitted}
                 />
               </TabsContent>
               <TabsContent value="css" className="h-full m-0">
@@ -119,6 +124,7 @@ export default function CodeEditor() {
                   padding={10}
                   style={editorStyles}
                   className="font-code h-full resize-none text-sm"
+                  readOnly={isSubmitted}
                 />
               </TabsContent>
               <TabsContent value="javascript" className="h-full m-0">
@@ -129,6 +135,7 @@ export default function CodeEditor() {
                   padding={10}
                   style={editorStyles}
                   className="font-code h-full resize-none text-sm"
+                  readOnly={isSubmitted}
                 />
               </TabsContent>
             </div>
