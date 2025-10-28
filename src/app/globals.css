@@ -100,8 +100,9 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: hsl(var(--secondary));
+    background: hsl(var(--border)); 
     border-radius: 10px;
+    border: 2px solid hsl(var(--muted));
   }
 
   ::-webkit-scrollbar-thumb:hover {
