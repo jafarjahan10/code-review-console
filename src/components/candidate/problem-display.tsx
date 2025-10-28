@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { checkTimeBasedAccess } from "@/ai/flows/time-based-access-control";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -37,26 +36,25 @@ export default function ProblemDisplay() {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
-    const checkAccess = async () => {
+    const checkAccess = () => {
       try {
-        const now = new Date().toISOString();
-        const result = await checkTimeBasedAccess({
-          scheduledTime: MOCK_CANDIDATE_DATA.scheduledTime,
-          currentTime: now,
-        });
-
-        if (result.canAccess) {
+        const now = new Date();
+        const scheduledTime = new Date(MOCK_CANDIDATE_DATA.scheduledTime);
+        
+        if (now >= scheduledTime) {
           setAccessState('granted');
+          setReason("Access granted. You may now start the challenge.");
         } else {
           setAccessState('denied');
+          setReason("Access to the challenge is time-locked.");
         }
-        setReason(result.reason || "Access status determined.");
       } catch (error) {
         console.error("Error checking access:", error);
         setAccessState('error');
         setReason("Could not verify access at this time.");
       }
     };
+
     checkAccess();
     
     // Set up a timer to re-check access periodically if denied
