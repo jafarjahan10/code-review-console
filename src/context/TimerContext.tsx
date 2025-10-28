@@ -6,7 +6,7 @@ import React, { createContext, useContext, useState, useEffect, useRef, useCallb
 interface TimerContextProps {
     time: number;
     isRunning: boolean;
-    startTimer: (duration: number) => void;
+    startTimer: () => void;
     stopTimer: () => void;
 }
 
@@ -17,10 +17,12 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const [isRunning, setIsRunning] = useState(false);
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-    const startTimer = useCallback((duration: number) => {
-        setTime(duration);
-        setIsRunning(true);
-    }, []);
+    const startTimer = useCallback(() => {
+        if (!isRunning) {
+            setTime(0);
+            setIsRunning(true);
+        }
+    }, [isRunning]);
 
     const stopTimer = useCallback(() => {
         setIsRunning(false);
@@ -30,12 +32,10 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }, []);
 
     useEffect(() => {
-        if (isRunning && time > 0) {
+        if (isRunning) {
             intervalRef.current = setInterval(() => {
-                setTime(prevTime => prevTime - 1);
+                setTime(prevTime => prevTime + 1);
             }, 1000);
-        } else if (time === 0) {
-            stopTimer();
         }
 
         return () => {
@@ -43,7 +43,7 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 clearInterval(intervalRef.current);
             }
         };
-    }, [isRunning, time, stopTimer]);
+    }, [isRunning]);
 
     return (
         <TimerContext.Provider value={{ time, isRunning, startTimer, stopTimer }}>
@@ -59,4 +59,3 @@ export const useTimer = () => {
     }
     return context;
 };
-

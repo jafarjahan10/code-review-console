@@ -27,7 +27,7 @@ export default function ProblemPage() {
   const { startTimer } = useTimer();
 
   useEffect(() => {
-    startTimer(30 * 60); // 30 minutes
+    startTimer();
   }, [startTimer]);
 
   return (
