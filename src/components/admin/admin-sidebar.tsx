@@ -30,7 +30,7 @@ export default function AdminSidebar() {
   }
 
   return (
-    <aside className="w-64 flex-shrink-0 border-r bg-card text-card-foreground flex flex-col">
+    <aside className="w-64 flex-shrink-0 border-r bg-card text-card-foreground flex flex-col" style={{height: '100dvh'}}>
       <div className="p-4 border-b">
         <Logo />
       </div>
