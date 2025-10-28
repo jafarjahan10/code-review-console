@@ -12,6 +12,7 @@ import "prismjs/components/prism-javascript";
 import "prismjs/components/prism-css";
 import "prismjs/components/prism-markup";
 import 'prismjs/themes/prism-tomorrow.css';
+import { cn } from "@/lib/utils";
 
 const initialHtml = `<h1>Code Challenge</h1>
 <p>Implement your solution below and see the live preview.</p>
@@ -75,7 +76,7 @@ export default function CodeEditor() {
     <div className="h-full flex flex-col">
       <Card className="flex-1 flex flex-col">
         <Tabs defaultValue="javascript" className="flex-1 flex flex-col">
-          <CardHeader className="flex-row items-center justify-between">
+          <CardHeader className="flex-row items-center justify-between gap-4">
             <TabsList className="grid w-full max-w-xs grid-cols-3">
               <TabsTrigger value="html">HTML</TabsTrigger>
               <TabsTrigger value="css">CSS</TabsTrigger>
