@@ -62,6 +62,14 @@ export default {
           '4': 'hsl(var(--chart-4))',
           '5': 'hsl(var(--chart-5))',
         },
+        green: {
+          '600': '#16a34a',
+          '600/80': 'rgba(22, 163, 74, 0.8)',
+        },
+        orange: {
+            '600': '#ea580c',
+            '600/80': 'rgba(234, 88, 12, 0.8)',
+        }
       },
       borderRadius: {
         lg: 'var(--radius)',

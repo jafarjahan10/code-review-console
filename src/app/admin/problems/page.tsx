@@ -1,8 +1,5 @@
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -97,31 +94,43 @@ export default function ProblemsPage() {
             <TableBody>
               {problems.map((problem) => (
                 <TableRow key={problem.id}>
-                  <TableCell className="font-medium whitespace-nowrap">{problem.title}</TableCell>
+                  <TableCell className="font-medium whitespace-nowrap">
+                    {problem.title}
+                  </TableCell>
                   <TableCell className="whitespace-nowrap">
                     <Badge
                       variant={
                         problem.difficulty === "Easy"
-                          ? "secondary"
+                          ? "default"
                           : problem.difficulty === "Medium"
-                          ? "outline"
-                          : "default"
+                          ? "default"
+                          : "destructive"
                       }
                       className={
-                        problem.difficulty === "Hard"
-                          ? "bg-destructive text-destructive-foreground hover:bg-destructive/80"
+                        problem.difficulty === "Easy"
+                          ? "bg-green-600 hover:bg-green-600/80"
+                          : problem.difficulty === "Medium"
+                          ? "bg-orange-600 hover:bg-orange-600/80"
                           : ""
                       }
                     >
                       {problem.difficulty}
                     </Badge>
                   </TableCell>
-                  <TableCell className="whitespace-nowrap">{problem.submissions}</TableCell>
-                  <TableCell className="whitespace-nowrap">{problem.createdAt}</TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    {problem.submissions}
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    {problem.createdAt}
+                  </TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup="true" size="icon" variant="ghost">
+                        <Button
+                          aria-haspopup="true"
+                          size="icon"
+                          variant="ghost"
+                        >
                           <MoreHorizontal className="h-4 w-4" />
                           <span className="sr-only">Toggle menu</span>
                         </Button>
@@ -133,12 +142,12 @@ export default function ProblemsPage() {
                           Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem>
-                           <File className="mr-2 h-4 w-4" />
-                           View
+                          <File className="mr-2 h-4 w-4" />
+                          View
                         </DropdownMenuItem>
-                         <DropdownMenuItem className="text-destructive">
-                           <Trash2 className="mr-2 h-4 w-4" />
-                           Delete
+                        <DropdownMenuItem className="text-destructive">
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
