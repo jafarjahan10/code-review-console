@@ -92,10 +92,10 @@ export default function CandidatesPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Candidate</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Problem Assigned</TableHead>
-                <TableHead>Invited At</TableHead>
+                <TableHead className="whitespace-nowrap">Candidate</TableHead>
+                <TableHead className="whitespace-nowrap">Status</TableHead>
+                <TableHead className="whitespace-nowrap">Problem Assigned</TableHead>
+                <TableHead className="whitespace-nowrap">Invited At</TableHead>
                 <TableHead>
                   <span className="sr-only">Actions</span>
                 </TableHead>
@@ -104,7 +104,7 @@ export default function CandidatesPage() {
             <TableBody>
               {candidates.map((candidate) => (
                 <TableRow key={candidate.id}>
-                  <TableCell>
+                  <TableCell className="whitespace-nowrap">
                     <div className="flex items-center gap-3">
                       <Avatar className="hidden h-9 w-9 sm:flex">
                         <AvatarImage src={`https://avatar.vercel.sh/${candidate.email}.png`} alt="Avatar" />
@@ -118,7 +118,7 @@ export default function CandidatesPage() {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="whitespace-nowrap">
                     <Badge variant={
                         candidate.status === 'Completed' ? 'default' : 
                         candidate.status === 'Pending' ? 'destructive' :
@@ -127,8 +127,8 @@ export default function CandidatesPage() {
                       {candidate.status}
                     </Badge>
                   </TableCell>
-                  <TableCell>{candidate.problemAssigned}</TableCell>
-                  <TableCell>{candidate.invitedAt}</TableCell>
+                  <TableCell className="whitespace-nowrap">{candidate.problemAssigned}</TableCell>
+                  <TableCell className="whitespace-nowrap">{candidate.invitedAt}</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
