@@ -94,10 +94,10 @@ export default function ProblemsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Difficulty</TableHead>
-                <TableHead>Submissions</TableHead>
-                <TableHead>Created At</TableHead>
+                <TableHead className="whitespace-nowrap">Title</TableHead>
+                <TableHead className="whitespace-nowrap">Difficulty</TableHead>
+                <TableHead className="whitespace-nowrap">Submissions</TableHead>
+                <TableHead className="whitespace-nowrap">Created At</TableHead>
                 <TableHead>
                   <span className="sr-only">Actions</span>
                 </TableHead>
@@ -106,8 +106,8 @@ export default function ProblemsPage() {
             <TableBody>
               {problems.map((problem) => (
                 <TableRow key={problem.id}>
-                  <TableCell className="font-medium">{problem.title}</TableCell>
-                  <TableCell>
+                  <TableCell className="font-medium whitespace-nowrap">{problem.title}</TableCell>
+                  <TableCell className="whitespace-nowrap">
                     <Badge
                       variant={
                         problem.difficulty === "Easy"
@@ -125,8 +125,8 @@ export default function ProblemsPage() {
                       {problem.difficulty}
                     </Badge>
                   </TableCell>
-                  <TableCell>{problem.submissions}</TableCell>
-                  <TableCell>{problem.createdAt}</TableCell>
+                  <TableCell className="whitespace-nowrap">{problem.submissions}</TableCell>
+                  <TableCell className="whitespace-nowrap">{problem.createdAt}</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
