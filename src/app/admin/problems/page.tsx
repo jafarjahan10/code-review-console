@@ -2,9 +2,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import {
   Table,
@@ -84,13 +81,7 @@ export default function ProblemsPage() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Problem List</CardTitle>
-          <CardDescription>
-            A list of all coding problems in the system.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <Table>
             <TableHeader>
               <TableRow>

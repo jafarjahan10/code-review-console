@@ -4,9 +4,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import {
   DropdownMenu,
@@ -82,13 +79,7 @@ export default function CandidatesPage() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Candidate List</CardTitle>
-          <CardDescription>
-            A list of all candidates in the system.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <Table>
             <TableHeader>
               <TableRow>

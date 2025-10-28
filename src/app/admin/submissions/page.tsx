@@ -4,9 +4,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import {
   DropdownMenu,
@@ -68,19 +65,13 @@ export default function SubmissionsPage() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>All Submissions</CardTitle>
-          <CardDescription>
-            A list of all submissions from candidates.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Candidate</TableHead>
-                <TableHead>Problem</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead className="whitespace-nowrap">Candidate</TableHead>
+                <TableHead className="whitespace-nowrap">Problem</TableHead>
+                <TableHead className="whitespace-nowrap">Status</TableHead>
                 <TableHead className="whitespace-nowrap">Submitted At</TableHead>
                 <TableHead>
                   <span className="sr-only">Actions</span>
@@ -105,7 +96,7 @@ export default function SubmissionsPage() {
                     </div>
                   </TableCell>
                   <TableCell className="whitespace-nowrap">{submission.problemTitle}</TableCell>
-                  <TableCell>
+                  <TableCell className="whitespace-nowrap">
                     <Badge variant={submission.status === 'Reviewed' ? 'default' : 'destructive'}>
                       {submission.status}
                     </Badge>
