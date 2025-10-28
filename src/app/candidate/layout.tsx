@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Logo from "@/components/logo";
 import { Button } from "@/components/ui/button";
-import { LogOut, User } from "lucide-react";
+import { LogOut } from "lucide-react";
 
 export default function CandidateLayout({
   children,
@@ -15,12 +15,8 @@ export default function CandidateLayout({
           <Logo />
         </Link>
         <div className="flex-1"></div>
-        <Button variant="ghost" size="icon">
-          <User className="h-5 w-5" />
-          <span className="sr-only">Profile</span>
-        </Button>
         <Button variant="ghost" size="icon" asChild>
-          <Link href="/admin">
+          <Link href="/login">
             <LogOut className="h-5 w-5" />
             <span className="sr-only">Log Out</span>
           </Link>
