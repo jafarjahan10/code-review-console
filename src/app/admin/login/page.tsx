@@ -25,13 +25,13 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/40">
+    <div className="relative flex min-h-screen items-center justify-center bg-muted/40">
+        <div className="absolute top-4 left-4">
+            <Logo />
+        </div>
       <Card className="mx-auto w-full max-w-sm">
         <CardHeader className="text-center">
-          <div className="mb-4">
-             <Logo />
-          </div>
-          <CardTitle className="text-2xl font-headline">Admin Login</CardTitle>
+          <CardTitle className="text-2xl font-headline pt-6">Admin Login</CardTitle>
           <CardDescription>
             Enter your credentials to access the admin dashboard.
           </CardDescription>
