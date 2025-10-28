@@ -21,7 +21,14 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import { Textarea } from '@/components/ui/textarea';
+import Editor from "react-simple-code-editor";
+import { highlight, languages } from "prismjs/components/prism-core";
+import "prismjs/components/prism-clike";
+import "prismjs/components/prism-javascript";
+import 'prismjs/themes/prism-tomorrow.css';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export default function NewProblemPage() {
   const router = useRouter();
@@ -49,6 +56,18 @@ export default function NewProblemPage() {
     router.push('/admin/problems');
   };
   
+
+  const editorStyles = {
+    fontFamily: '"Source Code Pro", "Fira Mono", "Courier New", Courier, monospace',
+    fontSize: 14,
+    backgroundColor: "hsl(var(--card))",
+    color: "hsl(var(--foreground))",
+    borderRadius: "var(--radius)",
+    padding: "1rem",
+    minHeight: "300px",
+    outline: "none",
+    border: "1px solid hsl(var(--border))",
+  };
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -98,13 +117,27 @@ export default function NewProblemPage() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="description">Description (Markdown)</Label>
-               <Textarea
-                id="description"
-                placeholder="Enter problem description here. You can use Markdown for formatting."
-                className="min-h-[300px] font-code"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
+              <Tabs defaultValue="write">
+                <TabsList>
+                  <TabsTrigger value="write">Write</TabsTrigger>
+                  <TabsTrigger value="preview">Preview</TabsTrigger>
+                </TabsList>
+                <TabsContent value="write" className="mt-2">
+                   <Editor
+                    value={description}
+                    onValueChange={(code) => setDescription(code)}
+                    highlight={(code) => highlight(code, languages.js, "javascript")}
+                    padding={10}
+                    style={editorStyles}
+                    className="font-code h-full resize-none text-sm"
+                  />
+                </TabsContent>
+                <TabsContent value="preview" className="mt-2">
+                  <div className="prose prose-sm dark:prose-invert p-4 rounded-md border min-h-[300px]">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{description || "Nothing to preview..."}</ReactMarkdown>
+                  </div>
+                </TabsContent>
+              </Tabs>
             </div>
           </CardContent>
           <CardFooter>
