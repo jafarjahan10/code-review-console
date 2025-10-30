@@ -19,7 +19,8 @@ const MOCK_PROBLEM = {
     "It should reset the timer on subsequent calls.",
     "The `cancel` method should prevent the function from being called.",
     "The `flush` method should call the function immediately."
-  ]
+  ],
+  technologies: ["HTML", "CSS", "JS"]
 };
 
 export default function ProblemPage() {
@@ -41,7 +42,7 @@ export default function ProblemPage() {
         </ScrollArea>
       </Card>
 
-      <CodeEditor />
+      <CodeEditor problem={MOCK_PROBLEM} />
     </div>
   );
 }

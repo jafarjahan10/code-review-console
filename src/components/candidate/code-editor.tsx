@@ -1,6 +1,6 @@
 
 "use client"
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
@@ -24,12 +24,15 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-const initialHtml = `<h1>Code Challenge</h1>
+const getInitialCode = (tech: string) => {
+    switch (tech.toLowerCase()) {
+        case "html":
+            return `<h1>Code Challenge</h1>
 <p>Implement your solution below and see the live preview.</p>
 <button id="myButton">Click me</button>
 <p>Button clicked <span id="count">0</span> times.</p>`;
-
-const initialCss = `body {
+        case "css":
+            return `body {
   font-family: sans-serif;
   background-color: #f0f0f0;
   padding: 1rem;
@@ -40,8 +43,8 @@ button {
   border: 1px solid #ccc;
   cursor: pointer;
 }`;
-
-const initialJs = `// Your debounce implementation here
+        case "js":
+            return `// Your debounce implementation here
 function debounce(func, wait) {
   // ...
 }
@@ -55,18 +58,53 @@ button.addEventListener('click', () => {
   countSpan.innerText = count;
   // Example usage of your debounce function would go here
 });`;
+        default:
+            return `// ${tech} code editor`;
+    }
+}
 
-export default function CodeEditor() {
-  const [html, setHtml] = useState(initialHtml);
-  const [css, setCss] = useState(initialCss);
-  const [js, setJs] = useState(initialJs);
+const getLanguage = (tech: string) => {
+    switch (tech.toLowerCase()) {
+        case "html":
+            return "markup";
+        case "css":
+            return "css";
+        case "js":
+            return "javascript";
+        case "python":
+            return "python";
+        default:
+            return "clike";
+    }
+}
+
+type CodeEditorProps = {
+    problem: {
+        technologies: string[];
+    }
+};
+
+export default function CodeEditor({ problem }: CodeEditorProps) {
+  const technologies = useMemo(() => problem.technologies || ["JS"], [problem.technologies]);
+  const [codes, setCodes] = useState<Record<string, string>>(() => {
+    const initialState: Record<string, string> = {};
+    technologies.forEach(tech => {
+        initialState[tech.toLowerCase()] = getInitialCode(tech);
+    });
+    return initialState;
+  });
+  
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { toast } = useToast();
 
+  const handleCodeChange = (tech: string, code: string) => {
+      setCodes(prev => ({ ...prev, [tech.toLowerCase()]: code }));
+  };
+
   const handleSubmit = () => {
     setShowConfirmDialog(false);
-    console.log({ html, css, js });
+    console.log(codes);
     toast({
       title: "Submission Successful!",
       description: "Your code has been submitted for review.",
@@ -90,12 +128,12 @@ export default function CodeEditor() {
     <>
       <div className="h-full flex flex-col">
         <Card className="flex-1 flex flex-col">
-          <Tabs defaultValue="javascript" className="flex-1 flex flex-col">
+          <Tabs defaultValue={technologies[0]?.toLowerCase()} className="flex-1 flex flex-col">
             <CardHeader className="flex-row items-center justify-between gap-4">
-              <TabsList className="grid w-full max-w-xs grid-cols-3">
-                <TabsTrigger value="html">HTML</TabsTrigger>
-                <TabsTrigger value="css">CSS</TabsTrigger>
-                <TabsTrigger value="javascript">JS</TabsTrigger>
+              <TabsList className={`grid w-full max-w-xs grid-cols-${technologies.length}`}>
+                {technologies.map(tech => (
+                    <TabsTrigger key={tech} value={tech.toLowerCase()}>{tech}</TabsTrigger>
+                ))}
               </TabsList>
               {!isSubmitted && (
                 <Button onClick={() => setShowConfirmDialog(true)} className="!space-y-0 h-[40px] !m-0">
@@ -105,39 +143,23 @@ export default function CodeEditor() {
               )}
             </CardHeader>
             <div className="flex-1 p-1 pt-0">
-              <TabsContent value="html" className="h-full m-0">
-                <Editor
-                  value={html}
-                  onValueChange={(code) => setHtml(code)}
-                  highlight={(code) => highlight(code, languages.markup, "markup")}
-                  padding={10}
-                  style={editorStyles}
-                  className="font-code h-full resize-none text-sm !p-0"
-                  readOnly={isSubmitted}
-                />
-              </TabsContent>
-              <TabsContent value="css" className="h-full m-0">
-                <Editor
-                  value={css}
-                  onValueChange={(code) => setCss(code)}
-                  highlight={(code) => highlight(code, languages.css, "css")}
-                  padding={10}
-                  style={editorStyles}
-                  className="font-code h-full resize-none text-sm !p-0"
-                  readOnly={isSubmitted}
-                />
-              </TabsContent>
-              <TabsContent value="javascript" className="h-full m-0">
-                <Editor
-                  value={js}
-                  onValueChange={(code) => setJs(code)}
-                  highlight={(code) => highlight(code, languages.js, "javascript")}
-                  padding={10}
-                  style={editorStyles}
-                  className="font-code h-full resize-none text-sm !p-0"
-                  readOnly={isSubmitted}
-                />
-              </TabsContent>
+                {technologies.map(tech => {
+                    const lowerTech = tech.toLowerCase();
+                    const language = getLanguage(lowerTech);
+                    return (
+                        <TabsContent key={tech} value={lowerTech} className="h-full m-0">
+                            <Editor
+                            value={codes[lowerTech]}
+                            onValueChange={(code) => handleCodeChange(lowerTech, code)}
+                            highlight={(code) => highlight(code, languages[language] || languages.clike, language)}
+                            padding={10}
+                            style={editorStyles}
+                            className="font-code h-full resize-none text-sm !p-0"
+                            readOnly={isSubmitted}
+                            />
+                        </TabsContent>
+                    )
+                })}
             </div>
           </Tabs>
         </Card>
