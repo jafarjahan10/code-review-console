@@ -38,35 +38,40 @@ const problems = [
     title: "FizzBuzz Challenge",
     difficulty: "Easy",
     description: "Write a program that prints the numbers from 1 to 100. But for multiples of three print “Fizz” instead of the number and for the multiples of five print “Buzz”. For numbers which are multiples of both three and five print “FizzBuzz”.",
-    technologies: ["JS"]
+    technologies: ["JS"],
+    positionId: "pos_1",
   },
   {
     id: "prob_2",
     title: "Palindrome Checker",
     difficulty: "Easy",
     description: "Write a function that checks if a given string is a palindrome. A palindrome is a word, phrase, number, or other sequence of characters that reads the same backward as forward.",
-    technologies: ["JS"]
+    technologies: ["JS"],
+    positionId: "pos_2",
   },
   {
     id: "prob_3",
     title: "Two Sum",
     difficulty: "Medium",
     description: "Given an array of integers `nums` and an integer `target`, return indices of the two numbers such that they add up to `target`.",
-    technologies: ["JS"]
+    technologies: ["JS"],
+    positionId: "pos_1",
   },
   {
     id: "prob_4",
     title: "Implement a Debounce Function",
     difficulty: "Medium",
     description: "Your task is to implement a debounce function in JavaScript. The function should delay invoking a passed-in function until after `wait` milliseconds have elapsed since the last time it was invoked.",
-    technologies: ["HTML", "CSS", "JS"]
+    technologies: ["HTML", "CSS", "JS"],
+     positionId: "pos_4",
   },
   {
     id: "prob_5",
     title: "Binary Tree Traversal",
     difficulty: "Hard",
     description: "Given a binary tree, write functions to perform preorder, inorder, and postorder traversal.",
-    technologies: ["JS"]
+    technologies: ["JS"],
+    positionId: "pos_1",
   },
 ];
 
@@ -77,6 +82,14 @@ const initialTechnologies = [
   { id: "tech_4", name: "Python" },
 ];
 
+const initialPositions = [
+  { id: "pos_1", title: "Senior Frontend Developer", department: "Engineering" },
+  { id: "pos_2", title: "UX/UI Designer", department: "Design" },
+  { id: "pos_3", title: "Product Manager", department: "Product" },
+  { id: "pos_4", title: "Junior Backend Developer", department: "Engineering" },
+];
+
+
 export default function EditProblemPage() {
   const router = useRouter();
   const params = useParams();
@@ -85,6 +98,7 @@ export default function EditProblemPage() {
   const [description, setDescription] = useState('');
   const [difficulty, setDifficulty] = useState('');
   const [selectedTechnologies, setSelectedTechnologies] = useState<string[]>([]);
+  const [positionId, setPositionId] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -96,6 +110,7 @@ export default function EditProblemPage() {
       setDescription(problemToEdit.description);
       setDifficulty(problemToEdit.difficulty);
       setSelectedTechnologies(problemToEdit.technologies || []);
+      setPositionId(problemToEdit.positionId || '');
     } else {
       toast({
         variant: 'destructive',
@@ -109,16 +124,16 @@ export default function EditProblemPage() {
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!title || !description || !difficulty || selectedTechnologies.length === 0) {
+    if (!title || !description || !difficulty || selectedTechnologies.length === 0 || !positionId) {
       toast({
         variant: 'destructive',
         title: 'Missing Fields',
-        description: 'Please fill out all fields and select at least one technology.',
+        description: 'Please fill out all fields, including position and technologies.',
       });
       return;
     }
     // In a real app, you would handle the API submission here.
-    console.log({ id: params.id, title, description, difficulty, technologies: selectedTechnologies });
+    console.log({ id: params.id, title, description, difficulty, technologies: selectedTechnologies, positionId });
     toast({
       title: 'Problem Updated!',
       description: `The problem "${title}" has been successfully updated.`,
@@ -198,14 +213,31 @@ export default function EditProblemPage() {
                 </Select>
               </div>
             </div>
-            <div className="grid gap-2">
-              <Label>Technologies</Label>
-               <MultiSelect
-                  options={technologyOptions}
-                  selected={selectedTechnologies}
-                  onChange={setSelectedTechnologies}
-                  placeholder="Select technologies..."
-                />
+             <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                    <Label htmlFor="position">Position</Label>
+                    <Select onValueChange={setPositionId} value={positionId}>
+                        <SelectTrigger id="position">
+                        <SelectValue placeholder="Select a position" />
+                        </SelectTrigger>
+                        <SelectContent>
+                        {initialPositions.map((pos) => (
+                            <SelectItem key={pos.id} value={pos.id}>
+                            {pos.title}
+                            </SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                 <div className="grid gap-2">
+                    <Label>Technologies</Label>
+                    <MultiSelect
+                        options={technologyOptions}
+                        selected={selectedTechnologies}
+                        onChange={setSelectedTechnologies}
+                        placeholder="Select technologies..."
+                    />
+                </div>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="description">Description (Markdown)</Label>

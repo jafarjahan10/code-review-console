@@ -13,7 +13,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Layers } from 'lucide-react';
+import { ArrowLeft, Layers, Briefcase } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -24,36 +24,48 @@ const problems = [
     title: "FizzBuzz Challenge",
     difficulty: "Easy",
     description: "Write a program that prints the numbers from 1 to 100. But for multiples of three print “Fizz” instead of the number and for the multiples of five print “Buzz”. For numbers which are multiples of both three and five print “FizzBuzz”.",
-    technologies: ["JS"]
+    technologies: ["JS"],
+    positionId: "pos_1",
   },
   {
     id: "prob_2",
     title: "Palindrome Checker",
     difficulty: "Easy",
     description: "Write a function that checks if a given string is a palindrome. A palindrome is a word, phrase, number, or other sequence of characters that reads the same backward as forward.",
-    technologies: ["JS"]
+    technologies: ["JS"],
+    positionId: "pos_2",
   },
   {
     id: "prob_3",
     title: "Two Sum",
     difficulty: "Medium",
     description: "Given an array of integers `nums` and an integer `target`, return indices of the two numbers such that they add up to `target`.",
-    technologies: ["JS"]
+    technologies: ["JS"],
+    positionId: "pos_1",
   },
   {
     id: "prob_4",
     title: "Implement a Debounce Function",
     difficulty: "Medium",
     description: "Your task is to implement a debounce function in JavaScript. The function should delay invoking a passed-in function until after `wait` milliseconds have elapsed since the last time it was invoked.",
-    technologies: ["HTML", "CSS", "JS"]
+    technologies: ["HTML", "CSS", "JS"],
+    positionId: "pos_4",
   },
   {
     id: "prob_5",
     title: "Binary Tree Traversal",
     difficulty: "Hard",
     description: "Given a binary tree, write functions to perform preorder, inorder, and postorder traversal.",
-    technologies: ["JS"]
+    technologies: ["JS"],
+    positionId: "pos_1",
   },
+];
+
+const initialPositions = [
+  { id: "pos_1", title: "Senior Frontend Developer", department: "Engineering" },
+  { id: "pos_2", title: "UX/UI Designer", department: "Design" },
+  { id: "pos_3", title: "Product Manager", department: "Product" },
+  { id: "pos_4", title: "Junior Backend Developer", department: "Engineering" },
 ];
 
 
@@ -63,6 +75,7 @@ type Problem = {
   difficulty: string;
   description: string;
   technologies: string[];
+  positionId: string;
 };
 
 export default function ViewProblemPage() {
@@ -71,6 +84,8 @@ export default function ViewProblemPage() {
   const { toast } = useToast();
   const [problem, setProblem] = useState<Problem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const position = initialPositions.find(p => p.id === problem?.positionId);
 
   useEffect(() => {
     const problemId = params.id;
@@ -137,12 +152,22 @@ export default function ViewProblemPage() {
                     {problem.difficulty}
                 </Badge>
             </div>
-            {problem.technologies && problem.technologies.length > 0 && (
-                 <div className="flex items-center flex-wrap gap-2 mt-2">
-                    <Layers className="h-4 w-4 text-muted-foreground" />
-                    {problem.technologies.map(tech => <Badge variant="secondary" key={tech}>{tech}</Badge>)}
-                </div>
-            )}
+             <div className="flex items-center flex-wrap gap-4 mt-2 text-sm text-muted-foreground">
+                {position && (
+                    <div className="flex items-center gap-2">
+                        <Briefcase className="h-4 w-4" />
+                        <span>{position.title}</span>
+                    </div>
+                )}
+                {problem.technologies && problem.technologies.length > 0 && (
+                    <div className="flex items-center gap-2">
+                        <Layers className="h-4 w-4" />
+                        <div className="flex flex-wrap gap-1">
+                           {problem.technologies.map(tech => <Badge variant="secondary" key={tech}>{tech}</Badge>)}
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
       </div>
 
@@ -159,5 +184,3 @@ export default function ViewProblemPage() {
     </div>
   );
 }
-
-    

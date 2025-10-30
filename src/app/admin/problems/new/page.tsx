@@ -39,6 +39,13 @@ const initialTechnologies = [
   { id: "tech_4", name: "Python" },
 ];
 
+const initialPositions = [
+  { id: "pos_1", title: "Senior Frontend Developer", department: "Engineering" },
+  { id: "pos_2", title: "UX/UI Designer", department: "Design" },
+  { id: "pos_3", title: "Product Manager", department: "Product" },
+  { id: "pos_4", title: "Junior Backend Developer", department: "Engineering" },
+];
+
 
 export default function NewProblemPage() {
   const router = useRouter();
@@ -47,19 +54,20 @@ export default function NewProblemPage() {
   const [description, setDescription] = useState('# Hello\n');
   const [difficulty, setDifficulty] = useState('');
   const [selectedTechnologies, setSelectedTechnologies] = useState<string[]>([]);
+  const [positionId, setPositionId] = useState('');
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!title || !description || !difficulty || selectedTechnologies.length === 0) {
+    if (!title || !description || !difficulty || selectedTechnologies.length === 0 || !positionId) {
       toast({
         variant: 'destructive',
         title: 'Missing Fields',
-        description: 'Please fill out all fields and select at least one technology.',
+        description: 'Please fill out all fields, including position and technologies.',
       });
       return;
     }
     // In a real app, you would handle the API submission here.
-    console.log({ title, description, difficulty, technologies: selectedTechnologies });
+    console.log({ title, description, difficulty, technologies: selectedTechnologies, positionId });
     toast({
       title: 'Problem Created!',
       description: `The problem "${title}" has been successfully created.`,
@@ -131,14 +139,31 @@ export default function NewProblemPage() {
                 </Select>
               </div>
             </div>
-             <div className="grid gap-2">
-                <Label>Technologies</Label>
-                <MultiSelect
-                  options={technologyOptions}
-                  selected={selectedTechnologies}
-                  onChange={setSelectedTechnologies}
-                  placeholder="Select technologies..."
-                />
+             <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                    <Label htmlFor="position">Position</Label>
+                    <Select onValueChange={setPositionId} value={positionId}>
+                        <SelectTrigger id="position">
+                        <SelectValue placeholder="Select a position" />
+                        </SelectTrigger>
+                        <SelectContent>
+                        {initialPositions.map((pos) => (
+                            <SelectItem key={pos.id} value={pos.id}>
+                            {pos.title}
+                            </SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="grid gap-2">
+                    <Label>Technologies</Label>
+                    <MultiSelect
+                    options={technologyOptions}
+                    selected={selectedTechnologies}
+                    onChange={setSelectedTechnologies}
+                    placeholder="Select technologies..."
+                    />
+                </div>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="description">Description (Markdown)</Label>
