@@ -51,7 +51,7 @@ export default function NewPositionPage() {
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-       <div className="flex items-start gap-4">
+       <div className="flex items-center gap-4">
         <Button variant="outline" size="icon" className="h-7 w-7" asChild>
           <Link href="/admin/positions">
             <ArrowLeft className="h-4 w-4" />
