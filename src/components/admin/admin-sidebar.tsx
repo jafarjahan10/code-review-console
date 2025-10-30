@@ -2,7 +2,7 @@
 "use client"
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, FileCode, Users, BookCopy, LogOut, Settings, Layers } from "lucide-react";
+import { Home, FileCode, Users, BookCopy, LogOut, Settings, Layers, Briefcase } from "lucide-react";
 import Logo from "@/components/logo";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
@@ -11,6 +11,7 @@ const navItems = [
   { href: "/admin/dashboard", icon: Home, label: "Dashboard" },
   { href: "/admin/problems", icon: FileCode, label: "Problems" },
   { href: "/admin/stacks", icon: Layers, label: "Technologies" },
+  { href: "/admin/positions", icon: Briefcase, label: "Positions" },
   { href: "/admin/candidates", icon: Users, label: "Candidates" },
   { href: "/admin/submissions", icon: BookCopy, label: "Submissions" },
   { href: "/admin/settings", icon: Settings, label: "Settings" },
