@@ -62,7 +62,7 @@ export default function InviteCandidatePage() {
         </Button>
         <div className="space-y-1">
           <h2 className="text-3xl font-bold tracking-tight font-headline">
-            Invite Candidate
+            Add Candidate
           </h2>
           <p className="text-muted-foreground">
             Send a coding challenge invitation to a new candidate.

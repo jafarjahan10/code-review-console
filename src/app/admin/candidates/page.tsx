@@ -111,8 +111,8 @@ export default function CandidatesPage() {
             <Button asChild>
               <Link href="/admin/candidates/new">
                 <PlusCircle className="mr-2 h-4 w-4" />
-                <span className="hidden md:inline">Invite Candidate</span>
-                 <span className="inline md:hidden">Invite</span>
+                <span className="hidden md:inline">Add Candidate</span>
+                 <span className="inline md:hidden">Add</span>
               </Link>
             </Button>
           </div>
