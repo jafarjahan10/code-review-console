@@ -16,7 +16,11 @@ import {
 import { useRouter, useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { ArrowLeft, Copy } from 'lucide-react';
+import { ArrowLeft, Copy, Calendar as CalendarIcon } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 const initialCandidates = [
   {
@@ -28,6 +32,7 @@ const initialCandidates = [
     problemId: "prob_1",
     positionId: "pos_1",
     accessCode: "FJ8K2L",
+    scheduledTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
   },
   {
     id: "cand_2",
@@ -38,6 +43,7 @@ const initialCandidates = [
     problemId: "prob_2",
     positionId: "pos_2",
     accessCode: "G4H9J1",
+    scheduledTime: new Date().toISOString(),
   },
 ];
 
@@ -84,6 +90,7 @@ export default function EditCandidatePage() {
   const [positionId, setPositionId] = useState('');
   const [problemId, setProblemId] = useState('');
   const [accessCode, setAccessCode] = useState('');
+  const [scheduledTime, setScheduledTime] = useState<Date | undefined>();
   const [isLoading, setIsLoading] = useState(true);
 
   const availablePositions = useMemo(() => {
@@ -111,6 +118,9 @@ export default function EditCandidatePage() {
       setPositionId(candidateToEdit.positionId);
       setDepartment(department);
       setAccessCode(candidateToEdit.accessCode);
+      if (candidateToEdit.scheduledTime) {
+        setScheduledTime(new Date(candidateToEdit.scheduledTime));
+      }
     } else {
       toast({
         variant: 'destructive',
@@ -143,7 +153,7 @@ export default function EditCandidatePage() {
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!name || !email || !status || !department || !positionId || !problemId) {
+    if (!name || !email || !status || !department || !positionId || !problemId || !scheduledTime) {
       toast({
         variant: 'destructive',
         title: 'Missing Fields',
@@ -152,7 +162,7 @@ export default function EditCandidatePage() {
       return;
     }
     // In a real app, you would handle the API submission here.
-    console.log({ id: params.id, name, email, status, department, positionId, problemId, accessCode });
+    console.log({ id: params.id, name, email, status, department, positionId, problemId, accessCode, scheduledTime: scheduledTime.toISOString() });
     toast({
       title: 'Candidate Updated!',
       description: `The details for "${name}" have been successfully updated.`,
@@ -266,20 +276,48 @@ export default function EditCandidatePage() {
                     </Select>
                 </div>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="problem">Assign Problem</Label>
-               <Select onValueChange={setProblemId} value={problemId} disabled={!positionId}>
-                  <SelectTrigger id="problem">
-                    <SelectValue placeholder="Select a coding problem" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableProblems.map((problem) => (
-                      <SelectItem key={problem.id} value={problem.id}>
-                        {problem.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                <Label htmlFor="problem">Assign Problem</Label>
+                <Select onValueChange={setProblemId} value={problemId} disabled={!positionId}>
+                    <SelectTrigger id="problem">
+                        <SelectValue placeholder="Select a coding problem" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {availableProblems.map((problem) => (
+                        <SelectItem key={problem.id} value={problem.id}>
+                            {problem.title}
+                        </SelectItem>
+                        ))}
+                    </SelectContent>
+                    </Select>
+                </div>
+                 <div className="grid gap-2">
+                    <Label htmlFor="test-time">Test Time</Label>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                        <Button
+                            id="test-time"
+                            variant={"outline"}
+                            className={cn(
+                            "justify-start text-left font-normal",
+                            !scheduledTime && "text-muted-foreground"
+                            )}
+                        >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {scheduledTime ? format(scheduledTime, "PPP") : <span>Pick a date</span>}
+                        </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                        <Calendar
+                            mode="single"
+                            selected={scheduledTime}
+                            onSelect={setScheduledTime}
+                            initialFocus
+                        />
+                        </PopoverContent>
+                    </Popover>
+                </div>
             </div>
           </CardContent>
           <CardFooter>
@@ -290,5 +328,3 @@ export default function EditCandidatePage() {
     </div>
   );
 }
-
-    

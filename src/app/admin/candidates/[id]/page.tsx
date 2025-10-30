@@ -24,7 +24,7 @@ const initialCandidates = [
     name: "John Doe",
     email: "john.doe@example.com",
     status: "Pending",
-    invitedAt: "2024-05-20",
+    scheduledTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
     problemAssigned: "FizzBuzz Challenge",
     positionId: "pos_1",
     accessCode: "FJ8K2L",
@@ -34,7 +34,7 @@ const initialCandidates = [
     name: "Jane Smith",
     email: "jane.smith@example.com",
     status: "Completed",
-    invitedAt: "2024-05-18",
+    scheduledTime: new Date().toISOString(),
     problemAssigned: "Palindrome Checker",
     positionId: "pos_2",
     accessCode: "G4H9J1",
@@ -44,7 +44,7 @@ const initialCandidates = [
     name: "Sam Wilson",
     email: "sam.wilson@example.com",
     status: "In Progress",
-    invitedAt: "2024-05-22",
+    scheduledTime: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(),
     problemAssigned: "Two Sum",
     positionId: "pos_1",
     accessCode: "K2L3M4",
@@ -54,7 +54,7 @@ const initialCandidates = [
     name: "Alice Johnson",
     email: "alice.j@example.com",
     status: "Invited",
-    invitedAt: "2024-05-23",
+    scheduledTime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
     problemAssigned: "Implement a Debounce Function",
     positionId: "pos_4",
     accessCode: "N5P6Q7",
@@ -121,6 +121,8 @@ export default function ViewCandidatePage() {
           </div>
     )
   }
+  
+  const scheduledDateTime = new Date(candidate.scheduledTime);
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -169,8 +171,8 @@ export default function ViewCandidatePage() {
                 <p className="text-muted-foreground">{candidate.email}</p>
             </div>
              <div className="space-y-2">
-                <p className="text-sm font-medium flex items-center"><Calendar className="mr-2 h-4 w-4 text-muted-foreground" /> Invited At</p>
-                <p className="text-muted-foreground">{candidate.invitedAt}</p>
+                <p className="text-sm font-medium flex items-center"><Calendar className="mr-2 h-4 w-4 text-muted-foreground" /> Scheduled For</p>
+                <p className="text-muted-foreground">{scheduledDateTime.toLocaleString()}</p>
             </div>
              <div className="space-y-2">
                 <p className="text-sm font-medium flex items-center"><FileCode className="mr-2 h-4 w-4 text-muted-foreground" /> Problem Assigned</p>
@@ -200,5 +202,3 @@ export default function ViewCandidatePage() {
     </div>
   );
 }
-
-    

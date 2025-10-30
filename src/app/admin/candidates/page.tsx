@@ -46,7 +46,7 @@ const initialCandidates = [
     name: "John Doe",
     email: "john.doe@example.com",
     status: "Pending",
-    invitedAt: "2024-05-20",
+    scheduledTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
     problemAssigned: "FizzBuzz Challenge",
     positionId: "pos_1",
     accessCode: "FJ8K2L",
@@ -56,7 +56,7 @@ const initialCandidates = [
     name: "Jane Smith",
     email: "jane.smith@example.com",
     status: "Completed",
-    invitedAt: "2024-05-18",
+    scheduledTime: new Date().toISOString(),
     problemAssigned: "Palindrome Checker",
     positionId: "pos_2",
     accessCode: "G4H9J1",
@@ -66,7 +66,7 @@ const initialCandidates = [
     name: "Sam Wilson",
     email: "sam.wilson@example.com",
     status: "In Progress",
-    invitedAt: "2024-05-22",
+    scheduledTime: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(),
     problemAssigned: "Two Sum",
     positionId: "pos_1",
     accessCode: "K2L3M4",
@@ -76,7 +76,7 @@ const initialCandidates = [
     name: "Alice Johnson",
     email: "alice.j@example.com",
     status: "Invited",
-    invitedAt: "2024-05-23",
+    scheduledTime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
     problemAssigned: "Implement a Debounce Function",
     positionId: "pos_4",
     accessCode: "N5P6Q7",
@@ -153,7 +153,7 @@ export default function CandidatesPage() {
                     <TableHead className="whitespace-nowrap">Problem Assigned</TableHead>
                     <TableHead className="whitespace-nowrap">Status</TableHead>
                     <TableHead className="whitespace-nowrap">Access Code</TableHead>
-                    <TableHead className="whitespace-nowrap">Invited At</TableHead>
+                    <TableHead className="whitespace-nowrap">Scheduled For</TableHead>
                     <TableHead>
                       <span className="sr-only">Actions</span>
                     </TableHead>
@@ -162,6 +162,7 @@ export default function CandidatesPage() {
                 <TableBody>
                   {candidates.map((candidate) => {
                     const position = initialPositions.find(p => p.id === candidate.positionId);
+                    const scheduledDateTime = new Date(candidate.scheduledTime);
                     return (
                     <TableRow key={candidate.id}>
                       <TableCell className="whitespace-nowrap">
@@ -205,7 +206,7 @@ export default function CandidatesPage() {
                             </Button>
                         </div>
                       </TableCell>
-                      <TableCell className="whitespace-nowrap">{candidate.invitedAt}</TableCell>
+                      <TableCell className="whitespace-nowrap">{scheduledDateTime.toLocaleDateString()}</TableCell>
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -244,6 +245,7 @@ export default function CandidatesPage() {
             <div className="md:hidden space-y-4">
                {candidates.map((candidate) => {
                  const position = initialPositions.find(p => p.id === candidate.positionId);
+                 const scheduledDateTime = new Date(candidate.scheduledTime);
                  return (
                 <Card key={candidate.id} className="p-4">
                    <div className="flex justify-between items-start">
@@ -256,6 +258,7 @@ export default function CandidatesPage() {
                           <p className="font-medium">{candidate.name}</p>
                           <p className="text-sm text-muted-foreground">{position?.title || 'N/A'}</p>
                           <p className="text-sm text-muted-foreground">{candidate.problemAssigned}</p>
+                           <p className="text-sm text-muted-foreground">Scheduled: {scheduledDateTime.toLocaleDateString()}</p>
                           <div className="flex items-center gap-2 mt-1 font-mono text-sm">
                             <span>{candidate.accessCode}</span>
                             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCopy(candidate.accessCode)}>
@@ -343,5 +346,3 @@ export default function CandidatesPage() {
     </>
   );
 }
-
-    

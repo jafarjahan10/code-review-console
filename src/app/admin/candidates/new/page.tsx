@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Calendar as CalendarIcon } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -17,6 +17,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 // Mock data - in a real app, this would be fetched from an API
 const departments = ["Engineering", "Design", "Product", "Marketing", "HR"];
@@ -67,6 +71,7 @@ export default function InviteCandidatePage() {
   const [department, setDepartment] = useState('');
   const [positionId, setPositionId] = useState('');
   const [problemId, setProblemId] = useState('');
+  const [scheduledTime, setScheduledTime] = useState<Date | undefined>();
 
   const availablePositions = useMemo(() => {
     if (!department) return [];
@@ -91,7 +96,7 @@ export default function InviteCandidatePage() {
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!name || !email || !department || !positionId || !problemId) {
+    if (!name || !email || !department || !positionId || !problemId || !scheduledTime) {
       toast({
         variant: 'destructive',
         title: 'Missing Fields',
@@ -101,7 +106,7 @@ export default function InviteCandidatePage() {
     }
     const accessCode = generateAccessCode();
     // In a real app, you would handle the API submission here.
-    console.log({ name, email, department, positionId, problemId, accessCode });
+    console.log({ name, email, department, positionId, problemId, accessCode, scheduledTime: scheduledTime.toISOString() });
     toast({
       title: 'Invitation Sent!',
       description: `${name} has been invited. Access Code: ${accessCode}`,
@@ -184,20 +189,48 @@ export default function InviteCandidatePage() {
                     </Select>
                 </div>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="problem">Assign Problem</Label>
-               <Select onValueChange={setProblemId} value={problemId} disabled={!positionId}>
-                  <SelectTrigger id="problem">
-                    <SelectValue placeholder="Select a coding problem" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableProblems.map((problem) => (
-                      <SelectItem key={problem.id} value={problem.id}>
-                        {problem.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="problem">Assign Problem</Label>
+                <Select onValueChange={setProblemId} value={problemId} disabled={!positionId}>
+                    <SelectTrigger id="problem">
+                      <SelectValue placeholder="Select a coding problem" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableProblems.map((problem) => (
+                        <SelectItem key={problem.id} value={problem.id}>
+                          {problem.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+              </div>
+               <div className="grid gap-2">
+                <Label htmlFor="test-time">Test Time</Label>
+                 <Popover>
+                    <PopoverTrigger asChild>
+                    <Button
+                        id="test-time"
+                        variant={"outline"}
+                        className={cn(
+                        "justify-start text-left font-normal",
+                        !scheduledTime && "text-muted-foreground"
+                        )}
+                    >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {scheduledTime ? format(scheduledTime, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                    <Calendar
+                        mode="single"
+                        selected={scheduledTime}
+                        onSelect={setScheduledTime}
+                        initialFocus
+                    />
+                    </PopoverContent>
+                </Popover>
+              </div>
             </div>
           </CardContent>
           <CardFooter>
@@ -208,5 +241,3 @@ export default function InviteCandidatePage() {
     </div>
   );
 }
-
-    
