@@ -139,7 +139,6 @@ export default function ProblemsPage() {
                   <TableHead className="whitespace-nowrap">Position</TableHead>
                   <TableHead className="whitespace-nowrap">Technologies</TableHead>
                   <TableHead className="whitespace-nowrap">Difficulty</TableHead>
-                  <TableHead className="whitespace-nowrap">Submissions</TableHead>
                   <TableHead>
                     <span className="sr-only">Actions</span>
                   </TableHead>
@@ -180,9 +179,6 @@ export default function ProblemsPage() {
                         >
                           {problem.difficulty}
                         </Badge>
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        {problem.submissions}
                       </TableCell>
                       <TableCell>
                         <DropdownMenu>
@@ -238,7 +234,6 @@ export default function ProblemsPage() {
                          <div className="flex flex-wrap gap-1 my-1">
                               {problem.technologies.map(tech => <Badge variant="secondary" key={tech}>{tech}</Badge>)}
                           </div>
-                        <p className="text-sm text-muted-foreground">Submissions: {problem.submissions}</p>
                       </div>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
