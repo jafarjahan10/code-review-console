@@ -130,7 +130,7 @@ export default function CodeEditor({ problem }: CodeEditorProps) {
         <Card className="flex-1 flex flex-col">
           <Tabs defaultValue={technologies[0]?.toLowerCase()} className="flex-1 flex flex-col">
             <CardHeader className="flex-row items-center justify-between gap-4">
-              <TabsList className={`grid w-full max-w-xs grid-cols-${technologies.length}`}>
+              <TabsList className={`grid w-full ${technologies.length > 1 ? 'max-w-xs' : ''} grid-cols-${technologies.length}`}>
                 {technologies.map(tech => (
                     <TabsTrigger key={tech} value={tech.toLowerCase()}>{tech}</TabsTrigger>
                 ))}
