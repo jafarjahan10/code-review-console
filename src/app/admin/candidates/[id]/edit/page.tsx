@@ -19,7 +19,7 @@ import Link from 'next/link';
 import { ArrowLeft, Copy, Calendar as CalendarIcon } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { format, setHours, setMinutes, setDate, getMonth, getYear } from 'date-fns';
+import { format, setHours, setMinutes, getDate, getMonth, getYear } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 const initialCandidates = [
@@ -415,5 +415,7 @@ export default function EditCandidatePage() {
     </div>
   );
 }
+
+    
 
     
