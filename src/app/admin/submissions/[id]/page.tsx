@@ -242,9 +242,27 @@ export default function ViewSubmissionPage() {
             </p>
         </div>
       </div>
+      
+       <Card>
+            <CardHeader>
+                <CardTitle>Submission Details</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                    <p className="text-sm font-medium flex items-center"><Briefcase className="mr-2 h-4 w-4 text-muted-foreground" /> Position</p>
+                    <p className="text-muted-foreground">{position?.title || "N/A"}</p>
+                </div>
+                {position?.department && (
+                <div className="space-y-2">
+                    <p className="text-sm font-medium flex items-center"><Building className="mr-2 h-4 w-4 text-muted-foreground" /> Department</p>
+                    <Badge variant="secondary">{position.department}</Badge>
+                </div>
+                )}
+            </CardContent>
+        </Card>
 
       <div className="grid gap-8 lg:grid-cols-3">
-        {/* Left side: Code Viewer & Details */}
+        {/* Left side: Code Viewer */}
         <div className="space-y-4 lg:col-span-2">
              <Card>
                 <CardHeader>
@@ -279,25 +297,8 @@ export default function ViewSubmissionPage() {
             </Card>
         </div>
 
-        {/* Right side: Remarks & Details */}
+        {/* Right side: Remarks */}
         <div className="space-y-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Submission Details</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                     <div className="space-y-2">
-                        <p className="text-sm font-medium flex items-center"><Briefcase className="mr-2 h-4 w-4 text-muted-foreground" /> Position</p>
-                        <p className="text-muted-foreground">{position?.title || "N/A"}</p>
-                    </div>
-                    {position?.department && (
-                    <div className="space-y-2">
-                        <p className="text-sm font-medium flex items-center"><Building className="mr-2 h-4 w-4 text-muted-foreground" /> Department</p>
-                        <Badge variant="secondary">{position.department}</Badge>
-                    </div>
-                    )}
-                </CardContent>
-            </Card>
             <Card>
                 <CardHeader>
                     <CardTitle>Interviewer Remarks</CardTitle>
