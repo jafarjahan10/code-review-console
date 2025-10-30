@@ -48,6 +48,7 @@ const initialCandidates = [
     status: "Pending",
     invitedAt: "2024-05-20",
     problemAssigned: "FizzBuzz Challenge",
+    positionId: "pos_1",
   },
   {
     id: "cand_2",
@@ -56,6 +57,7 @@ const initialCandidates = [
     status: "Completed",
     invitedAt: "2024-05-18",
     problemAssigned: "Palindrome Checker",
+    positionId: "pos_2",
   },
   {
     id: "cand_3",
@@ -64,6 +66,7 @@ const initialCandidates = [
     status: "In Progress",
     invitedAt: "2024-05-22",
     problemAssigned: "Two Sum",
+    positionId: "pos_1",
   },
   {
     id: "cand_4",
@@ -72,8 +75,17 @@ const initialCandidates = [
     status: "Invited",
     invitedAt: "2024-05-23",
     problemAssigned: "Implement a Debounce Function",
+    positionId: "pos_4",
   },
 ];
+
+const initialPositions = [
+  { id: "pos_1", title: "Senior Frontend Developer", department: "Engineering" },
+  { id: "pos_2", title: "UX/UI Designer", department: "Design" },
+  { id: "pos_3", title: "Product Manager", department: "Product" },
+  { id: "pos_4", title: "Junior Backend Developer", department: "Engineering" },
+];
+
 
 type Candidate = typeof initialCandidates[0];
 
@@ -125,6 +137,7 @@ export default function CandidatesPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="whitespace-nowrap">Candidate</TableHead>
+                    <TableHead className="whitespace-nowrap">Position</TableHead>
                     <TableHead className="whitespace-nowrap">Status</TableHead>
                     <TableHead className="whitespace-nowrap">Problem Assigned</TableHead>
                     <TableHead className="whitespace-nowrap">Invited At</TableHead>
@@ -134,7 +147,9 @@ export default function CandidatesPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {candidates.map((candidate) => (
+                  {candidates.map((candidate) => {
+                    const position = initialPositions.find(p => p.id === candidate.positionId);
+                    return (
                     <TableRow key={candidate.id}>
                       <TableCell className="whitespace-nowrap">
                         <div className="flex items-center gap-3">
@@ -149,6 +164,9 @@ export default function CandidatesPage() {
                             </p>
                           </div>
                         </div>
+                      </TableCell>
+                       <TableCell className="whitespace-nowrap text-muted-foreground">
+                        {position?.title || 'N/A'}
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
                         <Badge variant={
@@ -197,12 +215,15 @@ export default function CandidatesPage() {
                         </DropdownMenu>
                       </TableCell>
                     </TableRow>
-                  ))}
+                    )
+                  })}
                 </TableBody>
               </Table>
             </div>
             <div className="md:hidden space-y-4">
-               {candidates.map((candidate) => (
+               {candidates.map((candidate) => {
+                 const position = initialPositions.find(p => p.id === candidate.positionId);
+                 return (
                 <Card key={candidate.id} className="p-4">
                    <div className="flex justify-between items-start">
                       <div className="flex items-center gap-3">
@@ -212,6 +233,7 @@ export default function CandidatesPage() {
                           </Avatar>
                         <div>
                           <p className="font-medium">{candidate.name}</p>
+                          <p className="text-sm text-muted-foreground">{position?.title || 'N/A'}</p>
                           <p className="text-sm text-muted-foreground">{candidate.problemAssigned}</p>
                            <Badge variant={
                               candidate.status === 'Completed' ? 'default' :
@@ -264,7 +286,8 @@ export default function CandidatesPage() {
                         </DropdownMenu>
                    </div>
                 </Card>
-              ))}
+                 )
+                })}
             </div>
           </CardContent>
         </Card>
