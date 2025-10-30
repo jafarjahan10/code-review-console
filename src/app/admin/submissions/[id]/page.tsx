@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
@@ -36,11 +36,12 @@ const MOCK_SUBMISSIONS = [
     candidateName: "John Doe",
     candidateEmail: "john.doe@example.com",
     problemTitle: "FizzBuzz Challenge",
+    problemTechnologies: ["JS"],
     submittedAt: "2024-05-21T10:00:00Z",
     code: {
-      html: `<h1>FizzBuzz Result</h1>\n<div id="output"></div>`,
-      css: `body { font-family: sans-serif; } \n#output { display: flex; flex-direction: column; } \ndiv > span { padding: 2px 0; }`,
-      js: `const output = document.getElementById('output');\nfor (let i = 1; i <= 100; i++) {\n  const span = document.createElement('span');\n  if (i % 15 === 0) span.textContent = 'FizzBuzz';\n  else if (i % 3 === 0) span.textContent = 'Fizz';\n  else if (i % 5 === 0) span.textContent = 'Buzz';\n  else span.textContent = i;\n  output.appendChild(span);\n}`,
+      html: ``,
+      css: ``,
+      js: `// FizzBuzz Implementation\nfor (let i = 1; i <= 100; i++) {\n  if (i % 15 === 0) console.log('FizzBuzz');\n  else if (i % 3 === 0) console.log('Fizz');\n  else if (i % 5 === 0) console.log('Buzz');\n  else console.log(i);\n}`,
     },
     remarks: [
       {
@@ -57,10 +58,11 @@ const MOCK_SUBMISSIONS = [
     candidateName: "Jane Smith",
     candidateEmail: "jane.smith@example.com",
     problemTitle: "Palindrome Checker",
+    problemTechnologies: ["JS"],
     submittedAt: "2024-05-19",
     code: {
-        html: `<h1>Palindrome</h1>`,
-        css: `body { font-family: sans-serif; }`,
+        html: ``,
+        css: ``,
         js: `function isPalindrome(str) { return true; }`
     },
     remarks: [
@@ -78,6 +80,7 @@ const MOCK_SUBMISSIONS = [
     candidateName: "Sam Wilson",
     candidateEmail: "sam.wilson@example.com",
     problemTitle: "Two Sum",
+    problemTechnologies: ["HTML", "CSS", "JS"],
     submittedAt: "2024-05-23",
     code: {
         html: `<h1>Two Sum</h1>`,
@@ -101,6 +104,7 @@ type Submission = {
     candidateName: string;
     candidateEmail: string;
     problemTitle: string;
+    problemTechnologies: string[];
     submittedAt: string;
     code: {
         html: string;
@@ -108,6 +112,21 @@ type Submission = {
         js: string;
     };
     remarks: Remark[];
+}
+
+const getLanguage = (tech: string) => {
+    switch (tech.toLowerCase()) {
+        case "html":
+            return "markup";
+        case "css":
+            return "css";
+        case "js":
+            return "javascript";
+        case "python":
+            return "python";
+        default:
+            return "clike";
+    }
 }
 
 
@@ -119,6 +138,8 @@ export default function ViewSubmissionPage() {
   const [submission, setSubmission] = useState<Submission | null>(null);
   const [remark, setRemark] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  
+  const technologies = useMemo(() => submission?.problemTechnologies || [], [submission]);
 
   const hasAlreadyRemarked = submission?.remarks.some(r => r.userId === MOCK_CURRENT_USER_ID);
 
@@ -215,45 +236,29 @@ export default function ViewSubmissionPage() {
                     <CardTitle>Submitted Code</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <Tabs defaultValue="javascript">
-                    <TabsList className="grid w-full grid-cols-3">
-                        <TabsTrigger value="html">HTML</TabsTrigger>
-                        <TabsTrigger value="css">CSS</TabsTrigger>
-                        <TabsTrigger value="javascript">JS</TabsTrigger>
+                    <Tabs defaultValue={technologies[0]?.toLowerCase() || 'js'}>
+                    <TabsList className={`grid w-full grid-cols-${technologies.length}`}>
+                        {technologies.map(tech => (
+                            <TabsTrigger key={tech} value={tech.toLowerCase()}>{tech}</TabsTrigger>
+                        ))}
                     </TabsList>
-                    <TabsContent value="html" className="mt-2">
-                        <Editor
-                            value={submission.code.html}
-                            onValueChange={() => {}}
-                            highlight={(code) => highlight(code, languages.markup, "markup")}
-                            padding={10}
-                            style={editorStyles}
-                            readOnly
-                            className="font-code h-full resize-none text-sm"
-                        />
-                    </TabsContent>
-                    <TabsContent value="css" className="mt-2">
-                        <Editor
-                            value={submission.code.css}
-                            onValueChange={() => {}}
-                            highlight={(code) => highlight(code, languages.css, "css")}
-                            padding={10}
-                            style={editorStyles}
-                            readOnly
-                            className="font-code h-full resize-none text-sm"
-                        />
-                    </TabsContent>
-                    <TabsContent value="javascript" className="mt-2">
-                         <Editor
-                            value={submission.code.js}
-                            onValueChange={() => {}}
-                            highlight={(code) => highlight(code, languages.js, "javascript")}
-                            padding={10}
-                            style={editorStyles}
-                            readOnly
-                            className="font-code h-full resize-none text-sm"
-                        />
-                    </TabsContent>
+                     {technologies.map(tech => {
+                        const lowerTech = tech.toLowerCase() as keyof Submission['code'];
+                        const language = getLanguage(tech);
+                        return (
+                            <TabsContent key={tech} value={lowerTech} className="mt-2">
+                                <Editor
+                                    value={submission.code[lowerTech]}
+                                    onValueChange={() => {}}
+                                    highlight={(code) => highlight(code, languages[language] || languages.clike, language)}
+                                    padding={10}
+                                    style={editorStyles}
+                                    readOnly
+                                    className="font-code h-full resize-none text-sm"
+                                />
+                            </TabsContent>
+                        )
+                    })}
                     </Tabs>
                 </CardContent>
             </Card>
