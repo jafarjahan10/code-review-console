@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -18,23 +18,71 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-// Mock data for problems - in a real app, this would be fetched from an API
-const problems = [
-  { id: "prob_1", title: "FizzBuzz Challenge" },
-  { id: "prob_2", title: "Palindrome Checker" },
-  { id: "prob_3", title: "Two Sum" },
+// Mock data - in a real app, this would be fetched from an API
+const departments = ["Engineering", "Design", "Product", "Marketing", "HR"];
+const initialPositions = [
+  { id: "pos_1", title: "Senior Frontend Developer", department: "Engineering" },
+  { id: "pos_2", title: "UX/UI Designer", department: "Design" },
+  { id: "pos_3", title: "Product Manager", department: "Product" },
+  { id: "pos_4", title: "Junior Backend Developer", department: "Engineering" },
 ];
+const initialProblems = [
+  {
+    id: "prob_1",
+    title: "FizzBuzz Challenge",
+    positionId: "pos_1",
+  },
+  {
+    id: "prob_2",
+    title: "Palindrome Checker",
+    positionId: "pos_2",
+  },
+  {
+    id: "prob_3",
+    title: "Two Sum",
+    positionId: "pos_1",
+  },
+  {
+    id: "prob_4",
+    title: "Implement a Debounce Function",
+    positionId: "pos_4",
+  },
+];
+
 
 export default function InviteCandidatePage() {
   const router = useRouter();
   const { toast } = useToast();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [department, setDepartment] = useState('');
+  const [positionId, setPositionId] = useState('');
   const [problemId, setProblemId] = useState('');
+
+  const availablePositions = useMemo(() => {
+    if (!department) return [];
+    return initialPositions.filter(p => p.department === department);
+  }, [department]);
+
+  const availableProblems = useMemo(() => {
+    if (!positionId) return [];
+    return initialProblems.filter(p => p.positionId === positionId);
+  }, [positionId]);
+
+  const handleDepartmentChange = (value: string) => {
+    setDepartment(value);
+    setPositionId('');
+    setProblemId('');
+  }
+
+  const handlePositionChange = (value: string) => {
+    setPositionId(value);
+    setProblemId('');
+  }
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!name || !email || !problemId) {
+    if (!name || !email || !department || !positionId || !problemId) {
       toast({
         variant: 'destructive',
         title: 'Missing Fields',
@@ -43,7 +91,7 @@ export default function InviteCandidatePage() {
       return;
     }
     // In a real app, you would handle the API submission here.
-    console.log({ name, email, problemId });
+    console.log({ name, email, department, positionId, problemId });
     toast({
       title: 'Invitation Sent!',
       description: `${name} has been invited to take the challenge.`,
@@ -94,14 +142,46 @@ export default function InviteCandidatePage() {
                 />
               </div>
             </div>
+             <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                    <Label htmlFor="department">Department</Label>
+                    <Select onValueChange={handleDepartmentChange} value={department}>
+                        <SelectTrigger id="department">
+                            <SelectValue placeholder="Select a department" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {departments.map((dept) => (
+                                <SelectItem key={dept} value={dept}>
+                                {dept}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="grid gap-2">
+                    <Label htmlFor="position">Position</Label>
+                    <Select onValueChange={handlePositionChange} value={positionId} disabled={!department}>
+                        <SelectTrigger id="position">
+                            <SelectValue placeholder="Select a position" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {availablePositions.map((pos) => (
+                                <SelectItem key={pos.id} value={pos.id}>
+                                {pos.title}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
             <div className="grid gap-2">
               <Label htmlFor="problem">Assign Problem</Label>
-               <Select onValueChange={setProblemId} value={problemId}>
+               <Select onValueChange={setProblemId} value={problemId} disabled={!positionId}>
                   <SelectTrigger id="problem">
                     <SelectValue placeholder="Select a coding problem" />
                   </SelectTrigger>
                   <SelectContent>
-                    {problems.map((problem) => (
+                    {availableProblems.map((problem) => (
                       <SelectItem key={problem.id} value={problem.id}>
                         {problem.title}
                       </SelectItem>
