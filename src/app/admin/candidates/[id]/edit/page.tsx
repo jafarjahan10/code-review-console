@@ -92,6 +92,8 @@ export default function EditCandidatePage() {
   const [accessCode, setAccessCode] = useState('');
   const [scheduledTime, setScheduledTime] = useState<Date | undefined>();
   const [isLoading, setIsLoading] = useState(true);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+
 
   const availablePositions = useMemo(() => {
     if (!department) return [];
@@ -154,12 +156,14 @@ export default function EditCandidatePage() {
   const handleDateSelect = (date: Date | undefined) => {
     if (!date) {
         setScheduledTime(undefined);
+        setIsCalendarOpen(false);
         return;
     }
     const currentHours = scheduledTime ? scheduledTime.getHours() : new Date().getHours();
     const currentMinutes = scheduledTime ? scheduledTime.getMinutes() : new Date().getMinutes();
     const newDate = setMinutes(setHours(date, currentHours), currentMinutes);
     setScheduledTime(newDate);
+    setIsCalendarOpen(false);
   };
   
   const handleTimeChange = (value: string, unit: 'hours' | 'minutes') => {
@@ -316,7 +320,7 @@ export default function EditCandidatePage() {
                 <div className="grid gap-2">
                     <Label>Test Time</Label>
                     <div className="grid grid-cols-3 gap-2">
-                        <Popover>
+                        <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                             <PopoverTrigger asChild>
                             <Button
                                 id="test-time"
