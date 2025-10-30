@@ -206,7 +206,7 @@ export default function CandidatesPage() {
                             </Button>
                         </div>
                       </TableCell>
-                      <TableCell className="whitespace-nowrap">{scheduledDateTime.toLocaleDateString()}</TableCell>
+                      <TableCell className="whitespace-nowrap">{scheduledDateTime.toLocaleString()}</TableCell>
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -258,7 +258,7 @@ export default function CandidatesPage() {
                           <p className="font-medium">{candidate.name}</p>
                           <p className="text-sm text-muted-foreground">{position?.title || 'N/A'}</p>
                           <p className="text-sm text-muted-foreground">{candidate.problemAssigned}</p>
-                           <p className="text-sm text-muted-foreground">Scheduled: {scheduledDateTime.toLocaleDateString()}</p>
+                           <p className="text-sm text-muted-foreground">Scheduled: {scheduledDateTime.toLocaleString()}</p>
                           <div className="flex items-center gap-2 mt-1 font-mono text-sm">
                             <span>{candidate.accessCode}</span>
                             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCopy(candidate.accessCode)}>

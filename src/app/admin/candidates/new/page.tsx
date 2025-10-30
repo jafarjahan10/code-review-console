@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
+import { format, setHours, setMinutes } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 // Mock data - in a real app, this would be fetched from an API
@@ -92,6 +92,27 @@ export default function InviteCandidatePage() {
   const handlePositionChange = (value: string) => {
     setPositionId(value);
     setProblemId('');
+  }
+  
+  const handleDateSelect = (date: Date | undefined) => {
+    if (!date) {
+        setScheduledTime(undefined);
+        return;
+    }
+    const currentHours = scheduledTime ? scheduledTime.getHours() : new Date().getHours();
+    const currentMinutes = scheduledTime ? scheduledTime.getMinutes() : new Date().getMinutes();
+    const newDate = setMinutes(setHours(date, currentHours), currentMinutes);
+    setScheduledTime(newDate);
+  };
+  
+  const handleTimeChange = (value: string, unit: 'hours' | 'minutes') => {
+      let newDate = scheduledTime || new Date();
+      if (unit === 'hours') {
+          newDate = setHours(newDate, parseInt(value));
+      } else {
+          newDate = setMinutes(newDate, parseInt(value));
+      }
+      setScheduledTime(newDate);
   }
 
   const handleSubmit = (event: React.FormEvent) => {
@@ -206,30 +227,60 @@ export default function InviteCandidatePage() {
                   </Select>
               </div>
                <div className="grid gap-2">
-                <Label htmlFor="test-time">Test Time</Label>
-                 <Popover>
-                    <PopoverTrigger asChild>
-                    <Button
-                        id="test-time"
-                        variant={"outline"}
-                        className={cn(
-                        "justify-start text-left font-normal",
-                        !scheduledTime && "text-muted-foreground"
-                        )}
+                <Label>Test Time</Label>
+                <div className="grid grid-cols-3 gap-2">
+                    <Popover>
+                        <PopoverTrigger asChild>
+                        <Button
+                            id="test-time"
+                            variant={"outline"}
+                            className={cn(
+                            "col-span-3 sm:col-span-1 justify-start text-left font-normal",
+                            !scheduledTime && "text-muted-foreground"
+                            )}
+                        >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {scheduledTime ? format(scheduledTime, "PPP") : <span>Pick a date</span>}
+                        </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                        <Calendar
+                            mode="single"
+                            selected={scheduledTime}
+                            onSelect={handleDateSelect}
+                            initialFocus
+                        />
+                        </PopoverContent>
+                    </Popover>
+                    <Select
+                        onValueChange={(value) => handleTimeChange(value, 'hours')}
+                        value={String(scheduledTime?.getHours() ?? new Date().getHours()).padStart(2, '0')}
+                        disabled={!scheduledTime}
                     >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {scheduledTime ? format(scheduledTime, "PPP") : <span>Pick a date</span>}
-                    </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                    <Calendar
-                        mode="single"
-                        selected={scheduledTime}
-                        onSelect={setScheduledTime}
-                        initialFocus
-                    />
-                    </PopoverContent>
-                </Popover>
+                        <SelectTrigger>
+                            <SelectValue placeholder="HH" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-48">
+                            {Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0')).map(hour => (
+                                <SelectItem key={hour} value={hour}>{hour}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <Select
+                        onValueChange={(value) => handleTimeChange(value, 'minutes')}
+                        value={String(scheduledTime?.getMinutes() ?? new Date().getMinutes()).padStart(2, '0')}
+                        disabled={!scheduledTime}
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="MM" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-48">
+                            {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map(min => (
+                                <SelectItem key={min} value={min}>{min}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
               </div>
             </div>
           </CardContent>
