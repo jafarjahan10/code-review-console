@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { format, setHours, setMinutes } from 'date-fns';
+import { format, setHours, setMinutes, setDate, getMonth, getYear } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 // Mock data - in a real app, this would be fetched from an API
@@ -97,26 +97,47 @@ export default function InviteCandidatePage() {
   
   const handleDateSelect = (date: Date | undefined) => {
     if (!date) {
-        setScheduledTime(undefined);
-        setIsCalendarOpen(false);
-        return;
+      setScheduledTime(undefined);
+      setIsCalendarOpen(false);
+      return;
     }
-    const currentHours = scheduledTime ? scheduledTime.getHours() : new Date().getHours();
-    const currentMinutes = scheduledTime ? scheduledTime.getMinutes() : new Date().getMinutes();
-    const newDate = setMinutes(setHours(date, currentHours), currentMinutes);
+    const currentHours = scheduledTime ? scheduledTime.getHours() : 9; // Default to 9 AM
+    const currentMinutes = scheduledTime ? scheduledTime.getMinutes() : 0;
+    const newDate = new Date(
+      getYear(date),
+      getMonth(date),
+      getDate(date),
+      currentHours,
+      currentMinutes
+    );
     setScheduledTime(newDate);
     setIsCalendarOpen(false);
   };
   
-  const handleTimeChange = (value: string, unit: 'hours' | 'minutes') => {
+  const handleTimeChange = (value: string, unit: 'hour' | 'minute' | 'ampm') => {
       let newDate = scheduledTime || new Date();
-      if (unit === 'hours') {
-          newDate = setHours(newDate, parseInt(value));
-      } else {
-          newDate = setMinutes(newDate, parseInt(value));
+      if (unit === 'hour') {
+          const currentAmPm = newDate.getHours() >= 12 ? 'PM' : 'AM';
+          let newHour = parseInt(value, 10);
+          if (currentAmPm === 'PM' && newHour < 12) {
+              newHour += 12;
+          }
+          if (currentAmPm === 'AM' && newHour === 12) { // Midnight case
+              newHour = 0;
+          }
+          newDate = setHours(newDate, newHour);
+      } else if (unit === 'minute') {
+          newDate = setMinutes(newDate, parseInt(value, 10));
+      } else if (unit === 'ampm') {
+          const currentHour = newDate.getHours();
+          if (value === 'PM' && currentHour < 12) {
+              newDate = setHours(newDate, currentHour + 12);
+          } else if (value === 'AM' && currentHour >= 12) {
+              newDate = setHours(newDate, currentHour - 12);
+          }
       }
       setScheduledTime(newDate);
-  }
+  };
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -231,14 +252,14 @@ export default function InviteCandidatePage() {
               </div>
                <div className="grid gap-2">
                 <Label>Test Time</Label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-5 gap-2">
                     <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                         <PopoverTrigger asChild>
                         <Button
                             id="test-time"
                             variant={"outline"}
                             className={cn(
-                            "col-span-3 sm:col-span-1 justify-start text-left font-normal",
+                            "col-span-5 sm:col-span-2 justify-start text-left font-normal",
                             !scheduledTime && "text-muted-foreground"
                             )}
                         >
@@ -256,22 +277,22 @@ export default function InviteCandidatePage() {
                         </PopoverContent>
                     </Popover>
                     <Select
-                        onValueChange={(value) => handleTimeChange(value, 'hours')}
-                        value={String(scheduledTime?.getHours() ?? new Date().getHours()).padStart(2, '0')}
+                        onValueChange={(value) => handleTimeChange(value, 'hour')}
+                        value={String(scheduledTime ? scheduledTime.getHours() % 12 || 12 : '').padStart(2, '0')}
                         disabled={!scheduledTime}
                     >
                         <SelectTrigger>
                             <SelectValue placeholder="HH" />
                         </SelectTrigger>
                         <SelectContent className="max-h-48">
-                            {Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0')).map(hour => (
+                            {Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0')).map(hour => (
                                 <SelectItem key={hour} value={hour}>{hour}</SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
                     <Select
-                        onValueChange={(value) => handleTimeChange(value, 'minutes')}
-                        value={String(scheduledTime?.getMinutes() ?? new Date().getMinutes()).padStart(2, '0')}
+                        onValueChange={(value) => handleTimeChange(value, 'minute')}
+                        value={String(scheduledTime?.getMinutes() ?? '').padStart(2, '0')}
                         disabled={!scheduledTime}
                     >
                         <SelectTrigger>
@@ -281,6 +302,19 @@ export default function InviteCandidatePage() {
                             {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map(min => (
                                 <SelectItem key={min} value={min}>{min}</SelectItem>
                             ))}
+                        </SelectContent>
+                    </Select>
+                    <Select
+                        onValueChange={(value) => handleTimeChange(value, 'ampm')}
+                        value={scheduledTime && scheduledTime.getHours() >= 12 ? 'PM' : 'AM'}
+                        disabled={!scheduledTime}
+                    >
+                        <SelectTrigger>
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="AM">AM</SelectItem>
+                            <SelectItem value="PM">PM</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
@@ -295,3 +329,5 @@ export default function InviteCandidatePage() {
     </div>
   );
 }
+
+    
