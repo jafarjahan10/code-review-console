@@ -216,14 +216,17 @@ export default function EditProblemPage() {
                             selectedTechnologies.map(techName => (
                                 <Badge key={techName} variant="secondary" className="text-sm">
                                     {techName}
-                                    <button
-                                        type="button"
+                                    <div
+                                        role="button"
+                                        aria-label={`Remove ${techName}`}
+                                        tabIndex={0}
                                         className="ml-2 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                                        onClick={(e) => { e.stopPropagation(); handleTechToggle(techName); }}
+                                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleTechToggle(techName); }}
+                                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); handleTechToggle(techName); } }}
                                     >
                                         <X className="h-3 w-3" />
                                         <span className="sr-only">Remove {techName}</span>
-                                    </button>
+                                    </div>
                                 </Badge>
                             ))
                         ) : (
