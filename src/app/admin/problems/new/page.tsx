@@ -20,7 +20,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Info } from 'lucide-react';
 import Editor from "react-simple-code-editor";
 import { highlight, languages } from "prismjs/components/prism-core";
 import "prismjs/components/prism-clike";
@@ -30,6 +30,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { MultiSelect } from '@/components/ui/multi-select';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 
 const initialTechnologies = [
@@ -111,9 +112,13 @@ export default function NewProblemPage() {
           </p>
         </div>
       </div>
-      <p className="text-sm text-muted-foreground">
-        Note: If a Figma link is shared in the description, please ensure it is publicly available.
-      </p>
+       <Alert>
+        <Info className="h-4 w-4" />
+        <AlertTitle>Heads up!</AlertTitle>
+        <AlertDescription>
+          If a Figma link is shared in the description, please ensure it is publicly available for candidates to view.
+        </AlertDescription>
+      </Alert>
 
       <form onSubmit={handleSubmit}>
         <Card>
