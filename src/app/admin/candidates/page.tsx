@@ -104,7 +104,7 @@ export default function CandidatesPage() {
               Candidates
             </h2>
             <p className="text-muted-foreground">
-              Manage your candidates and their invitations.
+              Manage your candidates.
             </p>
           </div>
           <div className="flex items-center space-x-2">
