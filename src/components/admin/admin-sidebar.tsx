@@ -10,7 +10,7 @@ import { Button } from "../ui/button";
 const navItems = [
   { href: "/admin/dashboard", icon: Home, label: "Dashboard" },
   { href: "/admin/problems", icon: FileCode, label: "Problems" },
-  { href: "/admin/stacks", icon: Layers, label: "Stacks" },
+  { href: "/admin/stacks", icon: Layers, label: "Technologies" },
   { href: "/admin/candidates", icon: Users, label: "Candidates" },
   { href: "/admin/submissions", icon: BookCopy, label: "Submissions" },
   { href: "/admin/settings", icon: Settings, label: "Settings" },
