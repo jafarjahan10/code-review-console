@@ -150,8 +150,8 @@ export default function InviteCandidatePage() {
       return;
     }
     const accessCode = generateAccessCode();
-    // In a real app, you would handle the API submission here.
-    console.log({ name, email, department, positionId, problemId, accessCode, scheduledTime: scheduledTime.toISOString() });
+    const formData = { name, email, department, positionId, problemId, accessCode, scheduledTime: scheduledTime.toISOString() };
+    console.log(formData);
     toast({
       title: 'Invitation Sent!',
       description: `${name} has been invited. Access Code: ${accessCode}`,

@@ -205,8 +205,8 @@ export default function EditCandidatePage() {
       });
       return;
     }
-    // In a real app, you would handle the API submission here.
-    console.log({ id: params.id, name, email, status, department, positionId, problemId, accessCode, scheduledTime: scheduledTime.toISOString() });
+    const formData = { id: params.id, name, email, status, department, positionId, problemId, accessCode, scheduledTime: scheduledTime.toISOString() };
+    console.log(formData);
     toast({
       title: 'Candidate Updated!',
       description: `The details for "${name}" have been successfully updated.`,
