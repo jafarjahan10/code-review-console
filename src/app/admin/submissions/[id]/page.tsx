@@ -209,10 +209,8 @@ export default function ViewSubmissionPage() {
     backgroundColor: "hsl(var(--card))",
     color: "hsl(var(--foreground))",
     borderRadius: "var(--radius)",
-    padding: "1rem",
-    minHeight: "400px",
+    minHeight: "100%",
     outline: "none",
-    border: "1px solid hsl(var(--border))",
   };
 
 
@@ -225,8 +223,8 @@ export default function ViewSubmissionPage() {
   }
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <div className="flex items-center gap-4 mb-4">
+    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 h-full flex flex-col">
+      <div className="flex items-center gap-4">
         <Button variant="outline" size="icon" className="h-7 w-7" asChild>
           <Link href="/admin/submissions">
             <ArrowLeft className="h-4 w-4" />
@@ -261,16 +259,16 @@ export default function ViewSubmissionPage() {
             </CardContent>
         </Card>
 
-      <div className="grid gap-8 lg:grid-cols-3">
+      <div className="grid gap-8 lg:grid-cols-3 flex-1 min-h-0">
         {/* Left side: Code Viewer */}
-        <div className="space-y-4 lg:col-span-2">
-             <Card>
+        <div className="lg:col-span-2 flex flex-col">
+             <Card className="flex-1 flex flex-col">
                 <CardHeader>
                     <CardTitle>Submitted Code</CardTitle>
                 </CardHeader>
-                <CardContent>
-                    <Tabs defaultValue={technologies[0]?.toLowerCase() || 'js'} className="w-full">
-                    <TabsList className={`grid w-full ${technologies.length > 1 ? `grid-cols-${technologies.length}` : 'max-w-xs'}`}>
+                <CardContent className="flex-1 flex flex-col">
+                    <Tabs defaultValue={technologies[0]?.toLowerCase() || 'js'} className={`w-full flex-1 flex flex-col`}>
+                    <TabsList className={`grid w-full ${technologies.length > 1 ? `grid-cols-${technologies.length}` : 'grid-cols-1'}`}>
                         {technologies.map(tech => (
                             <TabsTrigger key={tech} value={tech.toLowerCase()}>{tech}</TabsTrigger>
                         ))}
@@ -279,7 +277,7 @@ export default function ViewSubmissionPage() {
                         const lowerTech = tech.toLowerCase() as keyof Submission['code'];
                         const language = getLanguage(tech);
                         return (
-                            <TabsContent key={tech} value={lowerTech} className="mt-2">
+                            <TabsContent key={tech} value={lowerTech} className="mt-2 flex-1">
                                 <Editor
                                     value={submission.code[lowerTech]}
                                     onValueChange={() => {}}
@@ -287,7 +285,7 @@ export default function ViewSubmissionPage() {
                                     padding={10}
                                     style={editorStyles}
                                     readOnly
-                                    className="font-code h-full resize-none text-sm !p-0"
+                                    className="font-code h-full resize-none text-sm !p-2 border rounded-md"
                                 />
                             </TabsContent>
                         )
