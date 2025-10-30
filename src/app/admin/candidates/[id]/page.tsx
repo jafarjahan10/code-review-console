@@ -14,7 +14,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, AtSign, Calendar, FileCode, User } from 'lucide-react';
+import { ArrowLeft, AtSign, Calendar, FileCode, User, Briefcase, Building } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 
@@ -26,6 +26,7 @@ const initialCandidates = [
     status: "Pending",
     invitedAt: "2024-05-20",
     problemAssigned: "FizzBuzz Challenge",
+    positionId: "pos_1",
   },
   {
     id: "cand_2",
@@ -34,6 +35,7 @@ const initialCandidates = [
     status: "Completed",
     invitedAt: "2024-05-18",
     problemAssigned: "Palindrome Checker",
+    positionId: "pos_2",
   },
   {
     id: "cand_3",
@@ -42,6 +44,7 @@ const initialCandidates = [
     status: "In Progress",
     invitedAt: "2024-05-22",
     problemAssigned: "Two Sum",
+    positionId: "pos_1",
   },
   {
     id: "cand_4",
@@ -50,8 +53,17 @@ const initialCandidates = [
     status: "Invited",
     invitedAt: "2024-05-23",
     problemAssigned: "Implement a Debounce Function",
+    positionId: "pos_4",
   },
 ];
+
+const initialPositions = [
+  { id: "pos_1", title: "Senior Frontend Developer", department: "Engineering" },
+  { id: "pos_2", title: "UX/UI Designer", department: "Design" },
+  { id: "pos_3", title: "Product Manager", department: "Product" },
+  { id: "pos_4", title: "Junior Backend Developer", department: "Engineering" },
+];
+
 
 type Candidate = typeof initialCandidates[0];
 
@@ -61,6 +73,8 @@ export default function ViewCandidatePage() {
   const { toast } = useToast();
   const [candidate, setCandidate] = useState<Candidate | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const position = initialPositions.find(p => p.id === candidate?.positionId);
 
   useEffect(() => {
     const candidateId = params.id;
@@ -150,6 +164,16 @@ export default function ViewCandidatePage() {
                 <p className="text-sm font-medium flex items-center"><FileCode className="mr-2 h-4 w-4 text-muted-foreground" /> Problem Assigned</p>
                 <p className="text-muted-foreground">{candidate.problemAssigned}</p>
             </div>
+             <div className="space-y-2">
+                <p className="text-sm font-medium flex items-center"><Briefcase className="mr-2 h-4 w-4 text-muted-foreground" /> Position</p>
+                <p className="text-muted-foreground">{position?.title || "N/A"}</p>
+            </div>
+            {position?.department && (
+              <div className="space-y-2">
+                  <p className="text-sm font-medium flex items-center"><Building className="mr-2 h-4 w-4 text-muted-foreground" /> Department</p>
+                  <Badge variant="secondary">{position.department}</Badge>
+              </div>
+            )}
           </CardContent>
         </Card>
     </div>
