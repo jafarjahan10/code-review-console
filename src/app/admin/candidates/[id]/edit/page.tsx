@@ -320,90 +320,88 @@ export default function EditCandidatePage() {
                     </Select>
                 </div>
             </div>
-            <div className="grid md:grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                <Label htmlFor="problem">Assign Problem</Label>
-                <Select onValueChange={setProblemId} value={problemId} disabled={!positionId}>
-                    <SelectTrigger id="problem">
-                        <SelectValue placeholder="Select a coding problem" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {availableProblems.map((problem) => (
-                        <SelectItem key={problem.id} value={problem.id}>
-                            {problem.title}
-                        </SelectItem>
-                        ))}
-                    </SelectContent>
+            <div className="grid gap-2">
+              <Label htmlFor="problem">Assign Problem</Label>
+              <Select onValueChange={setProblemId} value={problemId} disabled={!positionId}>
+                  <SelectTrigger id="problem">
+                      <SelectValue placeholder="Select a coding problem" />
+                  </SelectTrigger>
+                  <SelectContent>
+                      {availableProblems.map((problem) => (
+                      <SelectItem key={problem.id} value={problem.id}>
+                          {problem.title}
+                      </SelectItem>
+                      ))}
+                  </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+                <Label>Test Time</Label>
+                <div className="grid grid-cols-5 gap-2">
+                    <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                        <PopoverTrigger asChild>
+                        <Button
+                            id="test-time"
+                            variant={"outline"}
+                            className={cn(
+                            "col-span-5 sm:col-span-3 justify-start text-left font-normal",
+                            !scheduledTime && "text-muted-foreground"
+                            )}
+                        >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {scheduledTime ? format(scheduledTime, "PPP") : <span>Pick a date</span>}
+                        </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                        <Calendar
+                            mode="single"
+                            selected={scheduledTime}
+                            onSelect={handleDateSelect}
+                            initialFocus
+                        />
+                        </PopoverContent>
+                    </Popover>
+                      <Select
+                        onValueChange={(value) => handleTimeChange(value, 'hour')}
+                        value={String(scheduledTime ? scheduledTime.getHours() % 12 || 12 : '').padStart(2, '0')}
+                        disabled={!scheduledTime}
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="HH" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-48">
+                            {Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0')).map(hour => (
+                                <SelectItem key={hour} value={hour}>{hour}</SelectItem>
+                            ))}
+                        </SelectContent>
                     </Select>
-                </div>
-                <div className="grid gap-2">
-                    <Label>Test Time</Label>
-                    <div className="grid grid-cols-5 gap-2">
-                        <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                            <PopoverTrigger asChild>
-                            <Button
-                                id="test-time"
-                                variant={"outline"}
-                                className={cn(
-                                "col-span-5 sm:col-span-3 justify-start text-left font-normal",
-                                !scheduledTime && "text-muted-foreground"
-                                )}
-                            >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {scheduledTime ? format(scheduledTime, "PPP") : <span>Pick a date</span>}
-                            </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0">
-                            <Calendar
-                                mode="single"
-                                selected={scheduledTime}
-                                onSelect={handleDateSelect}
-                                initialFocus
-                            />
-                            </PopoverContent>
-                        </Popover>
-                         <Select
-                            onValueChange={(value) => handleTimeChange(value, 'hour')}
-                            value={String(scheduledTime ? scheduledTime.getHours() % 12 || 12 : '').padStart(2, '0')}
-                            disabled={!scheduledTime}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="HH" />
-                            </SelectTrigger>
-                            <SelectContent className="max-h-48">
-                                {Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0')).map(hour => (
-                                    <SelectItem key={hour} value={hour}>{hour}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <Select
-                            onValueChange={(value) => handleTimeChange(value, 'minute')}
-                            value={String(scheduledTime?.getMinutes() ?? '').padStart(2, '0')}
-                            disabled={!scheduledTime}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="MM" />
-                            </SelectTrigger>
-                             <SelectContent className="max-h-48">
-                                {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map(min => (
-                                    <SelectItem key={min} value={min}>{min}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <Select
-                            onValueChange={(value) => handleTimeChange(value, 'ampm')}
-                            value={scheduledTime && scheduledTime.getHours() >= 12 ? 'PM' : 'AM'}
-                            disabled={!scheduledTime}
-                        >
-                            <SelectTrigger>
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="AM">AM</SelectItem>
-                                <SelectItem value="PM">PM</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+                    <Select
+                        onValueChange={(value) => handleTimeChange(value, 'minute')}
+                        value={String(scheduledTime?.getMinutes() ?? '').padStart(2, '0')}
+                        disabled={!scheduledTime}
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="MM" />
+                        </SelectTrigger>
+                          <SelectContent className="max-h-48">
+                            {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map(min => (
+                                <SelectItem key={min} value={min}>{min}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <Select
+                        onValueChange={(value) => handleTimeChange(value, 'ampm')}
+                        value={scheduledTime && scheduledTime.getHours() >= 12 ? 'PM' : 'AM'}
+                        disabled={!scheduledTime}
+                    >
+                        <SelectTrigger>
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="AM">AM</SelectItem>
+                            <SelectItem value="PM">PM</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
             </div>
           </CardContent>
@@ -415,7 +413,3 @@ export default function EditCandidatePage() {
     </div>
   );
 }
-
-    
-
-    
