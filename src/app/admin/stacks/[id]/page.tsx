@@ -15,47 +15,33 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 
-const initialStacks = [
-  {
-    id: "stack_1",
-    name: "React + Tailwind",
-    technologies: ["React", "Next.js", "Tailwind CSS"],
-    createdAt: "2024-05-10",
-  },
-  {
-    id: "stack_2",
-    name: "Vue + Vuetify",
-    technologies: ["Vue.js", "Nuxt.js", "Vuetify"],
-    createdAt: "2024-05-12",
-  },
-  {
-    id: "stack_3",
-    name: "SvelteKit",
-    technologies: ["SvelteKit", "Tailwind CSS"],
-    createdAt: "2024-05-15",
-  },
+const initialTechnologies = [
+  { id: "tech_1", name: "HTML", createdAt: "2024-05-10" },
+  { id: "tech_2", name: "CSS", createdAt: "2024-05-11" },
+  { id: "tech_3", name: "JS", createdAt: "2024-05-12" },
+  { id: "tech_4", name: "Python", createdAt: "2024-05-13" },
 ];
 
-type Stack = typeof initialStacks[0];
+type Technology = typeof initialTechnologies[0];
 
-export default function ViewStackPage() {
+export default function ViewTechnologyPage() {
   const router = useRouter();
   const params = useParams();
   const { toast } = useToast();
-  const [stack, setStack] = useState<Stack | null>(null);
+  const [technology, setTechnology] = useState<Technology | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const stackId = params.id;
-    const stackToView = initialStacks.find(p => p.id === stackId);
+    const techId = params.id;
+    const techToView = initialTechnologies.find(p => p.id === techId);
 
-    if (stackToView) {
-      setStack(stackToView);
+    if (techToView) {
+      setTechnology(techToView);
     } else {
       toast({
         variant: 'destructive',
-        title: 'Stack not found',
-        description: 'The requested stack could not be found.',
+        title: 'Technology not found',
+        description: 'The requested technology could not be found.',
       });
       router.push('/admin/stacks');
     }
@@ -71,10 +57,10 @@ export default function ViewStackPage() {
     )
   }
 
-  if (!stack) {
+  if (!technology) {
     return (
          <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-            <p>Stack not found.</p>
+            <p>Technology not found.</p>
           </div>
     )
   }
@@ -89,17 +75,22 @@ export default function ViewStackPage() {
           </Link>
         </Button>
         <div className="space-y-1">
-            <CardTitle className="font-headline text-3xl">{stack.name}</CardTitle>
+            <CardTitle className="font-headline text-3xl">{technology.name}</CardTitle>
         </div>
       </div>
 
         <Card>
             <CardHeader>
-                <CardTitle>Technologies</CardTitle>
+                <CardTitle>Details</CardTitle>
             </CardHeader>
-          <CardContent className="pt-2">
-            <div className="flex flex-wrap gap-2">
-                {stack.technologies.map(tech => <Badge variant="secondary" key={tech} className="text-base">{tech}</Badge>)}
+          <CardContent className="pt-2 grid gap-4">
+             <div className="space-y-2">
+                <p className="text-sm font-medium">Name</p>
+                <p className="text-muted-foreground">{technology.name}</p>
+            </div>
+             <div className="space-y-2">
+                <p className="text-sm font-medium">Created At</p>
+                <p className="text-muted-foreground">{technology.createdAt}</p>
             </div>
           </CardContent>
         </Card>
@@ -107,3 +98,4 @@ export default function ViewStackPage() {
   );
 }
 
+    

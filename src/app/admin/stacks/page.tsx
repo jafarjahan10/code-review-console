@@ -12,7 +12,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { PlusCircle, MoreHorizontal, Layers, Pencil, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
@@ -34,43 +33,29 @@ import {
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 
-const initialStacks = [
-  {
-    id: "stack_1",
-    name: "React + Tailwind",
-    technologies: ["React", "Next.js", "Tailwind CSS"],
-    createdAt: "2024-05-10",
-  },
-  {
-    id: "stack_2",
-    name: "Vue + Vuetify",
-    technologies: ["Vue.js", "Nuxt.js", "Vuetify"],
-    createdAt: "2024-05-12",
-  },
-  {
-    id: "stack_3",
-    name: "SvelteKit",
-    technologies: ["SvelteKit", "Tailwind CSS"],
-    createdAt: "2024-05-15",
-  },
+const initialTechnologies = [
+  { id: "tech_1", name: "HTML", createdAt: "2024-05-10" },
+  { id: "tech_2", name: "CSS", createdAt: "2024-05-11" },
+  { id: "tech_3", name: "JS", createdAt: "2024-05-12" },
+  { id: "tech_4", name: "Python", createdAt: "2024-05-13" },
 ];
 
-type Stack = typeof initialStacks[0];
+type Technology = typeof initialTechnologies[0];
 
-export default function StacksPage() {
+export default function TechnologiesPage() {
   const { toast } = useToast();
-  const [stacks, setStacks] = useState<Stack[]>(initialStacks);
-  const [stackToDelete, setStackToDelete] = useState<Stack | null>(null);
+  const [technologies, setTechnologies] = useState<Technology[]>(initialTechnologies);
+  const [techToDelete, setTechToDelete] = useState<Technology | null>(null);
 
   const handleDelete = () => {
-    if (!stackToDelete) return;
+    if (!techToDelete) return;
 
-    setStacks(stacks.filter((s) => s.id !== stackToDelete.id));
+    setTechnologies(technologies.filter((s) => s.id !== techToDelete.id));
     toast({
-      title: "Stack Deleted",
-      description: `The stack "${stackToDelete.name}" has been successfully deleted.`,
+      title: "Technology Deleted",
+      description: `The technology "${techToDelete.name}" has been successfully deleted.`,
     });
-    setStackToDelete(null);
+    setTechToDelete(null);
   };
 
   return (
@@ -79,17 +64,17 @@ export default function StacksPage() {
         <div className="flex items-center justify-between space-y-2">
           <div>
             <h2 className="text-3xl font-bold tracking-tight font-headline">
-              Stacks
+              Technologies
             </h2>
             <p className="text-muted-foreground">
-              Manage your technology stacks here.
+              Manage your coding technologies here.
             </p>
           </div>
           <div className="flex items-center space-x-2">
             <Button asChild>
               <Link href="/admin/stacks/new">
                 <PlusCircle className="mr-2 h-4 w-4" />
-                Add Stack
+                Add Technology
               </Link>
             </Button>
           </div>
@@ -101,26 +86,20 @@ export default function StacksPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
-                  <TableHead>Technologies</TableHead>
-                  <TableHead className="hidden md:table-cell">Created At</TableHead>
+                  <TableHead>Created At</TableHead>
                   <TableHead>
                     <span className="sr-only">Actions</span>
                   </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {stacks.map((stack) => (
-                  <TableRow key={stack.id}>
+                {technologies.map((tech) => (
+                  <TableRow key={tech.id}>
                     <TableCell className="font-medium whitespace-nowrap">
-                      {stack.name}
+                      {tech.name}
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
-                        <div className="flex flex-wrap gap-1">
-                            {stack.technologies.map(tech => <Badge variant="secondary" key={tech}>{tech}</Badge>)}
-                        </div>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell whitespace-nowrap">
-                      {stack.createdAt}
+                      {tech.createdAt}
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
@@ -137,20 +116,20 @@ export default function StacksPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuItem asChild>
-                            <Link href={`/admin/stacks/${stack.id}/edit`}>
+                            <Link href={`/admin/stacks/${tech.id}/edit`}>
                               <Pencil className="mr-2 h-4 w-4" />
                               Edit
                             </Link>
                           </DropdownMenuItem>
                            <DropdownMenuItem asChild>
-                            <Link href={`/admin/stacks/${stack.id}`}>
+                            <Link href={`/admin/stacks/${tech.id}`}>
                               <Layers className="mr-2 h-4 w-4" />
                               View
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-destructive"
-                            onClick={() => setStackToDelete(stack)}
+                            onClick={() => setTechToDelete(tech)}
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
                             Delete
@@ -166,13 +145,13 @@ export default function StacksPage() {
         </Card>
       </div>
 
-      <AlertDialog open={!!stackToDelete} onOpenChange={(isOpen) => !isOpen && setStackToDelete(null)}>
+      <AlertDialog open={!!techToDelete} onOpenChange={(isOpen) => !isOpen && setTechToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
               This action cannot be undone. This will permanently delete the
-              stack &quot;{stackToDelete?.name}&quot;.
+              technology &quot;{techToDelete?.name}&quot;.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -189,3 +168,5 @@ export default function StacksPage() {
     </>
   );
 }
+
+    

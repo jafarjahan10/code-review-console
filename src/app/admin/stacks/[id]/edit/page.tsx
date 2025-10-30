@@ -14,83 +14,52 @@ import { useRouter, useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 
-const initialStacks = [
-  {
-    id: "stack_1",
-    name: "React + Tailwind",
-    technologies: ["React", "Next.js", "Tailwind CSS"],
-  },
-  {
-    id: "stack_2",
-    name: "Vue + Vuetify",
-    technologies: ["Vue.js", "Nuxt.js", "Vuetify"],
-  },
-  {
-    id: "stack_3",
-    name: "SvelteKit",
-    technologies: ["SvelteKit", "Tailwind CSS"],
-  },
+const initialTechnologies = [
+  { id: "tech_1", name: "HTML" },
+  { id: "tech_2", name: "CSS" },
+  { id: "tech_3", name: "JS" },
+  { id: "tech_4", name: "Python" },
 ];
 
-export default function EditStackPage() {
+export default function EditTechnologyPage() {
   const router = useRouter();
   const params = useParams();
   const { toast } = useToast();
   const [name, setName] = useState('');
-  const [techInput, setTechInput] = useState('');
-  const [technologies, setTechnologies] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const stackId = params.id;
-    const stackToEdit = initialStacks.find(s => s.id === stackId);
+    const techId = params.id;
+    const techToEdit = initialTechnologies.find(s => s.id === techId);
 
-    if (stackToEdit) {
-      setName(stackToEdit.name);
-      setTechnologies(stackToEdit.technologies);
+    if (techToEdit) {
+      setName(techToEdit.name);
     } else {
       toast({
         variant: 'destructive',
-        title: 'Stack not found',
-        description: 'The requested stack could not be found.',
+        title: 'Technology not found',
+        description: 'The requested technology could not be found.',
       });
       router.push('/admin/stacks');
     }
     setIsLoading(false);
   }, [params.id, router, toast]);
 
-  const handleTechKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter' && techInput.trim()) {
-      event.preventDefault();
-      const newTech = techInput.trim();
-      if (!technologies.includes(newTech)) {
-        setTechnologies([...technologies, newTech]);
-      }
-      setTechInput('');
-    }
-  };
-
-  const removeTech = (techToRemove: string) => {
-    setTechnologies(technologies.filter(tech => tech !== techToRemove));
-  };
-
-
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!name || technologies.length === 0) {
+    if (!name) {
       toast({
         variant: 'destructive',
-        title: 'Missing Fields',
-        description: 'Please fill out all fields before submitting.',
+        title: 'Missing Name',
+        description: 'Please provide a name for the technology.',
       });
       return;
     }
-    console.log({ id: params.id, name, technologies });
+    console.log({ id: params.id, name });
     toast({
-      title: 'Stack Updated!',
-      description: `The stack "${name}" has been successfully updated.`,
+      title: 'Technology Updated!',
+      description: `The technology "${name}" has been successfully updated.`,
     });
     router.push('/admin/stacks');
   };
@@ -110,10 +79,10 @@ export default function EditStackPage() {
         </Button>
         <div className="space-y-1">
           <h2 className="text-3xl font-bold tracking-tight font-headline">
-            Edit Stack
+            Edit Technology
           </h2>
           <p className="text-muted-foreground">
-            Update the technology stack details.
+            Update the technology name.
           </p>
         </div>
       </div>
@@ -122,44 +91,21 @@ export default function EditStackPage() {
         <Card>
           <CardContent className="space-y-4 pt-6">
             <div className="grid gap-2">
-                <Label htmlFor="name">Stack Name</Label>
+                <Label htmlFor="name">Technology Name</Label>
                 <Input
                     id="name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                 />
             </div>
-            <div className="grid gap-2">
-                <Label htmlFor="technologies">Technologies (press Enter to add)</Label>
-                <Input
-                    id="technologies"
-                    placeholder="e.g., Next.js"
-                    value={techInput}
-                    onChange={(e) => setTechInput(e.target.value)}
-                    onKeyDown={handleTechKeyDown}
-                />
-                <div className="flex flex-wrap gap-2 pt-2">
-                    {technologies.map((tech) => (
-                    <Badge key={tech} variant="secondary" className="text-sm">
-                        {tech}
-                        <button
-                        type="button"
-                        className="ml-2 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                        onClick={() => removeTech(tech)}
-                        >
-                        <span className="sr-only">Remove {tech}</span>
-                        &times;
-                        </button>
-                    </Badge>
-                    ))}
-                </div>
-            </div>
           </CardContent>
           <CardFooter>
-            <Button type="submit">Update Stack</Button>
+            <Button type="submit">Update Technology</Button>
           </CardFooter>
         </Card>
       </form>
     </div>
   );
 }
+
+    

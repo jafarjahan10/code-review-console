@@ -20,7 +20,7 @@ import {
 import { useRouter, useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, X } from 'lucide-react';
 import Editor from "react-simple-code-editor";
 import { highlight, languages } from "prismjs/components/prism-core";
 import "prismjs/components/prism-clike";
@@ -29,6 +29,9 @@ import 'prismjs/themes/prism-tomorrow.css';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import * as Popover from '@radix-ui/react-popover';
 
 // Mock data for problems
 const problems = [
@@ -37,51 +40,43 @@ const problems = [
     title: "FizzBuzz Challenge",
     difficulty: "Easy",
     description: "Write a program that prints the numbers from 1 to 100. But for multiples of three print “Fizz” instead of the number and for the multiples of five print “Buzz”. For numbers which are multiples of both three and five print “FizzBuzz”.",
-    stackId: "stack_1"
+    technologies: ["JS"]
   },
   {
     id: "prob_2",
     title: "Palindrome Checker",
     difficulty: "Easy",
     description: "Write a function that checks if a given string is a palindrome. A palindrome is a word, phrase, number, or other sequence of characters that reads the same backward as forward.",
-    stackId: "stack_1"
+    technologies: ["JS"]
   },
   {
     id: "prob_3",
     title: "Two Sum",
     difficulty: "Medium",
     description: "Given an array of integers `nums` and an integer `target`, return indices of the two numbers such that they add up to `target`.",
-    stackId: "stack_2"
+    technologies: ["JS"]
   },
   {
     id: "prob_4",
     title: "Implement a Debounce Function",
     difficulty: "Medium",
     description: "Your task is to implement a debounce function in JavaScript. The function should delay invoking a passed-in function until after `wait` milliseconds have elapsed since the last time it was invoked.",
-    stackId: "stack_3"
+    technologies: ["HTML", "CSS", "JS"]
   },
   {
     id: "prob_5",
     title: "Binary Tree Traversal",
     difficulty: "Hard",
     description: "Given a binary tree, write functions to perform preorder, inorder, and postorder traversal.",
-    stackId: "stack_1"
+    technologies: ["JS"]
   },
 ];
 
-const initialStacks = [
-  {
-    id: "stack_1",
-    name: "React + Tailwind",
-  },
-  {
-    id: "stack_2",
-    name: "Vue + Vuetify",
-  },
-  {
-    id: "stack_3",
-    name: "SvelteKit",
-  },
+const initialTechnologies = [
+  { id: "tech_1", name: "HTML" },
+  { id: "tech_2", name: "CSS" },
+  { id: "tech_3", name: "JS" },
+  { id: "tech_4", name: "Python" },
 ];
 
 export default function EditProblemPage() {
@@ -91,7 +86,7 @@ export default function EditProblemPage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [difficulty, setDifficulty] = useState('');
-  const [stackId, setStackId] = useState('');
+  const [selectedTechnologies, setSelectedTechnologies] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -102,7 +97,7 @@ export default function EditProblemPage() {
       setTitle(problemToEdit.title);
       setDescription(problemToEdit.description);
       setDifficulty(problemToEdit.difficulty);
-      setStackId(problemToEdit.stackId || '');
+      setSelectedTechnologies(problemToEdit.technologies || []);
     } else {
       toast({
         variant: 'destructive',
@@ -116,16 +111,16 @@ export default function EditProblemPage() {
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!title || !description || !difficulty || !stackId) {
+    if (!title || !description || !difficulty || selectedTechnologies.length === 0) {
       toast({
         variant: 'destructive',
         title: 'Missing Fields',
-        description: 'Please fill out all fields before submitting.',
+        description: 'Please fill out all fields and select at least one technology.',
       });
       return;
     }
     // In a real app, you would handle the API submission here.
-    console.log({ id: params.id, title, description, difficulty, stackId });
+    console.log({ id: params.id, title, description, difficulty, technologies: selectedTechnologies });
     toast({
       title: 'Problem Updated!',
       description: `The problem "${title}" has been successfully updated.`,
@@ -145,6 +140,17 @@ export default function EditProblemPage() {
     outline: "none",
     border: "1px solid hsl(var(--border))",
   };
+
+  const handleTechToggle = (techName: string) => {
+    setSelectedTechnologies(prev => 
+      prev.includes(techName) 
+        ? prev.filter(t => t !== techName) 
+        : [...prev, techName]
+    );
+  };
+
+  const getTechNameById = (id: string) => initialTechnologies.find(t => t.id === id)?.name || id;
+  const getTechIdByName = (name: string) => initialTechnologies.find(t => t.name === name)?.id || name;
 
   if (isLoading) {
       return (
@@ -176,7 +182,7 @@ export default function EditProblemPage() {
       <form onSubmit={handleSubmit}>
         <Card>
           <CardContent className="space-y-4 pt-6">
-            <div className="grid md:grid-cols-3 gap-4">
+            <div className="grid md:grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="title">Title</Label>
                 <Input
@@ -199,21 +205,48 @@ export default function EditProblemPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="stack">Stack</Label>
-                <Select onValueChange={setStackId} value={stackId}>
-                  <SelectTrigger id="stack">
-                    <SelectValue placeholder="Select a stack" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {initialStacks.map((stack) => (
-                        <SelectItem key={stack.id} value={stack.id}>
-                            {stack.name}
-                        </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label>Technologies</Label>
+               <Popover.Root>
+                <Popover.Trigger asChild>
+                    <Button variant="outline" className="w-full justify-start text-left font-normal h-auto">
+                        <div className="flex flex-wrap gap-2 py-1">
+                        {selectedTechnologies.length > 0 ? (
+                            selectedTechnologies.map(techName => (
+                                <Badge key={techName} variant="secondary" className="text-sm">
+                                    {techName}
+                                    <button
+                                        type="button"
+                                        className="ml-2 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                                        onClick={(e) => { e.stopPropagation(); handleTechToggle(techName); }}
+                                    >
+                                        <X className="h-3 w-3" />
+                                        <span className="sr-only">Remove {techName}</span>
+                                    </button>
+                                </Badge>
+                            ))
+                        ) : (
+                            <span className="text-muted-foreground">Select technologies</span>
+                        )}
+                        </div>
+                    </Button>
+                </Popover.Trigger>
+                <Popover.Content className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <div className="p-4 space-y-2">
+                         {initialTechnologies.map(tech => (
+                            <div key={tech.id} className="flex items-center space-x-2">
+                                <Checkbox 
+                                    id={`tech-${tech.id}`} 
+                                    checked={selectedTechnologies.includes(tech.name)}
+                                    onCheckedChange={() => handleTechToggle(tech.name)}
+                                />
+                                <Label htmlFor={`tech-${tech.id}`}>{tech.name}</Label>
+                            </div>
+                        ))}
+                    </div>
+                </Popover.Content>
+              </Popover.Root>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="description">Description (Markdown)</Label>
@@ -248,3 +281,5 @@ export default function EditProblemPage() {
     </div>
   );
 }
+
+    

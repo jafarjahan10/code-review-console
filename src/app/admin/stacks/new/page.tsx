@@ -14,46 +14,27 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 
-export default function NewStackPage() {
+export default function NewTechnologyPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [name, setName] = useState('');
-  const [techInput, setTechInput] = useState('');
-  const [technologies, setTechnologies] = useState<string[]>([]);
-
-  const handleTechKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter' && techInput.trim()) {
-      event.preventDefault();
-      const newTech = techInput.trim();
-      if (!technologies.includes(newTech)) {
-        setTechnologies([...technologies, newTech]);
-      }
-      setTechInput('');
-    }
-  };
-
-  const removeTech = (techToRemove: string) => {
-    setTechnologies(technologies.filter(tech => tech !== techToRemove));
-  };
-
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!name || technologies.length === 0) {
+    if (!name) {
       toast({
         variant: 'destructive',
-        title: 'Missing Fields',
-        description: 'Please fill out all fields before submitting.',
+        title: 'Missing Name',
+        description: 'Please provide a name for the technology.',
       });
       return;
     }
     // In a real app, you would handle the API submission here.
-    console.log({ name, technologies });
+    console.log({ name });
     toast({
-      title: 'Stack Created!',
-      description: `The stack "${name}" has been successfully created.`,
+      title: 'Technology Created!',
+      description: `The technology "${name}" has been successfully created.`,
     });
     router.push('/admin/stacks');
   };
@@ -69,10 +50,10 @@ export default function NewStackPage() {
         </Button>
         <div className="space-y-1">
           <h2 className="text-3xl font-bold tracking-tight font-headline">
-            Add New Stack
+            Add New Technology
           </h2>
           <p className="text-muted-foreground">
-            Create a new technology stack.
+            Create a new technology entry.
           </p>
         </div>
       </div>
@@ -81,42 +62,17 @@ export default function NewStackPage() {
         <Card>
           <CardContent className="space-y-4 pt-6">
             <div className="grid gap-2">
-                <Label htmlFor="name">Stack Name</Label>
+                <Label htmlFor="name">Technology Name</Label>
                 <Input
                     id="name"
-                    placeholder="e.g., React + Tailwind"
+                    placeholder="e.g., JavaScript"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                 />
             </div>
-            <div className="grid gap-2">
-                <Label htmlFor="technologies">Technologies (press Enter to add)</Label>
-                <Input
-                    id="technologies"
-                    placeholder="e.g., Next.js"
-                    value={techInput}
-                    onChange={(e) => setTechInput(e.target.value)}
-                    onKeyDown={handleTechKeyDown}
-                />
-                <div className="flex flex-wrap gap-2 pt-2">
-                    {technologies.map((tech) => (
-                    <Badge key={tech} variant="secondary" className="text-sm">
-                        {tech}
-                        <button
-                        type="button"
-                        className="ml-2 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                        onClick={() => removeTech(tech)}
-                        >
-                        <span className="sr-only">Remove {tech}</span>
-                        &times;
-                        </button>
-                    </Badge>
-                    ))}
-                </div>
-            </div>
           </CardContent>
           <CardFooter>
-            <Button type="submit">Submit Stack</Button>
+            <Button type="submit">Submit Technology</Button>
           </CardFooter>
         </Card>
       </form>
@@ -124,3 +80,4 @@ export default function NewStackPage() {
   );
 }
 
+    
