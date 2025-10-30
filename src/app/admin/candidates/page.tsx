@@ -138,8 +138,8 @@ export default function CandidatesPage() {
                   <TableRow>
                     <TableHead className="whitespace-nowrap">Candidate</TableHead>
                     <TableHead className="whitespace-nowrap">Position</TableHead>
-                    <TableHead className="whitespace-nowrap">Status</TableHead>
                     <TableHead className="whitespace-nowrap">Problem Assigned</TableHead>
+                    <TableHead className="whitespace-nowrap">Status</TableHead>
                     <TableHead className="whitespace-nowrap">Invited At</TableHead>
                     <TableHead>
                       <span className="sr-only">Actions</span>
@@ -168,6 +168,7 @@ export default function CandidatesPage() {
                        <TableCell className="whitespace-nowrap text-muted-foreground">
                         {position?.title || 'N/A'}
                       </TableCell>
+                      <TableCell className="whitespace-nowrap">{candidate.problemAssigned}</TableCell>
                       <TableCell className="whitespace-nowrap">
                         <Badge variant={
                             candidate.status === 'Completed' ? 'default' :
@@ -183,7 +184,6 @@ export default function CandidatesPage() {
                           {candidate.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="whitespace-nowrap">{candidate.problemAssigned}</TableCell>
                       <TableCell className="whitespace-nowrap">{candidate.invitedAt}</TableCell>
                       <TableCell>
                         <DropdownMenu>
@@ -316,3 +316,5 @@ export default function CandidatesPage() {
     </>
   );
 }
+
+    
