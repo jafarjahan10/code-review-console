@@ -112,7 +112,7 @@ export default function NewProblemPage() {
           </p>
         </div>
       </div>
-       <Alert>
+       <Alert variant="warning">
         <Info className="h-4 w-4" />
         <AlertTitle>Heads up!</AlertTitle>
         <AlertDescription>
