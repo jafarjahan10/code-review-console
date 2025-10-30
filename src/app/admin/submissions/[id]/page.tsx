@@ -241,7 +241,7 @@ export default function ViewSubmissionPage() {
         </div>
       </div>
       
-       <Card>
+       <Card className="w-full">
             <CardHeader>
                 <CardTitle>Submission Details</CardTitle>
             </CardHeader>
@@ -282,10 +282,10 @@ export default function ViewSubmissionPage() {
                                     value={submission.code[lowerTech]}
                                     onValueChange={() => {}}
                                     highlight={(code) => highlight(code, languages[language] || languages.clike, language)}
-                                    padding={0}
+                                    padding={10}
                                     style={editorStyles}
                                     readOnly
-                                    className="font-code h-full resize-none text-sm !p-0 border rounded-md"
+                                    className="font-code h-full resize-none text-sm border rounded-md"
                                 />
                             </TabsContent>
                         )
@@ -357,5 +357,3 @@ export default function ViewSubmissionPage() {
     </div>
   );
 }
-
-    
