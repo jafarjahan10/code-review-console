@@ -145,7 +145,7 @@ export default function InviteCandidatePage() {
       toast({
         variant: 'destructive',
         title: 'Missing Fields',
-        description: 'Please fill out all fields before sending the invitation.',
+        description: 'Please fill out all fields before adding the candidate.',
       });
       return;
     }
@@ -153,8 +153,8 @@ export default function InviteCandidatePage() {
     const formData = { name, email, department, positionId, problemId, accessCode, scheduledTime: scheduledTime.toISOString() };
     console.log(formData);
     toast({
-      title: 'Invitation Sent!',
-      description: `${name} has been invited. Access Code: ${accessCode}`,
+      title: 'Candidate Added!',
+      description: `${name} has been added. Access Code: ${accessCode}`,
     });
     router.push('/admin/candidates');
   };
@@ -173,7 +173,7 @@ export default function InviteCandidatePage() {
             Add Candidate
           </h2>
           <p className="text-muted-foreground">
-            Send a coding challenge invitation to a new candidate.
+            Add a new candidate and send a coding challenge invitation.
           </p>
         </div>
       </div>
@@ -320,10 +320,11 @@ export default function InviteCandidatePage() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button type="submit">Send Invitation</Button>
+            <Button type="submit">Add Candidate</Button>
           </CardFooter>
         </Card>
       </form>
     </div>
   );
-}
+
+    
