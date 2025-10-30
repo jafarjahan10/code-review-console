@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -82,6 +82,8 @@ const initialTechnologies = [
   { id: "tech_4", name: "Python" },
 ];
 
+const departments = ["Engineering", "Design", "Product", "Marketing", "HR"];
+
 const initialPositions = [
   { id: "pos_1", title: "Senior Frontend Developer", department: "Engineering" },
   { id: "pos_2", title: "UX/UI Designer", department: "Design" },
@@ -98,19 +100,29 @@ export default function EditProblemPage() {
   const [description, setDescription] = useState('');
   const [difficulty, setDifficulty] = useState('');
   const [selectedTechnologies, setSelectedTechnologies] = useState<string[]>([]);
+  const [department, setDepartment] = useState('');
   const [positionId, setPositionId] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+
+  const availablePositions = useMemo(() => {
+    if (!department) return [];
+    return initialPositions.filter(p => p.department === department);
+  }, [department]);
+
 
   useEffect(() => {
     const problemId = params.id;
     const problemToEdit = problems.find(p => p.id === problemId);
 
     if (problemToEdit) {
+      const position = initialPositions.find(p => p.id === problemToEdit.positionId);
+      
       setTitle(problemToEdit.title);
       setDescription(problemToEdit.description);
       setDifficulty(problemToEdit.difficulty);
       setSelectedTechnologies(problemToEdit.technologies || []);
       setPositionId(problemToEdit.positionId || '');
+      setDepartment(position?.department || '');
     } else {
       toast({
         variant: 'destructive',
@@ -121,6 +133,11 @@ export default function EditProblemPage() {
     }
     setIsLoading(false);
   }, [params.id, router, toast]);
+  
+  const handleDepartmentChange = (value: string) => {
+    setDepartment(value);
+    setPositionId('');
+  }
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -215,13 +232,28 @@ export default function EditProblemPage() {
             </div>
              <div className="grid md:grid-cols-2 gap-4">
                 <div className="grid gap-2">
+                    <Label htmlFor="department">Department</Label>
+                    <Select onValueChange={handleDepartmentChange} value={department}>
+                        <SelectTrigger id="department">
+                            <SelectValue placeholder="Select a department" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {departments.map((dept) => (
+                                <SelectItem key={dept} value={dept}>
+                                {dept}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="grid gap-2">
                     <Label htmlFor="position">Position</Label>
-                    <Select onValueChange={setPositionId} value={positionId}>
+                    <Select onValueChange={setPositionId} value={positionId} disabled={!department}>
                         <SelectTrigger id="position">
                         <SelectValue placeholder="Select a position" />
                         </SelectTrigger>
                         <SelectContent>
-                        {initialPositions.map((pos) => (
+                        {availablePositions.map((pos) => (
                             <SelectItem key={pos.id} value={pos.id}>
                             {pos.title}
                             </SelectItem>
@@ -229,15 +261,15 @@ export default function EditProblemPage() {
                         </SelectContent>
                     </Select>
                 </div>
-                 <div className="grid gap-2">
-                    <Label>Technologies</Label>
-                    <MultiSelect
-                        options={technologyOptions}
-                        selected={selectedTechnologies}
-                        onChange={setSelectedTechnologies}
-                        placeholder="Select technologies..."
-                    />
-                </div>
+            </div>
+             <div className="grid gap-2">
+                <Label>Technologies</Label>
+                <MultiSelect
+                    options={technologyOptions}
+                    selected={selectedTechnologies}
+                    onChange={setSelectedTechnologies}
+                    placeholder="Select technologies..."
+                />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="description">Description (Markdown)</Label>

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -40,6 +40,8 @@ const initialTechnologies = [
   { id: "tech_4", name: "Python" },
 ];
 
+const departments = ["Engineering", "Design", "Product", "Marketing", "HR"];
+
 const initialPositions = [
   { id: "pos_1", title: "Senior Frontend Developer", department: "Engineering" },
   { id: "pos_2", title: "UX/UI Designer", department: "Design" },
@@ -55,7 +57,18 @@ export default function NewProblemPage() {
   const [description, setDescription] = useState('# Hello\n');
   const [difficulty, setDifficulty] = useState('');
   const [selectedTechnologies, setSelectedTechnologies] = useState<string[]>([]);
+  const [department, setDepartment] = useState('');
   const [positionId, setPositionId] = useState('');
+
+  const availablePositions = useMemo(() => {
+    if (!department) return [];
+    return initialPositions.filter(p => p.department === department);
+  }, [department]);
+
+  const handleDepartmentChange = (value: string) => {
+    setDepartment(value);
+    setPositionId('');
+  }
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -149,13 +162,28 @@ export default function NewProblemPage() {
             </div>
              <div className="grid md:grid-cols-2 gap-4">
                 <div className="grid gap-2">
+                    <Label htmlFor="department">Department</Label>
+                    <Select onValueChange={handleDepartmentChange} value={department}>
+                        <SelectTrigger id="department">
+                            <SelectValue placeholder="Select a department" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {departments.map((dept) => (
+                                <SelectItem key={dept} value={dept}>
+                                {dept}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="grid gap-2">
                     <Label htmlFor="position">Position</Label>
-                    <Select onValueChange={setPositionId} value={positionId}>
+                    <Select onValueChange={setPositionId} value={positionId} disabled={!department}>
                         <SelectTrigger id="position">
                         <SelectValue placeholder="Select a position" />
                         </SelectTrigger>
                         <SelectContent>
-                        {initialPositions.map((pos) => (
+                        {availablePositions.map((pos) => (
                             <SelectItem key={pos.id} value={pos.id}>
                             {pos.title}
                             </SelectItem>
@@ -163,6 +191,8 @@ export default function NewProblemPage() {
                         </SelectContent>
                     </Select>
                 </div>
+            </div>
+            <div className="grid md:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                     <Label>Technologies</Label>
                     <MultiSelect
