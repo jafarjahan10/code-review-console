@@ -37,30 +37,50 @@ const problems = [
     title: "FizzBuzz Challenge",
     difficulty: "Easy",
     description: "Write a program that prints the numbers from 1 to 100. But for multiples of three print “Fizz” instead of the number and for the multiples of five print “Buzz”. For numbers which are multiples of both three and five print “FizzBuzz”.",
+    stackId: "stack_1"
   },
   {
     id: "prob_2",
     title: "Palindrome Checker",
     difficulty: "Easy",
     description: "Write a function that checks if a given string is a palindrome. A palindrome is a word, phrase, number, or other sequence of characters that reads the same backward as forward.",
+    stackId: "stack_1"
   },
   {
     id: "prob_3",
     title: "Two Sum",
     difficulty: "Medium",
     description: "Given an array of integers `nums` and an integer `target`, return indices of the two numbers such that they add up to `target`.",
+    stackId: "stack_2"
   },
   {
     id: "prob_4",
     title: "Implement a Debounce Function",
     difficulty: "Medium",
     description: "Your task is to implement a debounce function in JavaScript. The function should delay invoking a passed-in function until after `wait` milliseconds have elapsed since the last time it was invoked.",
+    stackId: "stack_3"
   },
   {
     id: "prob_5",
     title: "Binary Tree Traversal",
     difficulty: "Hard",
     description: "Given a binary tree, write functions to perform preorder, inorder, and postorder traversal.",
+    stackId: "stack_1"
+  },
+];
+
+const initialStacks = [
+  {
+    id: "stack_1",
+    name: "React + Tailwind",
+  },
+  {
+    id: "stack_2",
+    name: "Vue + Vuetify",
+  },
+  {
+    id: "stack_3",
+    name: "SvelteKit",
   },
 ];
 
@@ -71,6 +91,7 @@ export default function EditProblemPage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [difficulty, setDifficulty] = useState('');
+  const [stackId, setStackId] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -81,6 +102,7 @@ export default function EditProblemPage() {
       setTitle(problemToEdit.title);
       setDescription(problemToEdit.description);
       setDifficulty(problemToEdit.difficulty);
+      setStackId(problemToEdit.stackId || '');
     } else {
       toast({
         variant: 'destructive',
@@ -94,7 +116,7 @@ export default function EditProblemPage() {
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!title || !description || !difficulty) {
+    if (!title || !description || !difficulty || !stackId) {
       toast({
         variant: 'destructive',
         title: 'Missing Fields',
@@ -103,7 +125,7 @@ export default function EditProblemPage() {
       return;
     }
     // In a real app, you would handle the API submission here.
-    console.log({ id: params.id, title, description, difficulty });
+    console.log({ id: params.id, title, description, difficulty, stackId });
     toast({
       title: 'Problem Updated!',
       description: `The problem "${title}" has been successfully updated.`,
@@ -154,7 +176,7 @@ export default function EditProblemPage() {
       <form onSubmit={handleSubmit}>
         <Card>
           <CardContent className="space-y-4 pt-6">
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid md:grid-cols-3 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="title">Title</Label>
                 <Input
@@ -174,6 +196,21 @@ export default function EditProblemPage() {
                     <SelectItem value="Easy">Easy</SelectItem>
                     <SelectItem value="Medium">Medium</SelectItem>
                     <SelectItem value="Hard">Hard</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="stack">Stack</Label>
+                <Select onValueChange={setStackId} value={stackId}>
+                  <SelectTrigger id="stack">
+                    <SelectValue placeholder="Select a stack" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {initialStacks.map((stack) => (
+                        <SelectItem key={stack.id} value={stack.id}>
+                            {stack.name}
+                        </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

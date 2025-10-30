@@ -30,16 +30,33 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
+const initialStacks = [
+  {
+    id: "stack_1",
+    name: "React + Tailwind",
+  },
+  {
+    id: "stack_2",
+    name: "Vue + Vuetify",
+  },
+  {
+    id: "stack_3",
+    name: "SvelteKit",
+  },
+];
+
+
 export default function NewProblemPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('# Hello\n');
   const [difficulty, setDifficulty] = useState('');
+  const [stackId, setStackId] = useState('');
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!title || !description || !difficulty) {
+    if (!title || !description || !difficulty || !stackId) {
       toast({
         variant: 'destructive',
         title: 'Missing Fields',
@@ -48,7 +65,7 @@ export default function NewProblemPage() {
       return;
     }
     // In a real app, you would handle the API submission here.
-    console.log({ title, description, difficulty });
+    console.log({ title, description, difficulty, stackId });
     toast({
       title: 'Problem Created!',
       description: `The problem "${title}" has been successfully created.`,
@@ -91,7 +108,7 @@ export default function NewProblemPage() {
       <form onSubmit={handleSubmit}>
         <Card>
           <CardContent className="space-y-4 pt-6">
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid md:grid-cols-3 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="title">Title</Label>
                 <Input
@@ -103,7 +120,7 @@ export default function NewProblemPage() {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="difficulty">Difficulty</Label>
-                <Select onValuechange={setDifficulty} value={difficulty}>
+                <Select onValueChange={setDifficulty} value={difficulty}>
                   <SelectTrigger id="difficulty">
                     <SelectValue placeholder="Select a difficulty" />
                   </SelectTrigger>
@@ -111,6 +128,21 @@ export default function NewProblemPage() {
                     <SelectItem value="Easy">Easy</SelectItem>
                     <SelectItem value="Medium">Medium</SelectItem>
                     <SelectItem value="Hard">Hard</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="stack">Stack</Label>
+                <Select onValueChange={setStackId} value={stackId}>
+                  <SelectTrigger id="stack">
+                    <SelectValue placeholder="Select a stack" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {initialStacks.map((stack) => (
+                        <SelectItem key={stack.id} value={stack.id}>
+                            {stack.name}
+                        </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

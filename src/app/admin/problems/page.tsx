@@ -42,6 +42,7 @@ const initialProblems = [
     difficulty: "Easy",
     submissions: 25,
     createdAt: "2024-05-10",
+    stack: "React + Tailwind",
   },
   {
     id: "prob_2",
@@ -49,6 +50,7 @@ const initialProblems = [
     difficulty: "Easy",
     submissions: 38,
     createdAt: "2024-05-12",
+    stack: "React + Tailwind",
   },
   {
     id: "prob_3",
@@ -56,6 +58,7 @@ const initialProblems = [
     difficulty: "Medium",
     submissions: 52,
     createdAt: "2024-05-15",
+    stack: "Vue + Vuetify",
   },
   {
     id: "prob_4",
@@ -63,6 +66,7 @@ const initialProblems = [
     difficulty: "Medium",
     submissions: 15,
     createdAt: "2024-05-20",
+    stack: "SvelteKit",
   },
   {
     id: "prob_5",
@@ -70,6 +74,7 @@ const initialProblems = [
     difficulty: "Hard",
     submissions: 8,
     createdAt: "2024-05-22",
+    stack: "React + Tailwind",
   },
 ];
 
@@ -121,6 +126,7 @@ export default function ProblemsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="whitespace-nowrap">Title</TableHead>
+                  <TableHead className="whitespace-nowrap">Stack</TableHead>
                   <TableHead className="whitespace-nowrap">Difficulty</TableHead>
                   <TableHead className="whitespace-nowrap">Submissions</TableHead>
                   <TableHead className="whitespace-nowrap">Created At</TableHead>
@@ -134,6 +140,9 @@ export default function ProblemsPage() {
                   <TableRow key={problem.id}>
                     <TableCell className="font-medium whitespace-nowrap">
                       {problem.title}
+                    </TableCell>
+                     <TableCell className="whitespace-nowrap">
+                        <Badge variant="secondary">{problem.stack}</Badge>
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
                       <Badge
@@ -208,8 +217,8 @@ export default function ProblemsPage() {
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="font-medium">{problem.title}</p>
+                       <Badge variant="secondary" className="my-1">{problem.stack}</Badge>
                       <p className="text-sm text-muted-foreground">Submissions: {problem.submissions}</p>
-                      <p className="text-sm text-muted-foreground">Created: {problem.createdAt}</p>
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
