@@ -123,7 +123,7 @@ export default function CodeEditor() {
                   highlight={(code) => highlight(code, languages.css, "css")}
                   padding={10}
                   style={editorStyles}
-                  className="font-code h-full resize-none text-sm"
+                  className="font-code h-full resize-none text-sm !p-0"
                   readOnly={isSubmitted}
                 />
               </TabsContent>
@@ -134,7 +134,7 @@ export default function CodeEditor() {
                   highlight={(code) => highlight(code, languages.js, "javascript")}
                   padding={10}
                   style={editorStyles}
-                  className="font-code h-full resize-none text-sm"
+                  className="font-code h-full resize-none text-sm !p-0"
                   readOnly={isSubmitted}
                 />
               </TabsContent>
