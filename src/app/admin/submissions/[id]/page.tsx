@@ -237,7 +237,7 @@ export default function ViewSubmissionPage() {
                 </CardHeader>
                 <CardContent>
                     <Tabs defaultValue={technologies[0]?.toLowerCase() || 'js'}>
-                    <TabsList className={`grid w-full grid-cols-${technologies.length}`}>
+                    <TabsList className={`grid w-full ${technologies.length > 1 ? 'max-w-xs' : ''} grid-cols-${technologies.length}`}>
                         {technologies.map(tech => (
                             <TabsTrigger key={tech} value={tech.toLowerCase()}>{tech}</TabsTrigger>
                         ))}
@@ -254,7 +254,7 @@ export default function ViewSubmissionPage() {
                                     padding={10}
                                     style={editorStyles}
                                     readOnly
-                                    className="font-code h-full resize-none text-sm"
+                                    className="font-code h-full resize-none text-sm !p-0"
                                 />
                             </TabsContent>
                         )
