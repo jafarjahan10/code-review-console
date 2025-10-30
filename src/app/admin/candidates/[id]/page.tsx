@@ -14,7 +14,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, AtSign, Calendar, FileCode, User, Briefcase, Building } from 'lucide-react';
+import { ArrowLeft, AtSign, Calendar, FileCode, User, Briefcase, Building, KeyRound, Copy } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 
@@ -27,6 +27,7 @@ const initialCandidates = [
     invitedAt: "2024-05-20",
     problemAssigned: "FizzBuzz Challenge",
     positionId: "pos_1",
+    accessCode: "FJ8K2L",
   },
   {
     id: "cand_2",
@@ -36,6 +37,7 @@ const initialCandidates = [
     invitedAt: "2024-05-18",
     problemAssigned: "Palindrome Checker",
     positionId: "pos_2",
+    accessCode: "G4H9J1",
   },
   {
     id: "cand_3",
@@ -45,6 +47,7 @@ const initialCandidates = [
     invitedAt: "2024-05-22",
     problemAssigned: "Two Sum",
     positionId: "pos_1",
+    accessCode: "K2L3M4",
   },
   {
     id: "cand_4",
@@ -54,6 +57,7 @@ const initialCandidates = [
     invitedAt: "2024-05-23",
     problemAssigned: "Implement a Debounce Function",
     positionId: "pos_4",
+    accessCode: "N5P6Q7",
   },
 ];
 
@@ -92,6 +96,14 @@ export default function ViewCandidatePage() {
     }
     setIsLoading(false);
   }, [params.id, router, toast]);
+
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Copied to Clipboard",
+      description: "The access code has been copied.",
+    });
+  };
 
 
   if (isLoading) {
@@ -174,8 +186,19 @@ export default function ViewCandidatePage() {
                   <Badge variant="secondary">{position.department}</Badge>
               </div>
             )}
+             <div className="space-y-2">
+                <p className="text-sm font-medium flex items-center"><KeyRound className="mr-2 h-4 w-4 text-muted-foreground" /> Access Code</p>
+                <div className="flex items-center gap-2">
+                    <p className="text-muted-foreground font-mono">{candidate.accessCode}</p>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCopy(candidate.accessCode)}>
+                        <Copy className="h-4 w-4" />
+                    </Button>
+                </div>
+            </div>
           </CardContent>
         </Card>
     </div>
   );
 }
+
+    

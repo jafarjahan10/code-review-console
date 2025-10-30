@@ -24,7 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MoreHorizontal, PlusCircle, Trash2, Pencil, Eye } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash2, Pencil, Eye, Copy } from "lucide-react";
 import Link from "next/link";
 import {
   AlertDialog,
@@ -49,6 +49,7 @@ const initialCandidates = [
     invitedAt: "2024-05-20",
     problemAssigned: "FizzBuzz Challenge",
     positionId: "pos_1",
+    accessCode: "FJ8K2L",
   },
   {
     id: "cand_2",
@@ -58,6 +59,7 @@ const initialCandidates = [
     invitedAt: "2024-05-18",
     problemAssigned: "Palindrome Checker",
     positionId: "pos_2",
+    accessCode: "G4H9J1",
   },
   {
     id: "cand_3",
@@ -67,6 +69,7 @@ const initialCandidates = [
     invitedAt: "2024-05-22",
     problemAssigned: "Two Sum",
     positionId: "pos_1",
+    accessCode: "K2L3M4",
   },
   {
     id: "cand_4",
@@ -76,6 +79,7 @@ const initialCandidates = [
     invitedAt: "2024-05-23",
     problemAssigned: "Implement a Debounce Function",
     positionId: "pos_4",
+    accessCode: "N5P6Q7",
   },
 ];
 
@@ -104,6 +108,14 @@ export default function CandidatesPage() {
       description: `The candidate "${candidateToDelete.name}" has been successfully removed.`,
     });
     setCandidateToDelete(null);
+  };
+  
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Copied to Clipboard",
+      description: "The access code has been copied.",
+    });
   };
 
 
@@ -140,6 +152,7 @@ export default function CandidatesPage() {
                     <TableHead className="whitespace-nowrap">Position</TableHead>
                     <TableHead className="whitespace-nowrap">Problem Assigned</TableHead>
                     <TableHead className="whitespace-nowrap">Status</TableHead>
+                    <TableHead className="whitespace-nowrap">Access Code</TableHead>
                     <TableHead className="whitespace-nowrap">Invited At</TableHead>
                     <TableHead>
                       <span className="sr-only">Actions</span>
@@ -183,6 +196,14 @@ export default function CandidatesPage() {
                           >
                           {candidate.status}
                         </Badge>
+                      </TableCell>
+                       <TableCell className="whitespace-nowrap font-mono">
+                        <div className="flex items-center gap-2">
+                           <span>{candidate.accessCode}</span>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCopy(candidate.accessCode)}>
+                                <Copy className="h-4 w-4" />
+                            </Button>
+                        </div>
                       </TableCell>
                       <TableCell className="whitespace-nowrap">{candidate.invitedAt}</TableCell>
                       <TableCell>
@@ -231,10 +252,16 @@ export default function CandidatesPage() {
                             <AvatarImage src={`https://avatar.vercel.sh/${candidate.email}.png`} alt="Avatar" />
                             <AvatarFallback>{candidate.name.charAt(0)}</AvatarFallback>
                           </Avatar>
-                        <div>
+                        <div className="w-full">
                           <p className="font-medium">{candidate.name}</p>
                           <p className="text-sm text-muted-foreground">{position?.title || 'N/A'}</p>
                           <p className="text-sm text-muted-foreground">{candidate.problemAssigned}</p>
+                          <div className="flex items-center gap-2 mt-1 font-mono text-sm">
+                            <span>{candidate.accessCode}</span>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCopy(candidate.accessCode)}>
+                                <Copy className="h-4 w-4" />
+                            </Button>
+                          </div>
                            <Badge variant={
                               candidate.status === 'Completed' ? 'default' :
                               candidate.status === 'Pending' ? 'default' :

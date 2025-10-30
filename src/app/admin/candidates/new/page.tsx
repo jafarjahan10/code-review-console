@@ -49,6 +49,15 @@ const initialProblems = [
   },
 ];
 
+const generateAccessCode = (length = 6) => {
+    const chars = 'ABCDEFGHIJKLMNPQRSTUVWXYZ123456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+}
+
 
 export default function InviteCandidatePage() {
   const router = useRouter();
@@ -90,11 +99,12 @@ export default function InviteCandidatePage() {
       });
       return;
     }
+    const accessCode = generateAccessCode();
     // In a real app, you would handle the API submission here.
-    console.log({ name, email, department, positionId, problemId });
+    console.log({ name, email, department, positionId, problemId, accessCode });
     toast({
       title: 'Invitation Sent!',
-      description: `${name} has been invited to take the challenge.`,
+      description: `${name} has been invited. Access Code: ${accessCode}`,
     });
     router.push('/admin/candidates');
   };
@@ -198,3 +208,5 @@ export default function InviteCandidatePage() {
     </div>
   );
 }
+
+    

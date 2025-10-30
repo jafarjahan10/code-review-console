@@ -16,7 +16,7 @@ import {
 import { useRouter, useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Copy } from 'lucide-react';
 
 const initialCandidates = [
   {
@@ -27,6 +27,7 @@ const initialCandidates = [
     problemAssigned: "FizzBuzz Challenge",
     problemId: "prob_1",
     positionId: "pos_1",
+    accessCode: "FJ8K2L",
   },
   {
     id: "cand_2",
@@ -36,6 +37,7 @@ const initialCandidates = [
     problemAssigned: "Palindrome Checker",
     problemId: "prob_2",
     positionId: "pos_2",
+    accessCode: "G4H9J1",
   },
 ];
 
@@ -81,6 +83,7 @@ export default function EditCandidatePage() {
   const [department, setDepartment] = useState('');
   const [positionId, setPositionId] = useState('');
   const [problemId, setProblemId] = useState('');
+  const [accessCode, setAccessCode] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
   const availablePositions = useMemo(() => {
@@ -107,6 +110,7 @@ export default function EditCandidatePage() {
       setProblemId(candidateToEdit.problemId);
       setPositionId(candidateToEdit.positionId);
       setDepartment(department);
+      setAccessCode(candidateToEdit.accessCode);
     } else {
       toast({
         variant: 'destructive',
@@ -117,6 +121,14 @@ export default function EditCandidatePage() {
     }
     setIsLoading(false);
   }, [params.id, router, toast]);
+  
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Copied to Clipboard",
+      description: "The access code has been copied.",
+    });
+  };
 
   const handleDepartmentChange = (value: string) => {
     setDepartment(value);
@@ -140,7 +152,7 @@ export default function EditCandidatePage() {
       return;
     }
     // In a real app, you would handle the API submission here.
-    console.log({ id: params.id, name, email, status, department, positionId, problemId });
+    console.log({ id: params.id, name, email, status, department, positionId, problemId, accessCode });
     toast({
       title: 'Candidate Updated!',
       description: `The details for "${name}" have been successfully updated.`,
@@ -197,19 +209,30 @@ export default function EditCandidatePage() {
                 />
               </div>
             </div>
-             <div className="grid gap-2">
-                <Label htmlFor="status">Status</Label>
-                <Select onValueChange={setStatus} value={status}>
-                    <SelectTrigger id="status">
-                    <SelectValue placeholder="Select a status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                    <SelectItem value="Invited">Invited</SelectItem>
-                    <SelectItem value="In Progress">In Progress</SelectItem>
-                    <SelectItem value="Completed">Completed</SelectItem>
-                    <SelectItem value="Pending">Pending</SelectItem>
-                    </SelectContent>
-                </Select>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                    <Label htmlFor="status">Status</Label>
+                    <Select onValueChange={setStatus} value={status}>
+                        <SelectTrigger id="status">
+                        <SelectValue placeholder="Select a status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                        <SelectItem value="Invited">Invited</SelectItem>
+                        <SelectItem value="In Progress">In Progress</SelectItem>
+                        <SelectItem value="Completed">Completed</SelectItem>
+                        <SelectItem value="Pending">Pending</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                 <div className="grid gap-2">
+                    <Label htmlFor="access-code">Access Code</Label>
+                    <div className="flex items-center gap-2">
+                        <Input id="access-code" value={accessCode} readOnly className="font-mono bg-muted" />
+                        <Button type="button" variant="outline" size="icon" onClick={() => handleCopy(accessCode)}>
+                            <Copy className="h-4 w-4" />
+                        </Button>
+                    </div>
+                 </div>
             </div>
             <div className="grid md:grid-cols-2 gap-4">
                 <div className="grid gap-2">
@@ -267,3 +290,5 @@ export default function EditCandidatePage() {
     </div>
   );
 }
+
+    
