@@ -16,6 +16,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, AtSign, Calendar, FileCode, User, Briefcase, Building, KeyRound, Copy } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import ClientDateTime from '@/components/client-date-time';
 
 
 const initialCandidates = [
@@ -122,7 +123,6 @@ export default function ViewCandidatePage() {
     )
   }
   
-  const scheduledDateTime = new Date(candidate.scheduledTime);
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -172,7 +172,7 @@ export default function ViewCandidatePage() {
             </div>
              <div className="space-y-2">
                 <p className="text-sm font-medium flex items-center"><Calendar className="mr-2 h-4 w-4 text-muted-foreground" /> Scheduled For</p>
-                <p className="text-muted-foreground">{scheduledDateTime.toLocaleString()}</p>
+                <p className="text-muted-foreground"><ClientDateTime date={candidate.scheduledTime} /></p>
             </div>
              <div className="space-y-2">
                 <p className="text-sm font-medium flex items-center"><FileCode className="mr-2 h-4 w-4 text-muted-foreground" /> Problem Assigned</p>

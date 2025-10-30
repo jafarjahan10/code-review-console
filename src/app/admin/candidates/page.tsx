@@ -37,6 +37,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import ClientDateTime from "@/components/client-date-time";
 
 
 // Mock data for candidates
@@ -162,7 +163,6 @@ export default function CandidatesPage() {
                 <TableBody>
                   {candidates.map((candidate) => {
                     const position = initialPositions.find(p => p.id === candidate.positionId);
-                    const scheduledDateTime = new Date(candidate.scheduledTime);
                     return (
                     <TableRow key={candidate.id}>
                       <TableCell className="whitespace-nowrap">
@@ -206,7 +206,7 @@ export default function CandidatesPage() {
                             </Button>
                         </div>
                       </TableCell>
-                      <TableCell className="whitespace-nowrap">{scheduledDateTime.toLocaleString()}</TableCell>
+                      <TableCell className="whitespace-nowrap"><ClientDateTime date={candidate.scheduledTime} /></TableCell>
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -245,7 +245,6 @@ export default function CandidatesPage() {
             <div className="md:hidden space-y-4">
                {candidates.map((candidate) => {
                  const position = initialPositions.find(p => p.id === candidate.positionId);
-                 const scheduledDateTime = new Date(candidate.scheduledTime);
                  return (
                 <Card key={candidate.id} className="p-4">
                    <div className="flex justify-between items-start">
@@ -258,7 +257,7 @@ export default function CandidatesPage() {
                           <p className="font-medium">{candidate.name}</p>
                           <p className="text-sm text-muted-foreground">{position?.title || 'N/A'}</p>
                           <p className="text-sm text-muted-foreground">{candidate.problemAssigned}</p>
-                           <p className="text-sm text-muted-foreground">Scheduled: {scheduledDateTime.toLocaleString()}</p>
+                           <p className="text-sm text-muted-foreground">Scheduled: <ClientDateTime date={candidate.scheduledTime} /></p>
                           <div className="flex items-center gap-2 mt-1 font-mono text-sm">
                             <span>{candidate.accessCode}</span>
                             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCopy(candidate.accessCode)}>
