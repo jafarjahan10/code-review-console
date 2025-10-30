@@ -271,6 +271,7 @@ export default function InviteCandidatePage() {
                           mode="single"
                           selected={scheduledTime}
                           onSelect={handleDateSelect}
+                          disabled={{ before: new Date() }}
                           initialFocus
                       />
                       </PopoverContent>
