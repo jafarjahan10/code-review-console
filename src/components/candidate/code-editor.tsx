@@ -112,7 +112,7 @@ export default function CodeEditor() {
                   highlight={(code) => highlight(code, languages.markup, "markup")}
                   padding={10}
                   style={editorStyles}
-                  className="font-code h-full resize-none text-sm"
+                  className="font-code h-full resize-none text-sm !p-0"
                   readOnly={isSubmitted}
                 />
               </TabsContent>
