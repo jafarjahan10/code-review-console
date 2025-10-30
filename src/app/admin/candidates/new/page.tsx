@@ -259,7 +259,7 @@ export default function InviteCandidatePage() {
                             id="test-time"
                             variant={"outline"}
                             className={cn(
-                            "col-span-5 sm:col-span-2 justify-start text-left font-normal",
+                            "col-span-5 sm:col-span-3 justify-start text-left font-normal",
                             !scheduledTime && "text-muted-foreground"
                             )}
                         >
