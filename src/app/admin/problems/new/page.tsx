@@ -111,6 +111,9 @@ export default function NewProblemPage() {
           </p>
         </div>
       </div>
+      <p className="text-sm text-muted-foreground">
+        Note: If a Figma link is shared in the description, please ensure it is publicly available.
+      </p>
 
       <form onSubmit={handleSubmit}>
         <Card>
