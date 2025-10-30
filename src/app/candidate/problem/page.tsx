@@ -24,8 +24,39 @@ const MOCK_PROBLEM = {
 };
 
 export default function ProblemPage() {
+
+   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Prevent F12
+      if (e.key === 'F12') {
+        e.preventDefault();
+      }
+      // Prevent Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C
+      if (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) {
+        e.preventDefault();
+      }
+      // Prevent Cmd+Opt+I, Cmd+Opt+J on Mac
+      if (e.metaKey && e.altKey && ['I', 'J'].includes(e.key.toUpperCase())) {
+        e.preventDefault();
+      }
+    };
+
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('contextmenu', handleContextMenu);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('contextmenu', handleContextMenu);
+    };
+  }, []);
+
+
   return (
-    <div className="grid md:grid-cols-2 gap-4 p-4 no-scrollbar overflow-y-auto" style={{height: 'calc(100dvh - 64px)'}}>
+    <div className="grid md:grid-cols-2 gap-4 p-4 no-scrollbar overflow-y-auto select-none" style={{height: 'calc(100dvh - 64px)'}} onContextMenu={(e) => e.preventDefault()}>
       <Card className="flex flex-col">
         <CardHeader>
           <CardTitle className="font-headline text-2xl">{MOCK_PROBLEM.title}</CardTitle>
@@ -46,3 +77,4 @@ export default function ProblemPage() {
     </div>
   );
 }
+
