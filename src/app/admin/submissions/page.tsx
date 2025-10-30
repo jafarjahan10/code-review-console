@@ -23,7 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MoreHorizontal, Eye, MessageSquare } from "lucide-react";
+import { MoreHorizontal, Eye } from "lucide-react";
 import Link from "next/link";
 
 // Mock data for submissions
@@ -35,6 +35,7 @@ const submissions = [
     problemTitle: "FizzBuzz Challenge",
     submittedAt: "2024-05-21",
     status: "Pending",
+    positionId: "pos_1",
   },
   {
     id: "sub_2",
@@ -43,6 +44,7 @@ const submissions = [
     problemTitle: "Palindrome Checker",
     submittedAt: "2024-05-19",
     status: "Reviewed",
+    positionId: "pos_2",
   },
   {
     id: "sub_3",
@@ -51,8 +53,17 @@ const submissions = [
     problemTitle: "Two Sum",
     submittedAt: "2024-05-23",
     status: "Pending",
+    positionId: "pos_1",
   },
 ];
+
+const initialPositions = [
+  { id: "pos_1", title: "Senior Frontend Developer", department: "Engineering" },
+  { id: "pos_2", title: "UX/UI Designer", department: "Design" },
+  { id: "pos_3", title: "Product Manager", department: "Product" },
+  { id: "pos_4", title: "Junior Backend Developer", department: "Engineering" },
+];
+
 
 export default function SubmissionsPage() {
   return (
@@ -74,6 +85,7 @@ export default function SubmissionsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="whitespace-nowrap">Candidate</TableHead>
+                <TableHead className="whitespace-nowrap hidden md:table-cell">Position</TableHead>
                 <TableHead className="whitespace-nowrap hidden md:table-cell">Problem</TableHead>
                 <TableHead className="whitespace-nowrap hidden md:table-cell">Status</TableHead>
                 <TableHead className="whitespace-nowrap hidden md:table-cell">Submitted At</TableHead>
@@ -83,7 +95,9 @@ export default function SubmissionsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {submissions.map((submission) => (
+              {submissions.map((submission) => {
+                const position = initialPositions.find(p => p.id === submission.positionId);
+                return (
                 <TableRow key={submission.id}>
                   <TableCell className="whitespace-nowrap">
                     <div className="flex items-center gap-3">
@@ -97,6 +111,7 @@ export default function SubmissionsPage() {
                           {submission.candidateEmail}
                         </p>
                          <div className="md:hidden text-sm text-muted-foreground">
+                          <p>{position?.title || 'N/A'}</p>
                           <p>{submission.problemTitle}</p>
                            <Badge 
                               variant={submission.status === 'Reviewed' ? 'default' : 'destructive'}
@@ -108,6 +123,7 @@ export default function SubmissionsPage() {
                       </div>
                     </div>
                   </TableCell>
+                  <TableCell className="whitespace-nowrap hidden md:table-cell">{position?.title || 'N/A'}</TableCell>
                   <TableCell className="whitespace-nowrap hidden md:table-cell">{submission.problemTitle}</TableCell>
                   <TableCell className="whitespace-nowrap hidden md:table-cell">
                     <Badge 
@@ -138,7 +154,7 @@ export default function SubmissionsPage() {
                     </DropdownMenu>
                   </TableCell>
                 </TableRow>
-              ))}
+              )})}
             </TableBody>
           </Table>
         </CardContent>

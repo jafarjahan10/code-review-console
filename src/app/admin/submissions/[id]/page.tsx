@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, UserCircle } from 'lucide-react';
+import { ArrowLeft, Briefcase, Building } from 'lucide-react';
 import Link from 'next/link';
 import Editor from "react-simple-code-editor";
 import { highlight, languages } from "prismjs/components/prism-core";
@@ -26,6 +26,8 @@ import 'prismjs/themes/prism-tomorrow.css';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+
 
 // Mock Data
 const MOCK_CURRENT_USER_ID = "user_1"; // Assuming this is the logged-in interviewer
@@ -37,6 +39,7 @@ const MOCK_SUBMISSIONS = [
     candidateEmail: "john.doe@example.com",
     problemTitle: "FizzBuzz Challenge",
     problemTechnologies: ["JS"],
+    positionId: "pos_1",
     submittedAt: "2024-05-21T10:00:00Z",
     code: {
       html: ``,
@@ -59,6 +62,7 @@ const MOCK_SUBMISSIONS = [
     candidateEmail: "jane.smith@example.com",
     problemTitle: "Palindrome Checker",
     problemTechnologies: ["JS"],
+    positionId: "pos_2",
     submittedAt: "2024-05-19",
     code: {
         html: ``,
@@ -81,6 +85,7 @@ const MOCK_SUBMISSIONS = [
     candidateEmail: "sam.wilson@example.com",
     problemTitle: "Two Sum",
     problemTechnologies: ["HTML", "CSS", "JS"],
+    positionId: "pos_1",
     submittedAt: "2024-05-23",
     code: {
         html: `<h1>Two Sum</h1>`,
@@ -90,6 +95,14 @@ const MOCK_SUBMISSIONS = [
     remarks: [],
   }
 ];
+
+const initialPositions = [
+  { id: "pos_1", title: "Senior Frontend Developer", department: "Engineering" },
+  { id: "pos_2", title: "UX/UI Designer", department: "Design" },
+  { id: "pos_3", title: "Product Manager", department: "Product" },
+  { id: "pos_4", title: "Junior Backend Developer", department: "Engineering" },
+];
+
 
 type Remark = {
     userId: string;
@@ -105,6 +118,7 @@ type Submission = {
     candidateEmail: string;
     problemTitle: string;
     problemTechnologies: string[];
+    positionId: string;
     submittedAt: string;
     code: {
         html: string;
@@ -140,6 +154,7 @@ export default function ViewSubmissionPage() {
   const [isLoading, setIsLoading] = useState(true);
   
   const technologies = useMemo(() => submission?.problemTechnologies || [], [submission]);
+  const position = useMemo(() => initialPositions.find(p => p.id === submission?.positionId), [submission]);
 
   const hasAlreadyRemarked = submission?.remarks.some(r => r.userId === MOCK_CURRENT_USER_ID);
 
@@ -228,16 +243,16 @@ export default function ViewSubmissionPage() {
         </div>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-2">
-        {/* Left side: Code Viewer */}
-        <div className="space-y-4">
+      <div className="grid gap-8 lg:grid-cols-3">
+        {/* Left side: Code Viewer & Details */}
+        <div className="space-y-4 lg:col-span-2">
              <Card>
                 <CardHeader>
                     <CardTitle>Submitted Code</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <Tabs defaultValue={technologies[0]?.toLowerCase() || 'js'}>
-                    <TabsList className={`grid w-full ${technologies.length > 1 ? 'max-w-xs' : ''} grid-cols-${technologies.length}`}>
+                    <Tabs defaultValue={technologies[0]?.toLowerCase() || 'js'} className="w-full">
+                    <TabsList className={`grid w-full ${technologies.length > 1 ? `grid-cols-${technologies.length}` : 'max-w-xs'}`}>
                         {technologies.map(tech => (
                             <TabsTrigger key={tech} value={tech.toLowerCase()}>{tech}</TabsTrigger>
                         ))}
@@ -264,8 +279,25 @@ export default function ViewSubmissionPage() {
             </Card>
         </div>
 
-        {/* Right side: Remarks */}
+        {/* Right side: Remarks & Details */}
         <div className="space-y-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Submission Details</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                     <div className="space-y-2">
+                        <p className="text-sm font-medium flex items-center"><Briefcase className="mr-2 h-4 w-4 text-muted-foreground" /> Position</p>
+                        <p className="text-muted-foreground">{position?.title || "N/A"}</p>
+                    </div>
+                    {position?.department && (
+                    <div className="space-y-2">
+                        <p className="text-sm font-medium flex items-center"><Building className="mr-2 h-4 w-4 text-muted-foreground" /> Department</p>
+                        <Badge variant="secondary">{position.department}</Badge>
+                    </div>
+                    )}
+                </CardContent>
+            </Card>
             <Card>
                 <CardHeader>
                     <CardTitle>Interviewer Remarks</CardTitle>
