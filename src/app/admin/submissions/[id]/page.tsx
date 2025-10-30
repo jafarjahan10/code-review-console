@@ -282,10 +282,10 @@ export default function ViewSubmissionPage() {
                                     value={submission.code[lowerTech]}
                                     onValueChange={() => {}}
                                     highlight={(code) => highlight(code, languages[language] || languages.clike, language)}
-                                    padding={10}
+                                    padding={0}
                                     style={editorStyles}
                                     readOnly
-                                    className="font-code h-full resize-none text-sm !p-2 border rounded-md"
+                                    className="font-code h-full resize-none text-sm !p-0 border rounded-md"
                                 />
                             </TabsContent>
                         )
