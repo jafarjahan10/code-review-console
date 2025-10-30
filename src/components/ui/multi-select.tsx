@@ -106,12 +106,12 @@ export function MultiSelect({
                     <CommandItem
                         key={option.value}
                         onMouseDown={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
+                            e.preventDefault();
+                            e.stopPropagation();
                         }}
                         onSelect={() => {
-                        setInputValue("")
-                        onChange(prev => [...prev, option.value])
+                            setInputValue("");
+                            onChange(prev => [...prev, option.value]);
                         }}
                         className={"cursor-pointer"}
                     >
