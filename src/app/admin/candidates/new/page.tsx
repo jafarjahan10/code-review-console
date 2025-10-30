@@ -251,14 +251,14 @@ export default function InviteCandidatePage() {
             </div>
             <div className="grid gap-2">
               <Label>Test Time</Label>
-              <div className="grid grid-cols-5 gap-2">
+              <div className="grid grid-cols-[1fr_auto_auto_auto] sm:grid-cols-[2fr_1fr_1fr_1fr] gap-2 items-center">
                   <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                       <PopoverTrigger asChild>
                       <Button
                           id="test-time"
                           variant={"outline"}
                           className={cn(
-                          "col-span-5 sm:col-span-3 justify-start text-left font-normal",
+                          "justify-start text-left font-normal",
                           !scheduledTime && "text-muted-foreground"
                           )}
                       >
