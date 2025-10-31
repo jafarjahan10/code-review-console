@@ -25,8 +25,8 @@ export default function AdminLoginPage() {
   const auth = useAuth();
   const firestore = useFirestore();
   const { toast } = useToast();
-  const [email, setEmail] = useState('admin@example.com');
-  const [password, setPassword] = useState('password');
+  const [email, setEmail] = useState('admin@echologyx.com');
+  const [password, setPassword] = useState('Echologyx@1234');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (event: React.FormEvent) => {
@@ -39,7 +39,7 @@ export default function AdminLoginPage() {
       router.push('/admin/dashboard');
     } catch (error: any) {
       // If invalid credential, check if it's the initial admin login
-      if (error.code === 'auth/invalid-credential' && email === 'admin@example.com') {
+      if (error.code === 'auth/invalid-credential' && email === 'admin@echologyx.com') {
         try {
           // Check if any admin user already exists
           const adminsQuery = query(collection(firestore, 'admins'), limit(1));
