@@ -14,32 +14,70 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Logo from "@/components/logo";
 import { useRouter } from "next/navigation";
-import { useAuth } from '@/firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { useAuth, useFirestore } from '@/firebase';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, getDocs, collection, setDoc, query, limit } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
 export default function AdminLoginPage() {
   const router = useRouter();
   const auth = useAuth();
+  const firestore = useFirestore();
   const { toast } = useToast();
   const [email, setEmail] = useState('admin@example.com');
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState('password');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
     setIsLoading(true);
+
     try {
+      // Attempt to sign in first
       await signInWithEmailAndPassword(auth, email, password);
       router.push('/admin/dashboard');
     } catch (error: any) {
-      console.error(error);
-      toast({
-        variant: 'destructive',
-        title: 'Login Failed',
-        description: error.message || 'An unknown error occurred.',
-      });
+      // If invalid credential, check if it's the initial admin login
+      if (error.code === 'auth/invalid-credential' && email === 'admin@example.com') {
+        try {
+          // Check if any admin user already exists
+          const adminsQuery = query(collection(firestore, 'admins'), limit(1));
+          const adminSnapshot = await getDocs(adminsQuery);
+
+          if (adminSnapshot.empty) {
+            // No admins exist, create the first one
+            const { user: newAdminUser } = await createUserWithEmailAndPassword(auth, email, password);
+            const adminDocRef = doc(firestore, 'admins', newAdminUser.uid);
+            await setDoc(adminDocRef, {
+              id: newAdminUser.uid,
+              email: newAdminUser.email,
+              name: 'Default Admin',
+              role: 'Admin',
+            });
+            toast({
+              title: 'Admin Account Created',
+              description: 'Your initial admin account has been set up.',
+            });
+            router.push('/admin/dashboard');
+          } else {
+            // Admins exist, so the credentials were just wrong
+            throw error;
+          }
+        } catch (creationError: any) {
+           toast({
+            variant: 'destructive',
+            title: 'Login Failed',
+            description: creationError.message || 'An unknown error occurred during initial setup.',
+          });
+        }
+      } else {
+         toast({
+          variant: 'destructive',
+          title: 'Login Failed',
+          description: error.message || 'An unknown error occurred.',
+        });
+      }
     } finally {
       setIsLoading(false);
     }
