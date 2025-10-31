@@ -28,15 +28,16 @@ service cloud.firestore {
      * @description Grants admins full access to admin profiles.
      * @path /admins/{adminId}
      * @allow (get, list) User with admin role can read admin profile data.
-     * @allow (create, update, delete) User with admin role can modify admin profile data.
+     * @allow (create) User with admin role OR any authenticated user if they are creating their own doc and no admins exist.
+     * @allow (update, delete) User with admin role can modify admin profile data.
      * @deny (get, list) User without admin role cannot read admin profile data.
-     * @deny (create, update, delete) User without admin role cannot modify admin profile data.
-     * @principle Enforces admin-only access to admin profiles.
+     * @deny (create, update, delete) User without admin role cannot modify admin profile data (with exception for initial admin).
+     * @principle Enforces admin-only access to admin profiles, with a bootstrap mechanism for the first admin.
      */
     match /admins/{adminId} {
       allow get: if isAdmin();
       allow list: if isAdmin();
-      allow create: if isAdmin();
+      allow create: if isCreatingInitialAdmin(adminId);
       allow update: if isAdmin();
       allow delete: if isAdmin();
     }
@@ -128,6 +129,14 @@ service cloud.firestore {
      */
     function isAdmin() {
       return exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    
+    /**
+     * @description Checks if an admin is being created for the first time.
+     * @return {boolean} True if no admin docs exist and the user is creating their own admin doc.
+     */
+    function isCreatingInitialAdmin(adminId) {
+      return isOwner(adminId) && !exists(/databases/$(database)/documents/admins);
     }
   }
 }
