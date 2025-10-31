@@ -6,6 +6,9 @@ import { Home, FileCode, Users, BookCopy, LogOut, Settings, Layers, Briefcase } 
 import Logo from "@/components/logo";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
+import { useAuth } from "@/firebase";
+import { signOut } from "firebase/auth";
+import { useToast } from "@/hooks/use-toast";
 
 const navItems = [
   { href: "/admin/dashboard", icon: Home, label: "Dashboard" },
@@ -20,11 +23,18 @@ const navItems = [
 export default function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const auth = useAuth();
+  const { toast } = useToast();
 
-  const handleSignOut = () => {
-    // In a real app, you'd handle the sign-out logic here.
-    // For this prototype, we'll just navigate to the login page.
-    router.push('/admin/login');
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      router.push('/admin/login');
+      toast({ title: "Signed out successfully." });
+    } catch (error) {
+      console.error("Sign out error", error);
+      toast({ variant: "destructive", title: "Failed to sign out." });
+    }
   }
 
   return (
