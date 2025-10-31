@@ -1,0 +1,228 @@
+{
+  "entities": {
+    "Admin": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Admin",
+      "type": "object",
+      "description": "Represents an administrator user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Admin entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the administrator.",
+          "format": "email"
+        },
+        "firstName": {
+          "type": "string",
+          "description": "First name of the administrator."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "Last name of the administrator."
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "firstName",
+        "lastName"
+      ]
+    },
+    "Candidate": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Candidate",
+      "type": "object",
+      "description": "Represents a candidate user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Candidate entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the candidate.",
+          "format": "email"
+        },
+        "firstName": {
+          "type": "string",
+          "description": "First name of the candidate."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "Last name of the candidate."
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "firstName",
+        "lastName"
+      ]
+    },
+    "Problem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Problem",
+      "type": "object",
+      "description": "Represents a coding problem.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Problem entity."
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the problem."
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the problem."
+        },
+        "difficulty": {
+          "type": "string",
+          "description": "Difficulty level of the problem (e.g., Easy, Medium, Hard)."
+        },
+        "tags": {
+          "type": "array",
+          "description": "Problem tags",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "description",
+        "difficulty"
+      ]
+    },
+    "Submission": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Submission",
+      "type": "object",
+      "description": "Represents a candidate's code submission for a problem.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Submission entity."
+        },
+        "candidateId": {
+          "type": "string",
+          "description": "Reference to Candidate. (Relationship: Candidate 1:N Submission)"
+        },
+        "problemId": {
+          "type": "string",
+          "description": "Reference to Problem. (Relationship: Problem 1:N Submission)"
+        },
+        "codeHTML": {
+          "type": "string",
+          "description": "HTML code submitted by the candidate."
+        },
+        "codeCSS": {
+          "type": "string",
+          "description": "CSS code submitted by the candidate."
+        },
+        "codeJS": {
+          "type": "string",
+          "description": "JavaScript code submitted by the candidate."
+        },
+        "submissionTime": {
+          "type": "string",
+          "description": "Timestamp of when the submission was made.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "candidateId",
+        "problemId",
+        "codeHTML",
+        "codeCSS",
+        "codeJS",
+        "submissionTime"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/admins/{adminId}",
+        "definition": {
+          "entityName": "Admin",
+          "schema": {
+            "$ref": "#/backend/entities/Admin"
+          },
+          "description": "Stores administrator profiles. Access is restricted to admins. Allows searching, filtering and pagination on admins.",
+          "params": [
+            {
+              "name": "adminId",
+              "description": "The unique identifier of the admin."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/candidates/{candidateId}",
+        "definition": {
+          "entityName": "Candidate",
+          "schema": {
+            "$ref": "#/backend/entities/Candidate"
+          },
+          "description": "Stores candidate profiles.  Candidate data is private and path-based. Allows searching, filtering and pagination on candidates.",
+          "params": [
+            {
+              "name": "candidateId",
+              "description": "The unique identifier of the candidate."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/problems/{problemId}",
+        "definition": {
+          "entityName": "Problem",
+          "schema": {
+            "$ref": "#/backend/entities/Problem"
+          },
+          "description": "Stores coding problems. Admins have CRUD access. Allows searching, filtering and pagination on problems.",
+          "params": [
+            {
+              "name": "problemId",
+              "description": "The unique identifier of the problem."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/candidates/{candidateId}/submissions/{submissionId}",
+        "definition": {
+          "entityName": "Submission",
+          "schema": {
+            "$ref": "#/backend/entities/Submission"
+          },
+          "description": "Stores code submissions by candidates. Submissions are stored under the candidate document, simplifying ownership checks via the path itself. Allows searching, filtering and pagination on submissions.",
+          "params": [
+            {
+              "name": "candidateId",
+              "description": "The unique identifier of the candidate."
+            },
+            {
+              "name": "submissionId",
+              "description": "The unique identifier of the submission."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "This Firestore structure is designed to support the CodeReview Console application, emphasizing security, scalability, and ease of debugging. It prioritizes Authorization Independence (CRITICAL) by denormalizing relevant authorization data, avoiding hierarchical `get()` calls in security rules.  Structural Segregation is applied to maintain a homogeneous security posture within each collection. Access Modeling is based on path-based ownership for user-specific data and membership maps for collaborative scenarios. Data Clarity is achieved through explicit state modeling and predictable schema.\n\n*   **/admins/{adminId}**: Stores admin profiles.  Admin access is controlled via existence checks in this collection (DBAC).  This enables searching, filtering, and pagination. \n*   **/candidates/{candidateId}**: Stores candidate profiles.  Candidate access is controlled via their `uid`. This enables searching, filtering, and pagination.\n*   **/problems/{problemId}**: Stores coding problems. Admins have CRUD access. This enables searching, filtering, and pagination.\n*   **/candidates/{candidateId}/submissions/{submissionId}**: Stores code submissions by candidates. Authorization Independence is achieved as submissions are stored under the candidate document, simplifying ownership checks via the path itself.  Admins can review all submissions. The candidate can only access its own submissions. This enables searching, filtering, and pagination.\n\n**Authorization Independence (Denormalization):** The `submissions` subcollection is located under the `candidates` document. This means we do not need to make `get()` calls to the parent document to determine ownership. The path `/candidates/{candidateId}/submissions/{submissionId}` inherently defines the owner. This makes security rules more straightforward and efficient.\n\n**QAPs Support:** The structure supports secure `list` operations (QAPs) by segregating data based on access requirements. Admins can list all documents in `/problems`. Candidates can list only their own submissions in `/candidates/{candidateId}/submissions`. This segregation, combined with the enforcement of authorization rules, ensures that users can only access data they are permitted to view. Furthermore, the admin role is managed through existence checks in the `/roles_admin/{uid}` collection, which simplifies admin authorization rules and improves scalability.\n"
+  }
+}
