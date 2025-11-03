@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -13,7 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, MoreHorizontal, File, Pencil, Trash2 } from "lucide-react";
+import { PlusCircle, MoreHorizontal, File, Pencil, Trash2, Search, ArrowUpDown } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,79 +33,97 @@ import {
 } from "@/components/ui/alert-dialog";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-
-const initialPositions = [
-  { id: "pos_1", title: "Senior Frontend Developer", department: "Engineering" },
-  { id: "pos_2", title: "UX/UI Designer", department: "Design" },
-  { id: "pos_3", title: "Product Manager", department: "Product" },
-  { id: "pos_4", title: "Junior Backend Developer", department: "Engineering" },
-];
-
-const initialProblems = [
-  {
-    id: "prob_1",
-    title: "FizzBuzz Challenge",
-    difficulty: "Easy",
-    submissions: 25,
-    createdAt: "2024-05-10",
-    technologies: ["JS"],
-    positionId: "pos_1",
-  },
-  {
-    id: "prob_2",
-    title: "Palindrome Checker",
-    difficulty: "Easy",
-    submissions: 38,
-    createdAt: "2024-05-12",
-    technologies: ["JS"],
-     positionId: "pos_2",
-  },
-  {
-    id: "prob_3",
-    title: "Two Sum",
-    difficulty: "Medium",
-    submissions: 52,
-    createdAt: "2024-05-15",
-    technologies: ["JS"],
-     positionId: "pos_1",
-  },
-  {
-    id: "prob_4",
-    title: "Implement a Debounce Function",
-    difficulty: "Medium",
-    submissions: 15,
-    createdAt: "2024-05-20",
-    technologies: ["HTML", "CSS", "JS"],
-    positionId: "pos_4",
-  },
-  {
-    id: "prob_5",
-    title: "Binary Tree Traversal",
-    difficulty: "Hard",
-    submissions: 8,
-    createdAt: "2024-05-22",
-    technologies: ["JS"],
-     positionId: "pos_1",
-  },
-];
-
-type Problem = typeof initialProblems[0];
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { collection, deleteDoc, doc } from "firebase/firestore";
+import type { Problem, Position, Technology } from "@/types";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
 
 export default function ProblemsPage() {
   const { toast } = useToast();
-  const [problems, setProblems] = useState<Problem[]>(initialProblems);
+  const firestore = useFirestore();
+
   const [problemToDelete, setProblemToDelete] = useState<Problem | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortConfig, setSortConfig] = useState({ key: 'title', direction: 'ascending' });
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 10;
 
-  const handleDelete = () => {
-    if (!problemToDelete) return;
+  const problemsColRef = useMemoFirebase(() => firestore ? collection(firestore, 'problems') : null, [firestore]);
+  const { data: problems, isLoading: isLoadingProblems } = useCollection<Problem>(problemsColRef);
+  
+  const positionsColRef = useMemoFirebase(() => firestore ? collection(firestore, 'positions') : null, [firestore]);
+  const { data: positions, isLoading: isLoadingPositions } = useCollection<Position>(positionsColRef);
 
-    setProblems(problems.filter((p) => p.id !== problemToDelete.id));
-    toast({
-      title: "Problem Deleted",
-      description: `The problem "${problemToDelete.title}" has been successfully deleted.`,
+  const positionsMap = useMemo(() => {
+    if (!positions) return new Map();
+    return new Map(positions.map(p => [p.id, p.title]));
+  }, [positions]);
+
+  const filteredAndSortedProblems = useMemo(() => {
+    if (!problems) return [];
+    
+    let filtered = problems.filter(problem => {
+        const positionName = positionsMap.get(problem.positionId) || '';
+        const technologies = problem.tags?.join(' ') || '';
+        return problem.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               positionName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               problem.difficulty.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               technologies.toLowerCase().includes(searchTerm.toLowerCase());
     });
-    setProblemToDelete(null);
+
+    filtered.sort((a, b) => {
+        const aValue = a[sortConfig.key as keyof Problem] ?? '';
+        const bValue = b[sortConfig.key as keyof Problem] ?? '';
+        
+        if (aValue < bValue) {
+            return sortConfig.direction === 'ascending' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+            return sortConfig.direction === 'ascending' ? 1 : -1;
+        }
+        return 0;
+    });
+
+    return filtered;
+  }, [problems, searchTerm, sortConfig, positionsMap]);
+
+  const totalPages = Math.ceil(filteredAndSortedProblems.length / itemsPerPage);
+  const paginatedProblems = useMemo(() => {
+    const startIndex = (page - 1) * itemsPerPage;
+    return filteredAndSortedProblems.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredAndSortedProblems, page, itemsPerPage]);
+
+  const requestSort = (key: keyof Problem) => {
+    let direction = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
   };
+
+
+  const handleDelete = async () => {
+    if (!problemToDelete || !firestore) return;
+
+    try {
+        await deleteDoc(doc(firestore, "problems", problemToDelete.id));
+        toast({
+            title: "Problem Deleted",
+            description: `The problem "${problemToDelete.title}" has been successfully deleted.`,
+        });
+    } catch(error: any) {
+         toast({
+            variant: "destructive",
+            title: "Deletion Failed",
+            description: error.message,
+        });
+    } finally {
+        setProblemToDelete(null);
+    }
+  };
+  
+  const isLoading = isLoadingProblems || isLoadingPositions;
 
   return (
     <>
@@ -129,35 +147,60 @@ export default function ProblemsPage() {
           </div>
         </div>
 
+        <div className="relative">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+                placeholder="Search problems..."
+                value={searchTerm}
+                onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setPage(1);
+                }}
+                className="pl-8 w-full max-w-sm"
+            />
+        </div>
+
         <Card>
           <CardContent className="pt-6">
-            <div className="hidden md:block">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="whitespace-nowrap">Title</TableHead>
-                  <TableHead className="whitespace-nowrap">Position</TableHead>
-                  <TableHead className="whitespace-nowrap">Technologies</TableHead>
-                  <TableHead className="whitespace-nowrap">Difficulty</TableHead>
+                  <TableHead className="cursor-pointer" onClick={() => requestSort('title')}>
+                    Title <ArrowUpDown className="ml-2 h-4 w-4 inline-block" />
+                  </TableHead>
+                  <TableHead>Position</TableHead>
+                  <TableHead>Technologies</TableHead>
+                  <TableHead className="cursor-pointer" onClick={() => requestSort('difficulty')}>
+                    Difficulty <ArrowUpDown className="ml-2 h-4 w-4 inline-block" />
+                  </TableHead>
                   <TableHead>
                     <span className="sr-only">Actions</span>
                   </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {problems.map((problem) => {
-                  const position = initialPositions.find(p => p.id === problem.positionId);
+                {isLoading ? (
+                    Array.from({length: itemsPerPage}).map((_, i) => (
+                        <TableRow key={i}>
+                            <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-1/4" /></TableCell>
+                            <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
+                        </TableRow>
+                    ))
+                ) : paginatedProblems.map((problem) => {
                   return (
                     <TableRow key={problem.id}>
                       <TableCell className="font-medium whitespace-nowrap">
                         {problem.title}
                       </TableCell>
                        <TableCell className="whitespace-nowrap text-muted-foreground">
-                        {position?.title || 'N/A'}
+                        {positionsMap.get(problem.positionId) || 'N/A'}
                        </TableCell>
                        <TableCell className="whitespace-nowrap">
                           <div className="flex flex-wrap gap-1">
-                              {problem.technologies.map(tech => <Badge variant="secondary" key={tech}>{tech}</Badge>)}
+                              {(problem.tags || []).map(tag => <Badge variant="secondary" key={tag}>{tag}</Badge>)}
                           </div>
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
@@ -180,7 +223,7 @@ export default function ProblemsPage() {
                           {problem.difficulty}
                         </Badge>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
@@ -195,15 +238,15 @@ export default function ProblemsPage() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             <DropdownMenuItem asChild>
-                              <Link href={`/admin/problems/${problem.id}/edit`}>
-                                <Pencil className="mr-2 h-4 w-4" />
-                                Edit
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
                               <Link href={`/admin/problems/${problem.id}`}>
                                 <File className="mr-2 h-4 w-4" />
                                 View
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <Link href={`/admin/problems/${problem.id}/edit`}>
+                                <Pencil className="mr-2 h-4 w-4" />
+                                Edit
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem
@@ -221,79 +264,30 @@ export default function ProblemsPage() {
                 })}
               </TableBody>
             </Table>
-            </div>
-             <div className="md:hidden space-y-4">
-              {problems.map((problem) => {
-                const position = initialPositions.find(p => p.id === problem.positionId);
-                return (
-                  <Card key={problem.id} className="p-4">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="font-medium">{problem.title}</p>
-                        <p className="text-sm text-muted-foreground">{position?.title || 'N/A'}</p>
-                         <div className="flex flex-wrap gap-1 my-1">
-                              {problem.technologies.map(tech => <Badge variant="secondary" key={tech}>{tech}</Badge>)}
-                          </div>
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            aria-haspopup="true"
-                            size="icon"
-                            variant="ghost"
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem asChild>
-                            <Link href={`/admin/problems/${problem.id}/edit`}>
-                              <Pencil className="mr-2 h-4 w-4" />
-                              Edit
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <Link href={`/admin/problems/${problem.id}`}>
-                              <File className="mr-2 h-4 w-4" />
-                              View
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={() => setProblemToDelete(problem)}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                     <Badge
-                        variant={
-                          problem.difficulty === "Easy"
-                            ? "default"
-                            : problem.difficulty === "Medium"
-                            ? "default"
-                            : "destructive"
-                        }
-                        className={`mt-2 ${
-                          problem.difficulty === "Easy"
-                            ? "bg-green-600 hover:bg-green-600/80"
-                            : problem.difficulty === "Medium"
-                            ? "bg-orange-600 hover:bg-orange-600/80"
-                            : ""
-                        }`}
-                      >
-                        {problem.difficulty}
-                      </Badge>
-                  </Card>
-                )
-                })}
-            </div>
           </CardContent>
         </Card>
+        
+        <div className="flex items-center justify-end space-x-2 py-4">
+            <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+                disabled={page === 1}
+            >
+                Previous
+            </Button>
+             <span className="text-sm text-muted-foreground">
+                Page {page} of {totalPages}
+            </span>
+            <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={page === totalPages || totalPages === 0}
+            >
+                Next
+            </Button>
+        </div>
       </div>
 
       <AlertDialog open={!!problemToDelete} onOpenChange={(isOpen) => !isOpen && setProblemToDelete(null)}>

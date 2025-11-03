@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -16,84 +16,26 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Layers, Briefcase } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-
-// Mock data for problems
-const problems = [
-  {
-    id: "prob_1",
-    title: "FizzBuzz Challenge",
-    difficulty: "Easy",
-    description: "Write a program that prints the numbers from 1 to 100. But for multiples of three print “Fizz” instead of the number and for the multiples of five print “Buzz”. For numbers which are multiples of both three and five print “FizzBuzz”.",
-    technologies: ["JS"],
-    positionId: "pos_1",
-  },
-  {
-    id: "prob_2",
-    title: "Palindrome Checker",
-    difficulty: "Easy",
-    description: "Write a function that checks if a given string is a palindrome. A palindrome is a word, phrase, number, or other sequence of characters that reads the same backward as forward.",
-    technologies: ["JS"],
-    positionId: "pos_2",
-  },
-  {
-    id: "prob_3",
-    title: "Two Sum",
-    difficulty: "Medium",
-    description: "Given an array of integers `nums` and an integer `target`, return indices of the two numbers such that they add up to `target`.",
-    technologies: ["JS"],
-    positionId: "pos_1",
-  },
-  {
-    id: "prob_4",
-    title: "Implement a Debounce Function",
-    difficulty: "Medium",
-    description: "Your task is to implement a debounce function in JavaScript. The function should delay invoking a passed-in function until after `wait` milliseconds have elapsed since the last time it was invoked.",
-    technologies: ["HTML", "CSS", "JS"],
-    positionId: "pos_4",
-  },
-  {
-    id: "prob_5",
-    title: "Binary Tree Traversal",
-    difficulty: "Hard",
-    description: "Given a binary tree, write functions to perform preorder, inorder, and postorder traversal.",
-    technologies: ["JS"],
-    positionId: "pos_1",
-  },
-];
-
-const initialPositions = [
-  { id: "pos_1", title: "Senior Frontend Developer", department: "Engineering" },
-  { id: "pos_2", title: "UX/UI Designer", department: "Design" },
-  { id: "pos_3", title: "Product Manager", department: "Product" },
-  { id: "pos_4", title: "Junior Backend Developer", department: "Engineering" },
-];
-
-
-type Problem = {
-  id: string;
-  title: string;
-  difficulty: string;
-  description: string;
-  technologies: string[];
-  positionId: string;
-};
+import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import type { Position, Problem } from '@/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ViewProblemPage() {
   const router = useRouter();
   const params = useParams();
   const { toast } = useToast();
-  const [problem, setProblem] = useState<Problem | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const firestore = useFirestore();
+  const problemId = params.id as string;
 
-  const position = initialPositions.find(p => p.id === problem?.positionId);
+  const problemDocRef = useMemoFirebase(() => (firestore && problemId ? doc(firestore, 'problems', problemId) : null), [firestore, problemId]);
+  const { data: problem, isLoading: isLoadingProblem, error } = useDoc<Problem>(problemDocRef);
+  
+  const positionDocRef = useMemoFirebase(() => (firestore && problem?.positionId ? doc(firestore, 'positions', problem.positionId) : null), [firestore, problem]);
+  const { data: position, isLoading: isLoadingPosition } = useDoc<Position>(positionDocRef);
 
   useEffect(() => {
-    const problemId = params.id;
-    const problemToView = problems.find(p => p.id === problemId);
-
-    if (problemToView) {
-      setProblem(problemToView);
-    } else {
+    if (error) {
       toast({
         variant: 'destructive',
         title: 'Problem not found',
@@ -101,14 +43,25 @@ export default function ViewProblemPage() {
       });
       router.push('/admin/problems');
     }
-    setIsLoading(false);
-  }, [params.id, router, toast]);
+  }, [error, router, toast]);
 
+  const isLoading = isLoadingProblem || isLoadingPosition;
 
   if (isLoading) {
     return (
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-        <p>Loading...</p>
+        <div className="flex items-center gap-4 mb-4">
+            <Skeleton className="h-7 w-7 rounded-full" />
+            <Skeleton className="h-9 w-64" />
+        </div>
+        <Card>
+            <CardHeader>
+                <Skeleton className="h-6 w-32" />
+            </CardHeader>
+             <CardContent className="pt-2">
+                <Skeleton className="h-40 w-full" />
+            </CardContent>
+        </Card>
       </div>
     )
   }
@@ -159,11 +112,11 @@ export default function ViewProblemPage() {
                         <span>{position.title}</span>
                     </div>
                 )}
-                {problem.technologies && problem.technologies.length > 0 && (
+                {problem.tags && problem.tags.length > 0 && (
                     <div className="flex items-center gap-2">
                         <Layers className="h-4 w-4" />
                         <div className="flex flex-wrap gap-1">
-                           {problem.technologies.map(tech => <Badge variant="secondary" key={tech}>{tech}</Badge>)}
+                           {problem.tags.map(tag => <Badge variant="secondary" key={tag}>{tag}</Badge>)}
                         </div>
                     </div>
                 )}
