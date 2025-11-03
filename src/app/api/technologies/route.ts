@@ -91,19 +91,9 @@ export async function POST(request: NextRequest) {
             createdAt: serverTimestamp(),
         });
         
-        // Fetch the document we just created to get the server-generated timestamp
-        const newDocSnap = await getDoc(docRef);
-        const newTechnology = newDocSnap.data();
-
-        if (!newTechnology) {
-             throw new Error("Failed to retrieve newly created document.");
-        }
-
         const responseData = {
-            id: newDocSnap.id,
-            name: newTechnology.name,
-            // Convert Firestore Timestamp to JSON-serializable ISO string
-            createdAt: (newTechnology.createdAt as Timestamp).toDate().toISOString(), 
+            id: docRef.id,
+            name: name,
         };
 
         return NextResponse.json(responseData, { status: 201 });
