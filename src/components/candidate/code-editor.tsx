@@ -24,8 +24,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useFirestore } from "@/firebase";
-import { collection, addDoc, doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import type { Candidate, Problem } from "@/types";
 
 const getInitialCode = (tech: string) => {
@@ -63,7 +61,6 @@ type CodeEditorProps = {
 
 export default function CodeEditor({ problem, candidate }: CodeEditorProps) {
   const router = useRouter();
-  const firestore = useFirestore();
   const technologies = useMemo(() => problem.tags || [], [problem]);
   const [codes, setCodes] = useState<Record<string, string>>(() => {
     const initialState: Record<string, string> = {};
@@ -83,30 +80,27 @@ export default function CodeEditor({ problem, candidate }: CodeEditorProps) {
 
   const handleSubmit = async () => {
     setShowConfirmDialog(false);
-    if (!firestore) {
-      toast({ variant: 'destructive', title: "Submission Failed", description: "Database connection not found." });
-      return;
-    }
-    
     setIsSubmitted(true); // Disable editor immediately
 
     try {
-      const submissionsRef = collection(firestore, 'candidates', candidate.id, 'submissions');
-      const newSubmissionRef = await addDoc(submissionsRef, {
-        candidateId: candidate.id,
-        problemId: problem.id,
-        codeHTML: codes['html'] || '',
-        codeCSS: codes['css'] || '',
-        codeJS: codes['js'] || '',
-        submissionTime: serverTimestamp(),
+      const response = await fetch('/api/candidate/problem/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          candidateId: candidate.id,
+          problemId: problem.id,
+          codeHTML: codes['html'] || '',
+          codeCSS: codes['css'] || '',
+          codeJS: codes['js'] || '',
+        }),
       });
 
-      const candidateRef = doc(firestore, 'candidates', candidate.id);
-      await updateDoc(candidateRef, {
-        status: 'Completed',
-        submissionId: newSubmissionRef.id,
-        submitTime: serverTimestamp()
-      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Submission failed');
+      }
 
       toast({
         title: "Submission Successful!",
@@ -153,7 +147,7 @@ export default function CodeEditor({ problem, candidate }: CodeEditorProps) {
         <Card className="flex-1 flex flex-col">
           <Tabs defaultValue={technologies[0]?.toLowerCase()} className="flex-1 flex flex-col">
             <CardHeader className="flex-row items-center justify-between gap-4">
-              <TabsList className={`grid w-full max-w-xs ${getGridColsClass()}`}>
+              <TabsList className={cn("grid w-full max-w-xs", getGridColsClass())}>
                 {technologies.map(tech => (
                     <TabsTrigger key={tech} value={tech.toLowerCase()}>{tech}</TabsTrigger>
                 ))}
