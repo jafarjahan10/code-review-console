@@ -39,38 +39,45 @@ export default function ProblemDisplay() {
   const firestore = useFirestore();
   const { user, isUserLoading: isAuthLoading } = useUser();
   const { toast } = useToast();
-  const [candidateId, setCandidateId] = useState<string | null>(null);
+  
+  const candidateId = user?.uid;
   
   const [accessState, setAccessState] = useState<AccessState>('loading');
   const [reason, setReason] = useState("");
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isStarting, setIsStarting] = useState(false);
 
-  useEffect(() => {
-    if (!isAuthLoading && user) {
-        const id = sessionStorage.getItem('candidateId');
-        if (id) {
-            setCandidateId(id);
-        }
-    }
-  }, [isAuthLoading, user]);
-
   const candidateDocRef = useMemoFirebase(() => (firestore && candidateId ? doc(firestore, 'candidates', candidateId) : null), [firestore, candidateId]);
-  const { data: candidate, isLoading: isLoadingCandidate } = useDoc<Candidate>(candidateDocRef);
+  const { data: candidate, isLoading: isLoadingCandidate, error: candidateError } = useDoc<Candidate>(candidateDocRef);
 
   const problemDocRef = useMemoFirebase(() => (firestore && candidate?.problemId ? doc(firestore, 'problems', candidate.problemId) : null), [firestore, candidate]);
   const { data: problem, isLoading: isLoadingProblem } = useDoc<Problem>(problemDocRef);
+  
+  useEffect(() => {
+    if(candidateError) {
+        setAccessState('error');
+        setReason("Could not load your candidate information. You may not be registered for a challenge.");
+    }
+  }, [candidateError]);
 
   useEffect(() => {
-    if (isAuthLoading || isLoadingCandidate || !candidate) {
+    if (isAuthLoading || isLoadingCandidate) {
         setAccessState('loading');
+        return;
+    }
+
+    if (!candidate) {
+        if (!isLoadingCandidate) {
+             setAccessState('error');
+             setReason("Could not load your candidate information. Please try logging in again.");
+        }
         return;
     }
     
     if (!problem) {
         if (!isLoadingProblem) {
             setAccessState('error');
-            setReason("Could not load your problem information. Please contact support.");
+            setReason("Could not load your assigned problem. Please contact support.");
         }
         return;
     }

@@ -51,7 +51,6 @@ export default function CandidateLoginPage() {
         if (candidateDocSnap.exists()) {
              const candidateData = candidateDocSnap.data();
              if (candidateData.accessCode === accessCode) {
-                 sessionStorage.setItem('candidateId', user.uid);
                  toast({
                     title: 'Login Successful!',
                     description: `Welcome, ${candidateData.name}.`,

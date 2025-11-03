@@ -17,24 +17,12 @@ export default function ProblemPage() {
   const router = useRouter();
   const firestore = useFirestore();
   const { user, isUserLoading: isAuthLoading } = useUser();
-  const [candidateId, setCandidateId] = useState<string | null>(null);
+
+  const candidateId = user?.uid;
 
   useEffect(() => {
-    if (isAuthLoading) return; // Wait for auth state
-    
-    if (!user) {
+    if (!isAuthLoading && !user) {
       router.push('/login');
-      return;
-    }
-
-    const id = sessionStorage.getItem('candidateId');
-    // Also check if the session ID matches the authenticated user's ID
-    if (!id || id !== user.uid) {
-        // Clearing sessionStorage just in case
-        sessionStorage.removeItem('candidateId');
-        router.push('/login');
-    } else {
-        setCandidateId(id);
     }
   }, [router, user, isAuthLoading]);
 
@@ -76,7 +64,7 @@ export default function ProblemPage() {
 
   const isLoading = isAuthLoading || isLoadingCandidate || isLoadingProblem;
 
-  if (isLoading || !problem || !candidate) {
+  if (isLoading) {
     return (
         <div className="grid md:grid-cols-2 gap-4 p-4" style={{height: 'calc(100dvh - 64px)'}}>
             <Card className="flex flex-col">
@@ -102,6 +90,16 @@ export default function ProblemPage() {
     )
   }
 
+  if (!problem || !candidate) {
+    // This can happen briefly during loading or if data is not found.
+    // The useEffect for redirection should handle non-authenticated users.
+    // If user is authenticated but data is missing, this is a valid state to show a loader or message.
+    return (
+      <div className="grid md:grid-cols-2 gap-4 p-4" style={{height: 'calc(100dvh - 64px)'}}>
+          <p>Loading candidate data...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="grid md:grid-cols-2 gap-4 p-4 no-scrollbar overflow-y-auto" style={{height: 'calc(100dvh - 64px)'}} onContextMenu={(e) => e.preventDefault()}>

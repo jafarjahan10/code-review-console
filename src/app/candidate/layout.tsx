@@ -26,7 +26,6 @@ export default function CandidateLayout({
       if (auth) {
         await signOut(auth);
       }
-      sessionStorage.clear();
       router.push('/login');
       toast({ title: "Logged out successfully." });
     } catch (error: any) {
