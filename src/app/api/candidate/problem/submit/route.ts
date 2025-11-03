@@ -1,6 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
+import { initializeApp, getApps, App } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 
 // Initialize Firebase Admin SDK
@@ -25,12 +25,11 @@ export async function POST(request: Request) {
     }
 
     // 1. Generate a new document reference in the 'submissions' collection to get an ID upfront.
-    const submissionCollection = db.collection('submissions');
-    const submissionRef = submissionCollection.doc(); // Create a reference with a new auto-generated ID
+    const submissionRef = db.collection('submissions').doc();
 
-    // 2. Use a single `set` operation to create the document with all its data, including the ID.
+    // 2. Create the submission document using a single `set` operation.
     await submissionRef.set({
-      id: submissionRef.id, // Include the document's own ID
+      id: submissionRef.id,
       candidateId,
       problemId,
       codeHTML: codeHTML || '',
