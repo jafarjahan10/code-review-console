@@ -69,11 +69,11 @@ export default function SettingsPage() {
   const [interviewerToDelete, setInterviewerToDelete] = useState<WithId<AdminUser> | null>(null);
 
   // Fetch Admins
-  const adminsColRef = useMemoFirebase(() => collection(firestore, 'admins'), [firestore]);
+  const adminsColRef = useMemoFirebase(() => firestore ? collection(firestore, 'admins') : null, [firestore]);
   const { data: interviewers, isLoading: isLoadingAdmins } = useCollection<AdminUser>(adminsColRef);
   
   // Fetch Departments
-  const deptsColRef = useMemoFirebase(() => collection(firestore, 'departments'), [firestore]);
+  const deptsColRef = useMemoFirebase(() => firestore ? collection(firestore, 'departments') : null, [firestore]);
   const { data: departments, isLoading: isLoadingDepts } = useCollection<Department>(deptsColRef);
 
 
