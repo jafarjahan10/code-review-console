@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,11 +13,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Lock, Clock, ArrowRight } from "lucide-react";
+import { Lock, Clock, ArrowRight, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
-import { doc } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
 import type { Candidate, Problem } from "@/types";
+import { useToast } from "@/hooks/use-toast";
 
 type AccessState = 'loading' | 'denied' | 'granted' | 'error';
 
@@ -32,12 +33,15 @@ const toDate = (timestamp: any): Date | undefined => {
 };
 
 export default function ProblemDisplay() {
+  const router = useRouter();
   const firestore = useFirestore();
+  const { toast } = useToast();
   const [candidateId, setCandidateId] = useState<string | null>(null);
   
   const [accessState, setAccessState] = useState<AccessState>('loading');
   const [reason, setReason] = useState("");
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [isStarting, setIsStarting] = useState(false);
 
   useEffect(() => {
     setCandidateId(sessionStorage.getItem('candidateId'));
@@ -94,6 +98,26 @@ export default function ProblemDisplay() {
     return () => clearInterval(interval);
 
   }, [candidate, problem, isLoadingCandidate, isLoadingProblem, accessState]);
+
+  const handleStartChallenge = async () => {
+    if (!firestore || !candidateId) return;
+
+    setIsStarting(true);
+    try {
+        const candidateRef = doc(firestore, 'candidates', candidateId);
+        await updateDoc(candidateRef, {
+            status: 'In Progress'
+        });
+        router.push('/candidate/problem');
+    } catch(error: any) {
+        toast({
+            variant: "destructive",
+            title: "Could not start challenge",
+            description: error.message
+        });
+        setIsStarting(false);
+    }
+  };
 
 
   if (accessState === 'loading') {
@@ -162,10 +186,13 @@ export default function ProblemDisplay() {
             <p className="text-muted-foreground">{problem.description}</p>
         </CardContent>
         <CardFooter>
-            <Button asChild size="lg">
-            <Link href="/candidate/problem">
-                Start Challenge <ArrowRight className="ml-2 h-5 w-5" />
-            </Link>
+            <Button onClick={handleStartChallenge} size="lg" disabled={isStarting}>
+                {isStarting ? (
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                ) : (
+                    <ArrowRight className="mr-2 h-5 w-5" />
+                )}
+                Start Challenge
             </Button>
         </CardFooter>
         </Card>
