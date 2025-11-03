@@ -24,9 +24,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // 1. Create a new submission document in the top-level 'submissions' collection
+    // 1. Generate a new document reference in the 'submissions' collection to get an ID upfront.
     const submissionCollection = db.collection('submissions');
-    const submissionRef = await submissionCollection.add({
+    const submissionRef = submissionCollection.doc(); // Create a reference with a new auto-generated ID
+
+    // 2. Use a single `set` operation to create the document with all its data, including the ID.
+    await submissionRef.set({
+      id: submissionRef.id, // Include the document's own ID
       candidateId,
       problemId,
       codeHTML: codeHTML || '',
@@ -34,12 +38,8 @@ export async function POST(request: Request) {
       codeJS: codeJS || '',
       submissionTime: Timestamp.now(),
     });
-    
-    // As a separate step, update the new doc with its own ID
-    await submissionRef.update({ id: submissionRef.id });
 
-
-    // 2. Update the candidate's document with the new submission ID and status
+    // 3. Update the candidate's document with the new submission ID and status
     const candidateRef = db.doc(`candidates/${candidateId}`);
     await candidateRef.update({
       status: 'Completed',
