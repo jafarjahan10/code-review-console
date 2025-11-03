@@ -30,37 +30,33 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search') || '';
     const sortBy = searchParams.get('sortBy') || 'createdAt';
     const sortOrder = searchParams.get('sortOrder') === 'asc' ? 'asc' : 'desc';
-    const page = parseInt(searchParams.get('page') || '1', 10);
     const limitParam = parseInt(searchParams.get('limit') || '10', 10);
+    const startAfterDocId = searchParams.get('startAfter');
 
-    const constraints: QueryConstraint[] = [];
+    let constraints: QueryConstraint[] = [];
 
     if (search) {
       constraints.push(where('name_lowercase', '>=', search.toLowerCase()));
       constraints.push(where('name_lowercase', '<=', search.toLowerCase() + '\uf8ff'));
     }
 
-    if (sortBy) {
-      // Searching on name_lowercase, but sorting on original name field
-      const sortField = sortBy === 'name' ? 'name_lowercase' : sortBy;
-      constraints.push(orderBy(sortField, sortOrder));
-    } else {
-      constraints.push(orderBy('createdAt', 'desc'));
+    const sortField = sortBy === 'name' ? 'name_lowercase' : sortBy;
+    constraints.push(orderBy(sortField, sortOrder));
+
+    if (startAfterDocId) {
+      const startAfterDoc = await getDoc(doc(firestore, TECHNOLOGIES_COLLECTION, startAfterDocId));
+      if (startAfterDoc.exists()) {
+        constraints.push(startAfter(startAfterDoc));
+      }
     }
     
-    // For pagination: get all docs and slice them. Not efficient for large datasets.
-    // Firestore's cursor-based pagination is better but more complex to implement with page numbers.
-    const allDocsQuery = query(collection(firestore, TECHNOLOGIES_COLLECTION), ...constraints);
-    const allDocsSnapshot = await getDocs(allDocsQuery);
+    constraints.push(limit(limitParam + 1)); // Fetch one extra to check for hasNextPage
 
-    const startIndex = (page - 1) * limitParam;
-    const endIndex = startIndex + limitParam;
-    
-    const paginatedDocs = allDocsSnapshot.docs.slice(startIndex, endIndex);
+    const q = query(collection(firestore, TECHNOLOGIES_COLLECTION), ...constraints);
+    const querySnapshot = await getDocs(q);
 
-    const technologies: Technology[] = paginatedDocs.map(doc => {
+    let technologies: Technology[] = querySnapshot.docs.map(doc => {
       const data = doc.data();
-      // Handle cases where createdAt might be null
       const createdAt = data.createdAt ? (data.createdAt as Timestamp).toDate().toISOString() : new Date().toISOString();
       return {
         id: doc.id,
@@ -69,11 +65,14 @@ export async function GET(request: NextRequest) {
       };
     });
 
+    const hasNextPage = technologies.length > limitParam;
+    if (hasNextPage) {
+      technologies = technologies.slice(0, limitParam); // Remove the extra document
+    }
+
     return NextResponse.json({
         technologies,
-        page,
-        limit: limitParam,
-        hasNextPage: endIndex < allDocsSnapshot.docs.length,
+        hasNextPage,
     });
 
   } catch (error: any) {

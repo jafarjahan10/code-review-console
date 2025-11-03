@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -43,26 +43,45 @@ export default function TechnologiesPage() {
   const [techToDelete, setTechToDelete] = useState<Technology | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [sort, setSort] = useState({ by: 'createdAt', order: 'desc' });
+
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
-  const [sort, setSort] = useState({ by: 'createdAt', order: 'desc' });
+  const [startAfterCursors, setStartAfterCursors] = useState<string[]>(['']);
   const [hasNextPage, setHasNextPage] = useState(false);
-  
-  const fetchTechnologies = useCallback(async () => {
+
+  const [isPending, startTransition] = useTransition();
+
+  const fetchTechnologies = useCallback(async (newPage: number) => {
     setIsLoading(true);
     try {
+      const currentCursor = startAfterCursors[newPage - 1] || '';
+      
       const params = new URLSearchParams({
-        page: String(page),
         limit: String(limit),
         search: searchTerm,
         sortBy: sort.by,
         sortOrder: sort.order,
       });
+
+      if (newPage > 1 && currentCursor) {
+        params.append('startAfter', currentCursor);
+      }
+      
       const response = await fetch(`/api/technologies?${params.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch");
       const data = await response.json();
+
       setTechnologies(data.technologies);
       setHasNextPage(data.hasNextPage);
+      
+      if (data.hasNextPage && data.technologies.length > 0) {
+        const lastDocId = data.technologies[data.technologies.length - 1].id;
+        const newCursors = [...startAfterCursors];
+        newCursors[newPage] = lastDocId;
+        setStartAfterCursors(newCursors);
+      }
+
     } catch (error) {
       toast({
         variant: "destructive",
@@ -72,11 +91,23 @@ export default function TechnologiesPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [page, limit, searchTerm, sort, toast]);
+  }, [limit, searchTerm, sort, toast, startAfterCursors]);
 
   useEffect(() => {
-    fetchTechnologies();
-  }, [fetchTechnologies]);
+    startTransition(() => {
+        fetchTechnologies(page);
+    });
+  }, [page, fetchTechnologies]);
+
+  useEffect(() => {
+    // Reset pagination on search or sort change
+    setPage(1);
+    setStartAfterCursors(['']);
+    startTransition(() => {
+        fetchTechnologies(1);
+    });
+  }, [searchTerm, sort]);
+
 
   const handleDelete = async () => {
     if (!techToDelete) return;
@@ -93,7 +124,7 @@ export default function TechnologiesPage() {
             title: "Technology Deleted",
             description: `The technology "${techToDelete.name}" has been successfully deleted.`,
         });
-        fetchTechnologies(); // Refresh the list
+        fetchTechnologies(page); // Refresh the list
     } catch (error: any) {
          toast({
             variant: "destructive",
@@ -111,12 +142,10 @@ export default function TechnologiesPage() {
     } else {
       setSort({ by: column, order: 'desc' });
     }
-    setPage(1);
   };
   
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-    setPage(1); // Reset to first page on new search
   };
 
 
@@ -238,7 +267,7 @@ export default function TechnologiesPage() {
             variant="outline"
             size="sm"
             onClick={() => setPage(p => Math.max(1, p - 1))}
-            disabled={page <= 1}
+            disabled={page <= 1 || isLoading}
           >
             Previous
           </Button>
@@ -246,7 +275,7 @@ export default function TechnologiesPage() {
             variant="outline"
             size="sm"
             onClick={() => setPage(p => p + 1)}
-            disabled={!hasNextPage}
+            disabled={!hasNextPage || isLoading}
           >
             Next
           </Button>
