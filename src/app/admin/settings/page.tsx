@@ -59,6 +59,7 @@ export default function SettingsPage() {
 
   const [interviewers, setInterviewers] = useState<WithId<AdminUser>[]>([]);
   const [interviewerEmail, setInterviewerEmail] = useState('');
+  const [interviewerPassword, setInterviewerPassword] = useState('');
   
   const [departments, setDepartments] = useState<string[]>(initialDepartments);
   const [newDepartment, setNewDepartment] = useState("");
@@ -130,17 +131,15 @@ export default function SettingsPage() {
 
   const handleAddInterviewer = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!interviewerEmail.trim()) {
-        toast({ variant: "destructive", title: "Email cannot be empty." });
+    if (!interviewerEmail.trim() || !interviewerPassword.trim()) {
+        toast({ variant: "destructive", title: "Email and password cannot be empty." });
         return;
     }
     setIsAddingInterviewer(true);
 
-    const tempPassword = Math.random().toString(36).slice(-8);
-
     try {
         // We need a temporary auth instance to create a user without signing out the current admin
-        const { user: newInterviewer } = await createUserWithEmailAndPassword(auth, interviewerEmail, tempPassword);
+        const { user: newInterviewer } = await createUserWithEmailAndPassword(auth, interviewerEmail, interviewerPassword);
         
         const adminDocRef = doc(firestore, 'admins', newInterviewer.uid);
         await setDoc(adminDocRef, {
@@ -151,14 +150,10 @@ export default function SettingsPage() {
         });
         
         setInterviewerEmail('');
+        setInterviewerPassword('');
         toast({
             title: "Interviewer Added",
-            description: `Password: ${tempPassword}`,
-            action: (
-                <Button variant="outline" size="sm" onClick={() => navigator.clipboard.writeText(tempPassword)}>
-                    <Copy className="mr-2 h-4 w-4" /> Copy
-                </Button>
-            )
+            description: "The new user has been successfully added to the panel.",
         });
 
     } catch (error: any) {
@@ -313,11 +308,17 @@ export default function SettingsPage() {
                       <CardDescription>Invite a new interviewer to the panel by email.</CardDescription>
                   </CardHeader>
                   <CardContent>
-                      <form onSubmit={handleAddInterviewer} className="flex flex-col md:flex-row items-end gap-4">
-                          <div className="flex-1 w-full space-y-2">
-                              <Label htmlFor="interviewer-email">Email</Label>
-                              <Input id="interviewer-email" type="email" placeholder="interviewer@example.com" value={interviewerEmail} onChange={(e) => setInterviewerEmail(e.target.value)} disabled={isAddingInterviewer} />
-                          </div>
+                      <form onSubmit={handleAddInterviewer} className="space-y-4">
+                          <div className="flex flex-col md:flex-row items-end gap-4">
+                            <div className="flex-1 w-full space-y-2">
+                                <Label htmlFor="interviewer-email">Email</Label>
+                                <Input id="interviewer-email" type="email" placeholder="interviewer@example.com" value={interviewerEmail} onChange={(e) => setInterviewerEmail(e.target.value)} disabled={isAddingInterviewer} />
+                            </div>
+                            <div className="flex-1 w-full space-y-2">
+                                <Label htmlFor="interviewer-password">Password</Label>
+                                <Input id="interviewer-password" type="password" placeholder="Set a password" value={interviewerPassword} onChange={(e) => setInterviewerPassword(e.target.value)} disabled={isAddingInterviewer} />
+                            </div>
+                           </div>
                           <Button type="submit" className="w-full md:w-auto" disabled={isAddingInterviewer}>
                               {isAddingInterviewer && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                               <PlusCircle className="mr-2 h-4 w-4" />
@@ -470,3 +471,5 @@ export default function SettingsPage() {
     </>
   );
 }
+
+    
