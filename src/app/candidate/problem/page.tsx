@@ -10,6 +10,8 @@ import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import type { Candidate, Problem } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export default function ProblemPage() {
   const router = useRouter();
@@ -99,7 +101,9 @@ export default function ProblemPage() {
         </CardHeader>
         <ScrollArea className="flex-1">
           <CardContent>
-            <p className="text-foreground mb-4">{problem.description}</p>
+            <div className="prose max-w-none dark:prose-invert">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{problem.description}</ReactMarkdown>
+            </div>
           </CardContent>
         </ScrollArea>
       </Card>

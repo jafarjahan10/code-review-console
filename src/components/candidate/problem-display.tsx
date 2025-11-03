@@ -19,6 +19,8 @@ import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { doc, updateDoc } from 'firebase/firestore';
 import type { Candidate, Problem } from "@/types";
 import { useToast } from "@/hooks/use-toast";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 type AccessState = 'loading' | 'denied' | 'granted' | 'error';
 
@@ -183,7 +185,9 @@ export default function ProblemDisplay() {
             <CardDescription>Difficulty: {problem.difficulty}</CardDescription>
         </CardHeader>
         <CardContent>
-            <p className="text-muted-foreground">{problem.description}</p>
+            <div className="prose max-w-none dark:prose-invert">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{problem.description}</ReactMarkdown>
+            </div>
         </CardContent>
         <CardFooter>
             <Button onClick={handleStartChallenge} size="lg" disabled={isStarting}>
