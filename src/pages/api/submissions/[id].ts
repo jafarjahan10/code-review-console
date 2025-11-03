@@ -1,6 +1,6 @@
 
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getFirestore, doc, getDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc } from 'firebase-admin/firestore';
 import { initializeFirebase } from '@/firebase/server-init';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
