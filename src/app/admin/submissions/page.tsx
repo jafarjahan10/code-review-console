@@ -50,7 +50,7 @@ export default function SubmissionsPage() {
   const firestore = useFirestore();
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortConfig, setSortConfig] = useState({ key: 'submissionTime', direction: 'desc' });
+  const [sortConfig, setSortConfig] = useState<{key: string; direction: string}>({ key: 'submissionTime', direction: 'desc' });
   const [page, setPage] = useState(1);
   const itemsPerPage = 10;
   
@@ -91,11 +91,9 @@ export default function SubmissionsPage() {
         const candidateName = sub.candidate?.name?.toLowerCase() || '';
         const candidateEmail = sub.candidate?.email?.toLowerCase() || '';
         const problemTitle = sub.problem?.title?.toLowerCase() || '';
-        const status = sub.candidate?.status?.toLowerCase() || '';
         return candidateName.includes(searchTerm.toLowerCase()) || 
                candidateEmail.includes(searchTerm.toLowerCase()) || 
-               problemTitle.includes(searchTerm.toLowerCase()) ||
-               status.includes(searchTerm.toLowerCase());
+               problemTitle.includes(searchTerm.toLowerCase());
     });
 
     filtered.sort((a, b) => {
@@ -110,9 +108,9 @@ export default function SubmissionsPage() {
                 valA = a.problem?.title || '';
                 valB = b.problem?.title || '';
                 break;
-            case 'status':
-                valA = a.candidate?.status || '';
-                valB = b.candidate?.status || '';
+            case 'remarks':
+                valA = a.remarks?.length || 0;
+                valB = b.remarks?.length || 0;
                 break;
             case 'submissionTime':
             default:
@@ -138,7 +136,7 @@ export default function SubmissionsPage() {
   const handleSort = (column: string) => {
     setSort(currentSort => ({
       key: column,
-      order: currentSort.key === column && currentSort.order === 'asc' ? 'desc' : 'asc',
+      direction: currentSort.key === column && currentSort.order === 'asc' ? 'desc' : 'asc',
     }));
     setPage(1); // Reset to first page on sort change
   };
@@ -187,8 +185,8 @@ export default function SubmissionsPage() {
                     </Button>
                 </TableHead>
                 <TableHead className="hidden md:table-cell">
-                    <Button variant="ghost" onClick={() => handleSort('status')}>
-                        Status <ArrowUpDown className="ml-2 h-4 w-4 inline-block" />
+                    <Button variant="ghost" onClick={() => handleSort('remarks')}>
+                        Remarks <ArrowUpDown className="ml-2 h-4 w-4 inline-block" />
                     </Button>
                 </TableHead>
                 <TableHead className="hidden md:table-cell">
@@ -213,8 +211,6 @@ export default function SubmissionsPage() {
                     </TableRow>
                 ))
               ) : paginatedSubmissions.map((submission: any) => {
-                const status = submission.candidate?.status || 'Pending';
-                
                 return (
                 <TableRow key={submission.id}>
                   <TableCell className="whitespace-nowrap">
@@ -230,32 +226,14 @@ export default function SubmissionsPage() {
                         </p>
                          <div className="md:hidden text-sm text-muted-foreground">
                           <p>{submission.problem?.title || 'N/A'}</p>
-                           <Badge 
-                              variant={status === 'Completed' ? 'default' : 'secondary'}
-                              className={`mt-1 ${status === 'Completed' ? 'bg-green-600 hover:bg-green-600/80' : ''}`}
-                            >
-                              {status}
-                            </Badge>
+                           <p>Remarks: {submission.remarks?.length || 0}</p>
                         </div>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell className="whitespace-nowrap hidden md:table-cell">{submission.problem?.title || 'N/A'}</TableCell>
-                  <TableCell className="whitespace-nowrap hidden md:table-cell">
-                    <Badge 
-                       variant={
-                          status === 'Completed' ? 'default' :
-                          status === 'Pending' ? 'default' :
-                          status === 'In Progress' ? 'default' : 'secondary'
-                        }
-                        className={
-                          status === 'Completed' ? 'bg-green-600 hover:bg-green-600/80' :
-                          status === 'Pending' ? 'bg-orange-600 hover:bg-orange-600/80' :
-                          status === 'In Progress' ? 'bg-blue-600 hover:bg-blue-600/80' : ''
-                        }
-                    >
-                      {status}
-                    </Badge>
+                  <TableCell className="whitespace-nowrap hidden md:table-cell text-center">
+                    {submission.remarks?.length || 0}
                   </TableCell>
                   <TableCell className="whitespace-nowrap hidden md:table-cell">
                     <ClientDateTime date={toDate(submission.submissionTime)} />
