@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -119,7 +119,7 @@ export default function SettingsPage() {
   const paginatedInterviewers = useMemo(() => {
     const startIndex = (interviewerCurrentPage - 1) * itemsPerPage;
     return filteredInterviewers.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredInterviewers, interviewerCurrentPage, itemsPerPage]);
+  }, [filteredInterviewers, interviewerCurrentPage]);
 
   // Search and Pagination Logic for Departments
   const filteredDepartments = useMemo(() => {
@@ -133,7 +133,7 @@ export default function SettingsPage() {
   const paginatedDepartments = useMemo(() => {
     const startIndex = (departmentCurrentPage - 1) * itemsPerPage;
     return filteredDepartments.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredDepartments, departmentCurrentPage, itemsPerPage]);
+  }, [filteredDepartments, departmentCurrentPage]);
 
 
   useEffect(() => {
