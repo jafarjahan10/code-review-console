@@ -134,9 +134,9 @@ export default function SubmissionsPage() {
   }, [filteredAndSortedSubmissions, page, itemsPerPage]);
 
   const handleSort = (column: string) => {
-    setSort(currentSort => ({
+    setSortConfig(currentSort => ({
       key: column,
-      direction: currentSort.key === column && currentSort.order === 'asc' ? 'desc' : 'asc',
+      direction: currentSort.key === column && currentSort.direction === 'asc' ? 'desc' : 'asc',
     }));
     setPage(1); // Reset to first page on sort change
   };
