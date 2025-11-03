@@ -34,6 +34,7 @@ import { getAuth, createUserWithEmailAndPassword, updatePassword, updateProfile,
 import type { WithId } from "@/firebase";
 import { initializeApp, deleteApp } from "firebase/app";
 import { firebaseConfig } from "@/firebase/config";
+import { Switch } from "@/components/ui/switch";
 
 
 type AdminUser = {
@@ -80,11 +81,8 @@ export default function SettingsPage() {
   
   const departments = departmentsData || [];
 
-  const currentUserRole = useMemo(() => {
-    if (!currentUser || !interviewers) return null;
-    const adminData = interviewers.find(interviewer => interviewer.id === currentUser.uid);
-    return adminData?.role;
-  }, [currentUser, interviewers]);
+  const currentUserInPanel = interviewers?.find(interviewer => interviewer.id === currentUser?.uid);
+  const currentUserRole = currentUserInPanel?.role;
 
 
   useEffect(() => {
@@ -141,6 +139,16 @@ export default function SettingsPage() {
         toast({ variant: "destructive", title: "Failed to update password", description: "Please check your old password and try again." });
     } finally {
         setIsPasswordUpdating(false);
+    }
+  };
+
+  const handleRoleChange = async (userId: string, newRole: "Admin" | "User") => {
+    try {
+        const adminDocRef = doc(firestore, 'admins', userId);
+        await setDoc(adminDocRef, { role: newRole }, { merge: true });
+        toast({ title: "User role updated." });
+    } catch (error: any) {
+        toast({ variant: "destructive", title: "Failed to update role", description: error.message });
     }
   };
 
@@ -357,7 +365,7 @@ export default function SettingsPage() {
                               <TableRow>
                                   <TableHead>Name</TableHead>
                                   <TableHead className="hidden md:table-cell">Email</TableHead>
-                                  <TableHead className="hidden md:table-cell">Role</TableHead>
+                                  <TableHead>Role</TableHead>
                                   {currentUserRole === 'Admin' && <TableHead><span className="sr-only">Actions</span></TableHead>}
                               </TableRow>
                           </TableHeader>
@@ -377,7 +385,23 @@ export default function SettingsPage() {
                                           </div>
                                       </TableCell>
                                       <TableCell className="hidden md:table-cell">{interviewer.email}</TableCell>
-                                       <TableCell className="hidden md:table-cell">{interviewer.role}</TableCell>
+                                      <TableCell>
+                                        {currentUserRole === 'Admin' ? (
+                                            <div className="flex items-center space-x-2">
+                                                <Switch
+                                                    id={`role-switch-${interviewer.id}`}
+                                                    checked={interviewer.role === 'Admin'}
+                                                    onCheckedChange={(checked) =>
+                                                        handleRoleChange(interviewer.id, checked ? 'Admin' : 'User')
+                                                    }
+                                                    disabled={currentUser?.uid === interviewer.id}
+                                                />
+                                                <Label htmlFor={`role-switch-${interviewer.id}`}>{interviewer.role}</Label>
+                                            </div>
+                                        ) : (
+                                            interviewer.role
+                                        )}
+                                      </TableCell>
                                       {currentUserRole === 'Admin' && (
                                         <TableCell className="text-right">
                                             <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setInterviewerToDelete(interviewer)} disabled={currentUser?.uid === interviewer.id}>
@@ -433,7 +457,7 @@ export default function SettingsPage() {
                               </TableRow>
                           </TableHeader>
                           <TableBody>
-                              {departments.map((dept) => (
+                              {departments && departments.map((dept) => (
                                   <TableRow key={dept.id}>
                                       <TableCell className="font-medium">{dept.name}</TableCell>
                                       {currentUserRole === 'Admin' && (
