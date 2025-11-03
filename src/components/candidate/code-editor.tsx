@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Send } from "lucide-react";
+import { Send, Loader2 } from "lucide-react";
 import Editor from "react-simple-code-editor";
 import { highlight, languages } from "prismjs/components/prism-core";
 import "prismjs/components/prism-clike";
@@ -26,6 +26,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import type { Candidate, Problem } from "@/types";
 import { cn } from "@/lib/utils";
+import { useFirestore } from "@/firebase";
+import { collection, doc, writeBatch, serverTimestamp } from "firebase/firestore";
 
 const getInitialCode = (tech: string) => {
     switch (tech.toLowerCase()) {
@@ -62,6 +64,7 @@ type CodeEditorProps = {
 
 export default function CodeEditor({ problem, candidate }: CodeEditorProps) {
   const router = useRouter();
+  const firestore = useFirestore();
   const technologies = useMemo(() => problem.tags || [], [problem]);
   const [codes, setCodes] = useState<Record<string, string>>(() => {
     const initialState: Record<string, string> = {};
@@ -72,7 +75,7 @@ export default function CodeEditor({ problem, candidate }: CodeEditorProps) {
   });
   
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   const handleCodeChange = (tech: string, code: string) => {
@@ -81,7 +84,17 @@ export default function CodeEditor({ problem, candidate }: CodeEditorProps) {
 
   const handleSubmit = async () => {
     setShowConfirmDialog(false);
-    setIsSubmitted(true); // Disable editor immediately
+    setIsSubmitting(true);
+
+    if (!firestore) {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Database connection not available.",
+        });
+        setIsSubmitting(false);
+        return;
+    }
 
     const answers = technologies.map(tech => ({
         type: tech,
@@ -89,22 +102,34 @@ export default function CodeEditor({ problem, candidate }: CodeEditorProps) {
     }));
 
     try {
-      const response = await fetch('/api/candidate/problem/submit', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          candidateId: candidate.id,
-          problemId: problem.id,
-          answers: answers,
-        }),
+      // 1. Get a new write batch
+      const batch = writeBatch(firestore);
+
+      // 2. Create a reference for a new submission document
+      const submissionRef = doc(collection(firestore, "submissions"));
+
+      // 3. Set the data for the new submission in the batch
+      batch.set(submissionRef, {
+        id: submissionRef.id,
+        candidateId: candidate.id,
+        problemId: problem.id,
+        answers: answers,
+        submissionTime: serverTimestamp(),
+        remarks: [],
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Submission failed');
-      }
+      // 4. Create a reference to the candidate's document
+      const candidateRef = doc(firestore, "candidates", candidate.id);
+
+      // 5. Update the candidate's document in the batch
+      batch.update(candidateRef, {
+        status: 'Completed',
+        submissionId: submissionRef.id,
+        submitTime: serverTimestamp(),
+      });
+
+      // 6. Commit the batch
+      await batch.commit();
 
       toast({
         title: "Submission Successful!",
@@ -119,9 +144,9 @@ export default function CodeEditor({ problem, candidate }: CodeEditorProps) {
       toast({
         variant: 'destructive',
         title: "Submission Failed",
-        description: error.message || "An unexpected error occurred.",
+        description: error.message || "An unexpected error occurred. Check permissions.",
       });
-      setIsSubmitted(false); // Re-enable editor on failure
+      setIsSubmitting(false); // Re-enable button on failure
     }
   };
 
@@ -156,12 +181,18 @@ export default function CodeEditor({ problem, candidate }: CodeEditorProps) {
                     <TabsTrigger key={tech} value={tech.toLowerCase()}>{tech}</TabsTrigger>
                 ))}
               </TabsList>
-              {!isSubmitted && (
+              {!isSubmitting && (
                 <Button onClick={() => setShowConfirmDialog(true)} className="!space-y-0 h-[40px] !m-0">
                     <Send className="mr-2 h-4 w-4" />
                     Submit Solution
                 </Button>
               )}
+               {isSubmitting && (
+                    <Button disabled className="!space-y-0 h-[40px] !m-0">
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Submitting...
+                    </Button>
+                )}
             </CardHeader>
             <div className="flex-1 p-1 pt-0">
                 {technologies.map(tech => {
@@ -176,7 +207,7 @@ export default function CodeEditor({ problem, candidate }: CodeEditorProps) {
                             padding={10}
                             style={editorStyles}
                             className="font-code h-full resize-none text-sm !p-0"
-                            readOnly={isSubmitted}
+                            readOnly={isSubmitting}
                             />
                         </TabsContent>
                     )
