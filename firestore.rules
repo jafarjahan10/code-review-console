@@ -49,13 +49,14 @@ service cloud.firestore {
      * @description Grants admin and user roles read/write access to candidate profiles.
      * @path /candidates/{candidateId}
      * @allow (read) Any signed-in user can query for their own record.
-     * @allow (write) Authenticated user with admin/user role can modify profiles OR a user can update their own status.
+     * @allow (create, write) Authenticated user with admin/user role can modify profiles.
+     * @allow (update) An owner can update their own status or submission details.
      * @principle Enforces role-based access for candidate management, allowing self-updates for status.
      */
     match /candidates/{candidateId} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn() && (isAdmin() || isUser());
-      allow update: if isOwner(candidateId) && isUpdatingOwnStatus();
+      allow create, write: if isSignedIn() && (isAdmin() || isUser());
+      allow update: if isOwner(candidateId) && (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']) || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'submissionId', 'submitTime']));
     }
     
     /**
@@ -150,25 +151,6 @@ service cloud.firestore {
     }
 
     /**
-     * @description Checks if the user is only updating the 'status', 'submissionId', and 'submitTime' fields on their own candidate document.
-     * @return {boolean} True if the update is valid.
-     */
-    function isUpdatingOwnStatus() {
-        let incomingKeys = request.resource.data.keys();
-        let existingKeys = resource.data.keys();
-        let allowedUpdateKeys = ['status', 'submissionId', 'submitTime'];
-        
-        // Ensure they are not removing any fields they are not supposed to
-        let nonUpdatableKeysUnchanged = existingKeys.diff(incomingKeys).size() == 0 ||
-                                          existingKeys.diff(incomingKeys).hasOnly(allowedUpdateKeys);
-        
-        // Ensure they are only adding/modifying the allowed fields
-        let allowedKeysUpdated = incomingKeys.diff(existingKeys).hasOnly(allowedUpdateKeys);
-
-        return nonUpdatableKeysUnchanged && allowedKeysUpdated;
-    }
-
-    /**
      * @description Checks if the current user has the admin role.
      * @return {boolean} True if the user is an admin, false otherwise.
      */
@@ -195,3 +177,5 @@ service cloud.firestore {
     }
   }
 }
+
+    
