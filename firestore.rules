@@ -53,8 +53,7 @@ service cloud.firestore {
      * @principle Enforces role-based access for candidate management, while allowing login checks.
      */
     match /candidates/{candidateId} {
-      allow read: if isSignedIn();
-      allow write: if isSignedIn() && (isAdmin() || isUser() || isOwner(candidateId));
+      allow read, write: if isSignedIn() && (isAdmin() || isUser() || isOwner(candidateId));
     }
     
     /**

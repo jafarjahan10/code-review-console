@@ -16,7 +16,7 @@ import Logo from "@/components/logo";
 import { useRouter } from "next/navigation";
 import { useAuth, useFirestore } from "@/firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
-import { signInAnonymously } from "firebase/auth";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
@@ -42,9 +42,6 @@ export default function CandidateLoginPage() {
     }
 
     try {
-        // First, sign in anonymously to get permissions for the query
-        const userCredential = await signInAnonymously(auth);
-        
         const candidatesRef = collection(firestore, 'candidates');
         const q = query(
             candidatesRef, 
@@ -55,17 +52,26 @@ export default function CandidateLoginPage() {
         const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) {
-            // If login fails, sign out the anonymous user
-            await userCredential.user.delete();
             toast({
                 variant: 'destructive',
                 title: 'Login Failed',
                 description: 'Invalid email or access code. Please try again.',
             });
         } else {
-            // Found candidate, proceed
             const candidateData = querySnapshot.docs[0].data();
             const candidateId = querySnapshot.docs[0].id;
+
+            try {
+                // Try to sign in the user.
+                await signInWithEmailAndPassword(auth, email, `p-${accessCode}`);
+            } catch (error: any) {
+                // If the user does not exist, create them.
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+                    await createUserWithEmailAndPassword(auth, email, `p-${accessCode}`);
+                } else {
+                    throw error; // Re-throw other errors
+                }
+            }
             
             // Store candidate info for the session
             sessionStorage.setItem('candidateId', candidateId);
@@ -78,9 +84,6 @@ export default function CandidateLoginPage() {
             router.push('/');
         }
     } catch (error: any) {
-        if (auth.currentUser) {
-            await auth.currentUser.delete().catch(delError => console.error("Failed to clean up anonymous user:", delError));
-        }
         toast({
             variant: 'destructive',
             title: 'An Error Occurred',
