@@ -16,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { PlusCircle, Trash2, Loader2, Copy } from "lucide-react";
+import { PlusCircle, Trash2, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -29,13 +29,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useAuth, useFirestore, useUser } from "@/firebase";
-import { collection, doc, setDoc, onSnapshot, deleteDoc } from "firebase/firestore";
+import { useAuth, useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase";
+import { collection, doc, setDoc, deleteDoc, addDoc } from "firebase/firestore";
 import { createUserWithEmailAndPassword, updatePassword, updateProfile } from "firebase/auth";
 import type { WithId } from "@/firebase";
 
 
-// Mock data for interviewers - will be replaced with Firebase
 type AdminUser = {
     id: string;
     name: string | null;
@@ -43,7 +42,9 @@ type AdminUser = {
     role: "Admin" | "User";
 }
 
-const initialDepartments = ["Engineering", "Design", "Product", "Marketing", "HR"];
+type Department = {
+    name: string;
+}
 
 
 export default function SettingsPage() {
@@ -53,22 +54,28 @@ export default function SettingsPage() {
   const { user: currentUser, isUserLoading } = useUser();
 
   const [name, setName] = useState('');
-  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  const [interviewers, setInterviewers] = useState<WithId<AdminUser>[]>([]);
   const [interviewerEmail, setInterviewerEmail] = useState('');
   const [interviewerPassword, setInterviewerPassword] = useState('');
   
-  const [departments, setDepartments] = useState<string[]>(initialDepartments);
   const [newDepartment, setNewDepartment] = useState("");
-  const [departmentToDelete, setDepartmentToDelete] = useState<string | null>(null);
+  const [departmentToDelete, setDepartmentToDelete] = useState<WithId<Department> | null>(null);
 
   const [isProfileUpdating, setIsProfileUpdating] = useState(false);
   const [isPasswordUpdating, setIsPasswordUpdating] = useState(false);
   const [isAddingInterviewer, setIsAddingInterviewer] = useState(false);
   const [interviewerToDelete, setInterviewerToDelete] = useState<WithId<AdminUser> | null>(null);
+
+  // Fetch Admins
+  const adminsColRef = useMemoFirebase(() => collection(firestore, 'admins'), [firestore]);
+  const { data: interviewers = [], isLoading: isLoadingAdmins } = useCollection<AdminUser>(adminsColRef);
+  
+  // Fetch Departments
+  const deptsColRef = useMemoFirebase(() => collection(firestore, 'departments'), [firestore]);
+  const { data: departments = [], isLoading: isLoadingDepts } = useCollection<Department>(deptsColRef);
+
 
   const currentUserRole = useMemo(() => {
     if (!currentUser || !interviewers.length) return null;
@@ -82,15 +89,6 @@ export default function SettingsPage() {
         setName(currentUser.displayName || '');
     }
   }, [currentUser]);
-
-  useEffect(() => {
-    const adminsColRef = collection(firestore, 'admins');
-    const unsubscribe = onSnapshot(adminsColRef, (snapshot) => {
-        const adminList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as WithId<AdminUser>));
-        setInterviewers(adminList);
-    });
-    return () => unsubscribe();
-  }, [firestore]);
 
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -125,7 +123,6 @@ export default function SettingsPage() {
     try {
         await updatePassword(currentUser, newPassword);
         toast({ title: "Password updated successfully!" });
-        setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
     } catch (error: any) {
@@ -144,15 +141,14 @@ export default function SettingsPage() {
     setIsAddingInterviewer(true);
 
     try {
-        // We need a temporary auth instance to create a user without signing out the current admin
         const { user: newInterviewer } = await createUserWithEmailAndPassword(auth, interviewerEmail, interviewerPassword);
         
         const adminDocRef = doc(firestore, 'admins', newInterviewer.uid);
         await setDoc(adminDocRef, {
             id: newInterviewer.uid,
             email: interviewerEmail,
-            role: 'User', // Default role for new interviewers
-            name: interviewerEmail.split('@')[0], // Default name
+            role: 'User',
+            name: interviewerEmail.split('@')[0],
         });
         
         setInterviewerEmail('');
@@ -174,9 +170,6 @@ export default function SettingsPage() {
     try {
         const adminDocRef = doc(firestore, 'admins', interviewerToDelete.id);
         await deleteDoc(adminDocRef);
-        // Note: Deleting the Firebase Auth user is a sensitive operation and
-        // would typically be handled by a backend function for security reasons.
-        // For this client-side prototype, we will only remove them from the 'admins' collection.
         toast({ title: "Interviewer Removed", description: `"${interviewerToDelete.name}" has been removed from the panel.` });
     } catch (error: any) {
         toast({ variant: "destructive", title: "Failed to remove interviewer", description: error.message });
@@ -186,30 +179,41 @@ export default function SettingsPage() {
   };
 
 
-  const handleAddDepartment = (e: React.FormEvent) => {
+  const handleAddDepartment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newDepartment.trim()) {
       toast({ variant: "destructive", title: "Department name cannot be empty." });
       return;
     }
-    if (departments.find(d => d.toLowerCase() === newDepartment.toLowerCase())) {
+    if (departments.find(d => d.name.toLowerCase() === newDepartment.toLowerCase())) {
         toast({ variant: "destructive", title: "Department already exists." });
         return;
     }
 
-    setDepartments([...departments, newDepartment.trim()]);
-    setNewDepartment("");
-    toast({ title: `Department "${newDepartment.trim()}" added.` });
+    try {
+        const deptsColRef = collection(firestore, 'departments');
+        await addDoc(deptsColRef, { name: newDepartment.trim() });
+        setNewDepartment("");
+        toast({ title: `Department "${newDepartment.trim()}" added.` });
+    } catch (error: any) {
+         toast({ variant: "destructive", title: "Failed to add department", description: error.message });
+    }
   };
 
-  const handleDeleteDepartment = () => {
+  const handleDeleteDepartment = async () => {
     if (!departmentToDelete) return;
-    setDepartments(departments.filter(d => d !== departmentToDelete));
-    toast({
-        title: "Department Removed",
-        description: `The department "${departmentToDelete}" has been removed.`,
-    });
-    setDepartmentToDelete(null);
+    try {
+        const deptDocRef = doc(firestore, 'departments', departmentToDelete.id);
+        await deleteDoc(deptDocRef);
+        toast({
+            title: "Department Removed",
+            description: `The department "${departmentToDelete.name}" has been removed.`,
+        });
+    } catch(error: any) {
+        toast({ variant: "destructive", title: "Failed to remove department", description: error.message });
+    } finally {
+        setDepartmentToDelete(null);
+    }
   };
 
   return (
@@ -383,29 +387,31 @@ export default function SettingsPage() {
                </Card>
           </TabsContent>
            <TabsContent value="departments" className="space-y-4">
-              <Card>
-                  <CardHeader>
-                      <CardTitle>Add Department</CardTitle>
-                      <CardDescription>Create a new department for positions.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                      <form onSubmit={handleAddDepartment} className="flex flex-col md:flex-row items-end gap-4">
-                          <div className="flex-1 w-full space-y-2">
-                              <Label htmlFor="department-name">Department Name</Label>
-                              <Input 
+              {currentUserRole === 'Admin' && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Add Department</CardTitle>
+                        <CardDescription>Create a new department for positions.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <form onSubmit={handleAddDepartment} className="flex flex-col md:flex-row items-end gap-4">
+                            <div className="flex-1 w-full space-y-2">
+                                <Label htmlFor="department-name">Department Name</Label>
+                                <Input 
                                 id="department-name"
                                 placeholder="e.g., Quality Assurance"
                                 value={newDepartment}
                                 onChange={(e) => setNewDepartment(e.target.value)} 
-                               />
-                          </div>
-                          <Button type="submit" className="w-full md:w-auto">
-                              <PlusCircle className="mr-2 h-4 w-4" />
-                              Add Department
-                          </Button>
-                      </form>
-                  </CardContent>
-              </Card>
+                                />
+                            </div>
+                            <Button type="submit" className="w-full md:w-auto">
+                                <PlusCircle className="mr-2 h-4 w-4" />
+                                Add Department
+                            </Button>
+                        </form>
+                    </CardContent>
+                </Card>
+              )}
                <Card>
                   <CardHeader>
                       <CardTitle>Manage Departments</CardTitle>
@@ -416,19 +422,21 @@ export default function SettingsPage() {
                           <TableHeader>
                               <TableRow>
                                   <TableHead>Department Name</TableHead>
-                                  <TableHead><span className="sr-only">Actions</span></TableHead>
+                                  {currentUserRole === 'Admin' && <TableHead><span className="sr-only">Actions</span></TableHead>}
                               </TableRow>
                           </TableHeader>
                           <TableBody>
                               {departments.map((dept) => (
-                                  <TableRow key={dept}>
-                                      <TableCell className="font-medium">{dept}</TableCell>
-                                      <TableCell className="text-right">
-                                          <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setDepartmentToDelete(dept)}>
-                                              <Trash2 className="h-4 w-4" />
-                                              <span className="sr-only">Remove {dept}</span>
-                                          </Button>
-                                      </TableCell>
+                                  <TableRow key={dept.id}>
+                                      <TableCell className="font-medium">{dept.name}</TableCell>
+                                      {currentUserRole === 'Admin' && (
+                                        <TableCell className="text-right">
+                                            <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setDepartmentToDelete(dept)}>
+                                                <Trash2 className="h-4 w-4" />
+                                                <span className="sr-only">Remove {dept.name}</span>
+                                            </Button>
+                                        </TableCell>
+                                      )}
                                   </TableRow>
                               ))}
                           </TableBody>
@@ -464,7 +472,7 @@ export default function SettingsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently remove the department &quot;{departmentToDelete}&quot;.
+              This action cannot be undone. This will permanently remove the department &quot;{departmentToDelete?.name}&quot;.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -481,3 +489,4 @@ export default function SettingsPage() {
     </>
   );
 }
+
