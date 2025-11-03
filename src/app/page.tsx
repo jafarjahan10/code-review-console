@@ -8,42 +8,32 @@ import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import ProblemDisplay from "@/components/candidate/problem-display";
 import { useRouter } from 'next/navigation';
-
-// Mock authentication state
-const useAuth = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // In a real app, this would check for a session token.
-    // For this prototype, we'll simulate an unauthenticated user by default.
-    // To proceed to the main content, the user must "log in" via the /login page.
-    if (typeof window !== 'undefined') {
-      const session = sessionStorage.getItem('authenticated');
-      if (session) {
-        setIsAuthenticated(true);
-      } else {
-        setIsAuthenticated(false);
-      }
-    }
-    setIsLoading(false);
-  }, []);
-
-  return { isAuthenticated, isLoading };
-};
+import { useUser } from '@/firebase';
 
 
 export default function Home() {
   const router = useRouter();
-  const {isAuthenticated, isLoading} = useAuth();
+  const { user, isUserLoading } = useUser();
+  const [candidateId, setCandidateId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    // This now relies on Firebase Auth state and sessionStorage for candidate data
+    const storedCandidateId = sessionStorage.getItem('candidateId');
+    setCandidateId(storedCandidateId);
+
+    if (!isUserLoading && !user) {
       router.push('/login');
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isUserLoading, user, router]);
 
-  if (isLoading || !isAuthenticated) {
+  const handleLogout = () => {
+    sessionStorage.removeItem('candidateId');
+    sessionStorage.removeItem('candidateData');
+    // Firebase sign out will be handled by the sidebar/header component
+    router.push('/login');
+  }
+
+  if (isUserLoading || (!user && !candidateId)) {
     return (
        <div className="flex min-h-screen items-center justify-center">
         <p>Loading...</p>
@@ -57,11 +47,9 @@ export default function Home() {
         <Logo />
         <div className="flex-1 text-center">
         </div>
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/login" onClick={() => sessionStorage.removeItem('authenticated')}>
+        <Button variant="ghost" size="icon" onClick={handleLogout}>
             <LogOut className="h-5 w-5" />
             <span className="sr-only">Log Out</span>
-          </Link>
         </Button>
       </header>
       <main className="flex-1 bg-muted/40 flex items-center justify-center p-4">

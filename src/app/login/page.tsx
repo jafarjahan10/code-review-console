@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,17 +14,74 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Logo from "@/components/logo";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { useAuth, useFirestore } from "@/firebase";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { signInAnonymously } from "firebase/auth";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 export default function CandidateLoginPage() {
   const router = useRouter();
+  const firestore = useFirestore();
+  const auth = useAuth();
+  const { toast } = useToast();
 
-  const handleLogin = (event: React.FormEvent) => {
+  const [email, setEmail] = useState('');
+  const [accessCode, setAccessCode] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+
+  const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
-    // In a real app, you'd handle candidate authentication here.
-    // For this prototype, we'll set a session item and navigate.
-    sessionStorage.setItem('authenticated', 'true');
-    router.push('/');
+    setIsLoading(true);
+
+    if (!firestore || !auth) {
+        toast({ variant: 'destructive', title: 'Firebase not initialized.'});
+        setIsLoading(false);
+        return;
+    }
+
+    try {
+        const candidatesRef = collection(firestore, 'candidates');
+        const q = query(
+            candidatesRef, 
+            where('email', '==', email), 
+            where('accessCode', '==', accessCode)
+        );
+
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+            toast({
+                variant: 'destructive',
+                title: 'Login Failed',
+                description: 'Invalid email or access code. Please try again.',
+            });
+        } else {
+            // Found candidate, log them in anonymously
+            const userCredential = await signInAnonymously(auth);
+            const candidateData = querySnapshot.docs[0].data();
+            const candidateId = querySnapshot.docs[0].id;
+            
+            // Store candidate info for the session
+            sessionStorage.setItem('candidateId', candidateId);
+            sessionStorage.setItem('candidateData', JSON.stringify(candidateData));
+            
+            toast({
+                title: 'Login Successful!',
+                description: `Welcome, ${candidateData.name}.`,
+            });
+            router.push('/');
+        }
+    } catch (error: any) {
+        toast({
+            variant: 'destructive',
+            title: 'An Error Occurred',
+            description: error.message,
+        });
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   return (
@@ -47,13 +105,25 @@ export default function CandidateLoginPage() {
                 type="email"
                 placeholder="candidate@example.com"
                 required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
               />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="access-code">Access Code</Label>
-              <Input id="access-code" type="text" placeholder="Enter your access code" required />
+              <Input 
+                id="access-code" 
+                type="text" 
+                placeholder="Enter your access code" 
+                required 
+                value={accessCode}
+                onChange={(e) => setAccessCode(e.target.value)}
+                disabled={isLoading}
+               />
             </div>
-            <Button type="submit" className="w-full mt-2">
+            <Button type="submit" className="w-full mt-2" disabled={isLoading}>
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Login
             </Button>
           </form>
