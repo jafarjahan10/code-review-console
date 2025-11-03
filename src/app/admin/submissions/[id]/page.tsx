@@ -78,8 +78,8 @@ export default function ViewSubmissionPage() {
 
   const technologies = useMemo(() => problem?.tags || [], [problem]);
   const hasAlreadyRemarked = useMemo(() => 
-    candidate?.remarks?.some(r => r.userId === user?.uid), 
-  [candidate, user]);
+    submission?.remarks?.some(r => r.userId === user?.uid), 
+  [submission, user]);
 
 
   const handleAddRemark = async (e: React.FormEvent) => {
@@ -88,12 +88,12 @@ export default function ViewSubmissionPage() {
       toast({ variant: 'destructive', title: 'Remark cannot be empty.' });
       return;
     }
-    if (!firestore || !submission || !candidate || !user || !adminUser) return;
+    if (!firestore || !submission || !user || !adminUser) return;
     
     setIsSubmittingRemark(true);
 
     try {
-        const candidateRef = doc(firestore, 'candidates', candidate.id);
+        const submissionRef = doc(firestore, 'submissions', submission.id);
         const newRemark = {
             userId: user.uid,
             userName: adminUser.name || 'Admin',
@@ -102,7 +102,7 @@ export default function ViewSubmissionPage() {
             createdAt: new Date().toISOString(),
         };
 
-        await setDoc(candidateRef, { remarks: arrayUnion(newRemark) }, { merge: true });
+        await setDoc(submissionRef, { remarks: arrayUnion(newRemark) }, { merge: true });
 
         toast({ title: 'Remark added successfully!' });
         setRemark("");
@@ -239,8 +239,8 @@ export default function ViewSubmissionPage() {
                     <CardDescription>Feedback from the interview panel.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    {candidate?.remarks && candidate.remarks.length > 0 ? (
-                    candidate.remarks.map((r, index) => (
+                    {submission?.remarks && submission.remarks.length > 0 ? (
+                    submission.remarks.map((r, index) => (
                       <div key={index} className="flex items-start gap-4">
                           <Avatar>
                             <AvatarImage src={`https://avatar.vercel.sh/${r.userEmail}.png`} />
