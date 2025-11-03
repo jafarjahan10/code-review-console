@@ -30,6 +30,8 @@ export default function ProblemPage() {
     const id = sessionStorage.getItem('candidateId');
     // Also check if the session ID matches the authenticated user's ID
     if (!id || id !== user.uid) {
+        // Clearing sessionStorage just in case
+        sessionStorage.removeItem('candidateId');
         router.push('/login');
     } else {
         setCandidateId(id);
