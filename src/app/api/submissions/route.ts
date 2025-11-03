@@ -1,26 +1,18 @@
 
-import type { NextApiRequest, NextApiResponse } from 'next';
+import { NextRequest, NextResponse } from 'next/server';
 import { initializeFirebase } from '@/firebase/server-init';
-import { Collection, DocumentData, Timestamp } from 'firebase-admin/firestore';
+import { Timestamp } from 'firebase-admin/firestore';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
-  }
-
+export async function GET(req: NextRequest) {
   try {
     const { firestore } = initializeFirebase();
-    const { 
-        page = '1', 
-        limit = '10', 
-        search = '',
-        sortBy = 'submissionTime',
-        sortOrder = 'desc'
-    } = req.query;
-
-    const pageNum = parseInt(page as string, 10);
-    const limitNum = parseInt(limit as string, 10);
-    const searchTerm = (search as string).toLowerCase();
+    const { searchParams } = new URL(req.url);
+    
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const limit = parseInt(searchParams.get('limit') || '10', 10);
+    const search = searchParams.get('search')?.toLowerCase() || '';
+    const sortBy = searchParams.get('sortBy') || 'submissionTime';
+    const sortOrder = searchParams.get('sortOrder') || 'desc';
 
     // Fetch all submissions, candidates, and problems first
     const [submissionsSnap, candidatesSnap, problemsSnap] = await Promise.all([
@@ -43,14 +35,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     // Server-side search
-    if (searchTerm) {
+    if (search) {
         allSubmissions = allSubmissions.filter(sub => {
             const candidateName = sub.candidate?.name?.toLowerCase() || '';
             const candidateEmail = sub.candidate?.email?.toLowerCase() || '';
             const problemTitle = sub.problem?.title?.toLowerCase() || '';
-            return candidateName.includes(searchTerm) || 
-                   candidateEmail.includes(searchTerm) || 
-                   problemTitle.includes(searchTerm);
+            return candidateName.includes(search) || 
+                   candidateEmail.includes(search) || 
+                   problemTitle.includes(search);
         });
     }
 
@@ -64,7 +56,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 valB = b.candidate?.name || '';
                 break;
             case 'problemTitle':
-                valA = a.problem?.title || '';
+                valA = b.problem?.title || '';
                 valB = b.problem?.title || '';
                 break;
             case 'status':
@@ -86,15 +78,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     // Server-side pagination
-    const startIndex = (pageNum - 1) * limitNum;
-    const endIndex = pageNum * limitNum;
+    const startIndex = (page - 1) * limit;
+    const endIndex = page * limit;
     const paginatedSubmissions = allSubmissions.slice(startIndex, endIndex);
     const hasNextPage = endIndex < allSubmissions.length;
 
-    res.status(200).json({ submissions: paginatedSubmissions, hasNextPage });
+    return NextResponse.json({ submissions: paginatedSubmissions, hasNextPage });
 
   } catch (error: any) {
     console.error('Error fetching submissions:', error);
-    res.status(500).json({ error: 'Internal Server Error', details: error.message });
+    return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
   }
 }
