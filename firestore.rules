@@ -11,12 +11,14 @@
  * - /departments/{departmentId}: Stores department information.
  * - /problems/{problemId}: Stores coding problems.
  * - /candidates/{candidateId}/submissions/{submissionId}: Stores code submissions by candidates.
+ * - /technologies/{technologyId}: Stores technology stacks.
  *
  * Key Security Decisions:
  * - Admin role is determined by checking the existence of an admin document.
  * - Candidates can only access their own profile data.
  * - Candidates can only access their own submissions.
  * - Problems are publicly readable but only modifiable by admins.
+ * - Technologies are readable by any authenticated user but only modifiable by admins.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -109,6 +111,19 @@ service cloud.firestore {
     }
 
     /**
+     * @description Grants admins CRUD access to technologies, and all authenticated users read access.
+     * @path /technologies/{technologyId}
+     * @allow (get, list) Any authenticated user can read technologies.
+     * @allow (create, update, delete) User with admin role can modify technologies.
+     * @deny (create, update, delete) User without admin role cannot modify technologies.
+     * @principle Enforces admin-only writes for technologies.
+     */
+    match /technologies/{technologyId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
      * @description Checks if the current user is signed in.
      * @return {boolean} True if the user is signed in, false otherwise.
      */
@@ -151,3 +166,4 @@ service cloud.firestore {
     }
   }
 }
+

@@ -170,6 +170,32 @@
         "codeJS",
         "submissionTime"
       ]
+    },
+    "Technology": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Technology",
+      "type": "object",
+      "description": "Represents a coding technology or stack.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Technology entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the technology."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp of when the technology was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "createdAt"
+      ]
     }
   },
   "auth": {
@@ -263,8 +289,24 @@
             }
           ]
         }
+      },
+      {
+        "path": "/technologies/{technologyId}",
+        "definition": {
+          "entityName": "Technology",
+          "schema": {
+            "$ref": "#/backend/entities/Technology"
+          },
+          "description": "Stores technology stacks. Admins have CRUD access, authenticated users have read access.",
+          "params": [
+            {
+              "name": "technologyId",
+              "description": "The unique identifier of the technology."
+            }
+          ]
+        }
       }
     ],
-    "reasoning": "This Firestore structure is designed to support the CodeReview Console application, emphasizing security, scalability, and ease of debugging. It prioritizes Authorization Independence (CRITICAL) by denormalizing relevant authorization data, avoiding hierarchical `get()` calls in security rules.  Structural Segregation is applied to maintain a homogeneous security posture within each collection. Access Modeling is based on path-based ownership for user-specific data and membership maps for collaborative scenarios. Data Clarity is achieved through explicit state modeling and predictable schema.\n\n*   **/admins/{adminId}**: Stores admin profiles and roles. Admin access is controlled via existence checks in this collection (DBAC).  This enables searching, filtering, and pagination. \n*   **/candidates/{candidateId}**: Stores candidate profiles.  Candidate access is controlled via their `uid`. This enables searching, filtering, and pagination.\n*   **/departments/{departmentId}**: Stores department names. Admin access is controlled via the `isAdmin()` function. This enables searching, filtering, and pagination.\n*   **/problems/{problemId}**: Stores coding problems. Admins have CRUD access. This enables searching, filtering, and pagination.\n*   **/candidates/{candidateId}/submissions/{submissionId}**: Stores code submissions by candidates. Authorization Independence is achieved as submissions are stored under the candidate document, simplifying ownership checks via the path itself.  Admins can review all submissions. The candidate can only access its own submissions. This enables searching, filtering, and pagination.\n\n**Authorization Independence (Denormalization):** The `submissions` subcollection is located under the `candidates` document. This means we do not need to make `get()` calls to the parent document to determine ownership. The path `/candidates/{candidateId}/submissions/{submissionId}` inherently defines the owner. This makes security rules more straightforward and efficient.\n\n**QAPs Support:** The structure supports secure `list` operations (QAPs) by segregating data based on access requirements. Admins can list all documents in `/problems`. Candidates can list only their own submissions in `/candidates/{candidateId}/submissions`. This segregation, combined with the enforcement of authorization rules, ensures that users can only access data they are permitted to view. Furthermore, the admin role is managed through existence checks in the `/roles_admin/{uid}` collection, which simplifies admin authorization rules and improves scalability.\n"
+    "reasoning": "This Firestore structure is designed to support the CodeReview Console application, emphasizing security, scalability, and ease of debugging. It prioritizes Authorization Independence (CRITICAL) by denormalizing relevant authorization data, avoiding hierarchical `get()` calls in security rules.  Structural Segregation is applied to maintain a homogeneous security posture within each collection. Access Modeling is based on path-based ownership for user-specific data and membership maps for collaborative scenarios. Data Clarity is achieved through explicit state modeling and predictable schema.\n\n*   **/admins/{adminId}**: Stores admin profiles and roles. Admin access is controlled via existence checks in this collection (DBAC).  This enables searching, filtering, and pagination. \n*   **/candidates/{candidateId}**: Stores candidate profiles.  Candidate access is controlled via their `uid`. This enables searching, filtering, and pagination.\n*   **/departments/{departmentId}**: Stores department names. Admin access is controlled via the `isAdmin()` function. This enables searching, filtering, and pagination.\n*   **/problems/{problemId}**: Stores coding problems. Admins have CRUD access. This enables searching, filtering, and pagination.\n*   **/candidates/{candidateId}/submissions/{submissionId}**: Stores code submissions by candidates. Authorization Independence is achieved as submissions are stored under the candidate document, simplifying ownership checks via the path itself.  Admins can review all submissions. The candidate can only access its own submissions. This enables searching, filtering, and pagination.\n*   **/technologies/{technologyId}**: Stores technology stacks. Admin have CRUD access, authenticated users have read access. This enables searching, filtering, and pagination.\n\n**Authorization Independence (Denormalization):** The `submissions` subcollection is located under the `candidates` document. This means we do not need to make `get()` calls to the parent document to determine ownership. The path `/candidates/{candidateId}/submissions/{submissionId}` inherently defines the owner. This makes security rules more straightforward and efficient.\n\n**QAPs Support:** The structure supports secure `list` operations (QAPs) by segregating data based on access requirements. Admins can list all documents in `/problems`. Candidates can list only their own submissions in `/candidates/{candidateId}/submissions`. This segregation, combined with the enforcement of authorization rules, ensures that users can only access data they are permitted to view. Furthermore, the admin role is managed through existence checks in the `/roles_admin/{uid}` collection, which simplifies admin authorization rules and improves scalability.\n"
   }
 }
