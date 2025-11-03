@@ -33,7 +33,7 @@ const getInitialCode = (tech: string) => {
             return `<!-- Your HTML code here -->\n<h1>Code Challenge</h1>`;
         case "css":
             return `/* Your CSS code here */\nbody {\n  font-family: sans-serif;\n}`;
-        case "js":
+        case "javascript":
             return `// Your JavaScript code here\nconsole.log("Hello, Candidate!");`;
         default:
             return `// ${tech} code editor`;
@@ -46,7 +46,7 @@ const getLanguage = (tech: string) => {
             return "markup";
         case "css":
             return "css";
-        case "js":
+        case "javascript":
             return "javascript";
         case "python":
             return "python";
@@ -83,6 +83,11 @@ export default function CodeEditor({ problem, candidate }: CodeEditorProps) {
     setShowConfirmDialog(false);
     setIsSubmitted(true); // Disable editor immediately
 
+    const answers = technologies.map(tech => ({
+        type: tech,
+        code: codes[tech.toLowerCase()] || ''
+    }));
+
     try {
       const response = await fetch('/api/candidate/problem/submit', {
         method: 'POST',
@@ -92,9 +97,7 @@ export default function CodeEditor({ problem, candidate }: CodeEditorProps) {
         body: JSON.stringify({
           candidateId: candidate.id,
           problemId: problem.id,
-          codeHTML: codes['html'] || '',
-          codeCSS: codes['css'] || '',
-          codeJS: codes['js'] || '',
+          answers: answers,
         }),
       });
 

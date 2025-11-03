@@ -29,7 +29,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc, setDoc, arrayUnion } from 'firebase/firestore';
-import type { Submission, Candidate, Problem, Department, Position } from '@/types';
+import type { Submission, Candidate, Problem, Department, Position, SubmissionAnswer } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
 type Remark = {
@@ -44,7 +44,7 @@ const getLanguage = (tech: string) => {
     switch (tech.toLowerCase()) {
         case "html": return "markup";
         case "css": return "css";
-        case "js": return "javascript";
+        case "javascript": return "javascript";
         default: return "clike";
     }
 }
@@ -156,6 +156,10 @@ export default function ViewSubmissionPage() {
     );
   }
 
+  const getCodeForTech = (tech: string) => {
+    return submission.answers?.find(a => a.type.toLowerCase() === tech.toLowerCase())?.code || '';
+  }
+
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 h-full flex flex-col">
       <div className="flex items-center gap-4">
@@ -207,12 +211,12 @@ export default function ViewSubmissionPage() {
                         ))}
                     </TabsList>
                      {technologies.map(tech => {
-                        const lowerTech = tech.toLowerCase() as keyof Submission;
+                        const lowerTech = tech.toLowerCase();
                         const language = getLanguage(tech);
                         return (
                             <TabsContent key={tech} value={lowerTech} className="mt-2 flex-1">
                                 <Editor
-                                    value={submission[lowerTech] as string || ''}
+                                    value={getCodeForTech(tech)}
                                     onValueChange={() => {}}
                                     highlight={(code) => highlight(code, languages[language] || languages.clike, language)}
                                     padding={10}

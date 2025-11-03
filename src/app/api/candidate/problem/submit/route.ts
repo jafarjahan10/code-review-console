@@ -1,14 +1,14 @@
 
 import { NextResponse } from 'next/server';
-import { initializeApp, getApps, App } from 'firebase-admin/app';
+import { initializeApp, getApps, App, applicationDefault } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 
 // Initialize Firebase Admin SDK
 let adminApp: App;
 if (!getApps().length) {
-  // initializeApp() with no parameters will use Application Default Credentials
-  // in the App Hosting environment.
-  adminApp = initializeApp();
+  adminApp = initializeApp({
+    credential: applicationDefault(),
+  });
 } else {
   adminApp = getApps()[0];
 }
@@ -18,9 +18,9 @@ const db = getFirestore(adminApp);
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { candidateId, problemId, codeHTML, codeCSS, codeJS } = body;
+    const { candidateId, problemId, answers } = body;
 
-    if (!candidateId || !problemId) {
+    if (!candidateId || !problemId || !answers) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
@@ -33,9 +33,7 @@ export async function POST(request: Request) {
       id: submissionRef.id,
       candidateId,
       problemId,
-      codeHTML: codeHTML || '',
-      codeCSS: codeCSS || '',
-      codeJS: codeJS || '',
+      answers,
       submissionTime: submissionTime,
       remarks: [],
     });

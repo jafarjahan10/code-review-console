@@ -28,13 +28,16 @@ export type Problem = {
     positionId: string;
 }
 
+export type SubmissionAnswer = {
+    type: string;
+    code: string;
+};
+
 export type Submission = {
     id: string;
     candidateId: string;
     problemId: string;
-    codeHTML: string;
-    codeCSS: string;
-    codeJS: string;
+    answers: SubmissionAnswer[];
     submissionTime: any;
     remarks: any[];
 };
@@ -53,4 +56,5 @@ export type Candidate = {
     remarks: any[];
     submitTime: any | null;
 }
+
 

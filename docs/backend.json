@@ -221,17 +221,23 @@
           "type": "string",
           "description": "Reference to Problem. (Relationship: Problem 1:N Submission)"
         },
-        "codeHTML": {
-          "type": "string",
-          "description": "HTML code submitted by the candidate."
-        },
-        "codeCSS": {
-          "type": "string",
-          "description": "CSS code submitted by the candidate."
-        },
-        "codeJS": {
-          "type": "string",
-          "description": "JavaScript code submitted by the candidate."
+        "answers": {
+            "type": "array",
+            "description": "An array of code answers, where each object contains the technology type and the code.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "description": "The technology or language of the code (e.g., JavaScript, HTML)."
+                    },
+                    "code": {
+                        "type": "string",
+                        "description": "The code submitted by the candidate."
+                    }
+                },
+                "required": ["type", "code"]
+            }
         },
         "submissionTime": {
           "type": "string",
@@ -248,9 +254,7 @@
         "id",
         "candidateId",
         "problemId",
-        "codeHTML",
-        "codeCSS",
-        "codeJS",
+        "answers",
         "submissionTime"
       ]
     },
