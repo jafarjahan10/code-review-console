@@ -1,31 +1,55 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardFooter,
+  CardHeader,
+  CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { ArrowLeft, Loader2 } from 'lucide-react';
-import { useFirestore } from '@/firebase';
+import { ArrowLeft, Loader2, ShieldAlert } from 'lucide-react';
+import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+
+type AdminUser = {
+    id: string;
+    name: string | null;
+    email: string;
+    role: "Admin" | "User";
+}
 
 export default function NewTechnologyPage() {
   const router = useRouter();
   const { toast } = useToast();
   const firestore = useFirestore();
+  const { user: currentUser } = useUser();
+
   const [name, setName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  
+  const adminsColRef = useMemoFirebase(() => firestore ? collection(firestore, 'admins') : null, [firestore]);
+  const { data: admins, isLoading: isLoadingAdmins } = useCollection<AdminUser>(adminsColRef);
+
+  const currentUserRole = useMemo(() => {
+    if (!currentUser || !admins) return null;
+    const adminUser = admins.find(admin => admin.id === currentUser.uid);
+    return adminUser?.role;
+  }, [currentUser, admins]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (currentUserRole !== 'Admin') {
+        toast({ variant: 'destructive', title: 'Permission Denied', description: 'You do not have permission to create technologies.' });
+        return;
+    }
     if (!name) {
       toast({
         variant: 'destructive',
@@ -62,6 +86,39 @@ export default function NewTechnologyPage() {
         setIsLoading(false);
     }
   };
+  
+  if (isLoadingAdmins) {
+    return <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">Loading...</div>
+  }
+
+  if (currentUserRole !== 'Admin') {
+    return (
+        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+             <div className="flex items-center gap-4">
+                <Button variant="outline" size="icon" className="h-7 w-7" asChild>
+                <Link href="/admin/technologies">
+                    <ArrowLeft className="h-4 w-4" />
+                    <span className="sr-only">Back</span>
+                </Link>
+                </Button>
+                <h2 className="text-3xl font-bold tracking-tight font-headline">
+                    Access Denied
+                </h2>
+            </div>
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <ShieldAlert className="h-6 w-6 text-destructive" />
+                        Permission Required
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p>You do not have the necessary permissions to create a new technology. Please contact an administrator.</p>
+                </CardContent>
+            </Card>
+        </div>
+    )
+  }
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">

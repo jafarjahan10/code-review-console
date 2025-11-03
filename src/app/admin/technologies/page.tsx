@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -19,6 +19,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -36,21 +37,38 @@ import { useToast } from "@/hooks/use-toast";
 import { Technology } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import ClientDateTime from "@/components/client-date-time";
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { collection, deleteDoc, doc } from "firebase/firestore";
+
+type AdminUser = {
+    id: string;
+    name: string | null;
+    email: string;
+    role: "Admin" | "User";
+}
 
 export default function TechnologiesPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
+  const { user: currentUser } = useUser();
 
   const technologiesColRef = useMemoFirebase(() => firestore ? collection(firestore, 'technologies') : null, [firestore]);
   const { data: allTechnologies, isLoading } = useCollection<Technology>(technologiesColRef);
+
+  const adminsColRef = useMemoFirebase(() => firestore ? collection(firestore, 'admins') : null, [firestore]);
+  const { data: admins, isLoading: isLoadingAdmins } = useCollection<AdminUser>(adminsColRef);
 
   const [techToDelete, setTechToDelete] = useState<Technology | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [sort, setSort] = useState({ by: 'createdAt', order: 'desc' });
+
+  const currentUserRole = useMemo(() => {
+    if (!currentUser || !admins) return null;
+    const adminUser = admins.find(admin => admin.id === currentUser.uid);
+    return adminUser?.role;
+  }, [currentUser, admins]);
 
   const filteredAndSortedTechnologies = useMemo(() => {
     if (!allTechnologies) return [];
@@ -63,6 +81,9 @@ export default function TechnologiesPage() {
         const aVal = a[sort.by as keyof Technology] || '';
         const bVal = b[sort.by as keyof Technology] || '';
 
+        if (!aVal) return 1;
+        if (!bVal) return -1;
+        
         if (aVal < bVal) return sort.order === 'asc' ? -1 : 1;
         if (aVal > bVal) return sort.order === 'asc' ? 1 : -1;
         return 0;
@@ -130,14 +151,16 @@ export default function TechnologiesPage() {
               Manage your coding technologies here.
             </p>
           </div>
-          <div className="flex items-center space-x-2">
-            <Button asChild>
-              <Link href="/admin/technologies/new">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add Technology
-              </Link>
-            </Button>
-          </div>
+          {currentUserRole === 'Admin' && (
+            <div className="flex items-center space-x-2">
+                <Button asChild>
+                <Link href="/admin/technologies/new">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add Technology
+                </Link>
+                </Button>
+            </div>
+          )}
         </div>
         
         <div className="relative">
@@ -173,7 +196,7 @@ export default function TechnologiesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {isLoading ? (
+                {isLoading || isLoadingAdmins ? (
                   Array.from({ length: 5 }).map((_, i) => (
                     <TableRow key={i}>
                       <TableCell><Skeleton className="h-5 w-24" /></TableCell>
@@ -204,24 +227,29 @@ export default function TechnologiesPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuItem asChild>
-                            <Link href={`/admin/technologies/${tech.id}/edit`}>
-                              <Pencil className="mr-2 h-4 w-4" />
-                              Edit
-                            </Link>
-                          </DropdownMenuItem>
-                           <DropdownMenuItem asChild>
                             <Link href={`/admin/technologies/${tech.id}`}>
                               <Layers className="mr-2 h-4 w-4" />
                               View
                             </Link>
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={() => setTechToDelete(tech)}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
+                          {currentUserRole === 'Admin' && (
+                            <>
+                              <DropdownMenuItem asChild>
+                                <Link href={`/admin/technologies/${tech.id}/edit`}>
+                                  <Pencil className="mr-2 h-4 w-4" />
+                                  Edit
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() => setTechToDelete(tech)}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
+                            </>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
