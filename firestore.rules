@@ -92,7 +92,8 @@ service cloud.firestore {
      * @principle Enforces admin/user writes for problems.
      */
     match /problems/{problemId} {
-      allow get, list: if isSignedIn();
+      allow get: if isSignedIn() && (isAdmin() || isUser() || get(/databases/$(database)/documents/candidates/$(request.auth.uid)).data.problemId == problemId);
+      allow list: if isSignedIn() && (isAdmin() || isUser());
       allow create, update, delete: if isSignedIn() && (isAdmin() || isUser());
     }
 
