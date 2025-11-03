@@ -16,114 +16,67 @@ import {
 import { useRouter, useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { ArrowLeft, Copy, Calendar as CalendarIcon } from 'lucide-react';
+import { ArrowLeft, Copy, Calendar as CalendarIcon, Loader2 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { format, setHours, setMinutes, getDate, getMonth, getYear } from 'date-fns';
 import { cn } from '@/lib/utils';
-
-const initialCandidates = [
-  {
-    id: "cand_1",
-    name: "John Doe",
-    email: "john.doe@example.com",
-    status: "Pending",
-    problemAssigned: "FizzBuzz Challenge",
-    problemId: "prob_1",
-    positionId: "pos_1",
-    accessCode: "FJ8K2L",
-    scheduledTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "cand_2",
-    name: "Jane Smith",
-    email: "jane.smith@example.com",
-    status: "Completed",
-    problemAssigned: "Palindrome Checker",
-    problemId: "prob_2",
-    positionId: "pos_2",
-    accessCode: "G4H9J1",
-    scheduledTime: new Date().toISOString(),
-  },
-];
-
-const departments = ["Engineering", "Design", "Product", "Marketing", "HR"];
-
-const initialPositions = [
-  { id: "pos_1", title: "Senior Frontend Developer", department: "Engineering" },
-  { id: "pos_2", title: "UX/UI Designer", department: "Design" },
-  { id: "pos_3", title: "Product Manager", department: "Product" },
-  { id: "pos_4", title: "Junior Backend Developer", department: "Engineering" },
-];
-const initialProblems = [
-  {
-    id: "prob_1",
-    title: "FizzBuzz Challenge",
-    positionId: "pos_1",
-  },
-  {
-    id: "prob_2",
-    title: "Palindrome Checker",
-    positionId: "pos_2",
-  },
-  {
-    id: "prob_3",
-    title: "Two Sum",
-    positionId: "pos_1",
-  },
-  {
-    id: "prob_4",
-    title: "Implement a Debounce Function",
-    positionId: "pos_4",
-  },
-];
-
+import { useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
+import { doc, updateDoc, collection } from 'firebase/firestore';
+import type { Candidate, Department, Position, Problem } from '@/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function EditCandidatePage() {
   const router = useRouter();
   const params = useParams();
   const { toast } = useToast();
+  const firestore = useFirestore();
+  const candidateId = params.id as string;
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState('');
-  const [department, setDepartment] = useState('');
+  const [departmentId, setDepartmentId] = useState('');
   const [positionId, setPositionId] = useState('');
   const [problemId, setProblemId] = useState('');
   const [accessCode, setAccessCode] = useState('');
   const [scheduledTime, setScheduledTime] = useState<Date | undefined>();
-  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
+  const candidateDocRef = useMemoFirebase(() => (firestore && candidateId ? doc(firestore, 'candidates', candidateId) : null), [firestore, candidateId]);
+  const { data: candidate, isLoading: isLoadingCandidate, error: candidateError } = useDoc<Candidate>(candidateDocRef);
 
-  const availablePositions = useMemo(() => {
-    if (!department) return [];
-    return initialPositions.filter(p => p.department === department);
-  }, [department]);
+  const deptsColRef = useMemoFirebase(() => (firestore ? collection(firestore, 'departments') : null), [firestore]);
+  const { data: departments, isLoading: isLoadingDepts } = useCollection<Department>(deptsColRef);
+  
+  const posColRef = useMemoFirebase(() => (firestore ? collection(firestore, 'positions') : null), [firestore]);
+  const { data: positions, isLoading: isLoadingPos } = useCollection<Position>(posColRef);
 
-  const availableProblems = useMemo(() => {
-    if (!positionId) return [];
-    return initialProblems.filter(p => p.positionId === positionId);
-  }, [positionId]);
+  const problemsColRef = useMemoFirebase(() => (firestore ? collection(firestore, 'problems') : null), [firestore]);
+  const { data: problems, isLoading: isLoadingProblems } = useCollection<Problem>(problemsColRef);
 
   useEffect(() => {
-    const candidateId = params.id;
-    const candidateToEdit = initialCandidates.find(c => c.id === candidateId);
-
-    if (candidateToEdit) {
-      const position = initialPositions.find(p => p.id === candidateToEdit.positionId);
-      const department = position?.department || '';
-      
-      setName(candidateToEdit.name);
-      setEmail(candidateToEdit.email);
-      setStatus(candidateToEdit.status);
-      setProblemId(candidateToEdit.problemId);
-      setPositionId(candidateToEdit.positionId);
-      setDepartment(department);
-      setAccessCode(candidateToEdit.accessCode);
-      if (candidateToEdit.scheduledTime) {
-        setScheduledTime(new Date(candidateToEdit.scheduledTime));
+    if (candidate) {
+      setName(candidate.name);
+      setEmail(candidate.email);
+      setStatus(candidate.status);
+      setDepartmentId(candidate.departmentId);
+      setPositionId(candidate.positionId);
+      setProblemId(candidate.problemId);
+      setAccessCode(candidate.accessCode);
+      if (candidate.scheduledTime) {
+          const date = typeof candidate.scheduledTime === 'string' 
+              ? new Date(candidate.scheduledTime)
+              // @ts-ignore
+              : candidate.scheduledTime.toDate();
+          setScheduledTime(date);
       }
-    } else {
+    }
+  }, [candidate]);
+  
+  useEffect(() => {
+    if(candidateError) {
       toast({
         variant: 'destructive',
         title: 'Candidate not found',
@@ -131,8 +84,18 @@ export default function EditCandidatePage() {
       });
       router.push('/admin/candidates');
     }
-    setIsLoading(false);
-  }, [params.id, router, toast]);
+  }, [candidateError, router, toast]);
+
+  const availablePositions = useMemo(() => {
+    if (!departmentId || !positions) return [];
+    return positions.filter(p => p.departmentId === departmentId);
+  }, [departmentId, positions]);
+
+  const availableProblems = useMemo(() => {
+    if (!positionId || !problems) return [];
+    return problems.filter(p => p.positionId === positionId);
+  }, [positionId, problems]);
+
   
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -143,7 +106,7 @@ export default function EditCandidatePage() {
   };
 
   const handleDepartmentChange = (value: string) => {
-    setDepartment(value);
+    setDepartmentId(value);
     setPositionId('');
     setProblemId('');
   }
@@ -154,7 +117,7 @@ export default function EditCandidatePage() {
   }
   
   const handleDateSelect = (date: Date | undefined) => {
-    if (!date || !scheduledTime) {
+    if (!date) {
       setScheduledTime(date);
       setIsCalendarOpen(false);
       return;
@@ -163,14 +126,14 @@ export default function EditCandidatePage() {
       getYear(date),
       getMonth(date),
       getDate(date),
-      scheduledTime.getHours(),
-      scheduledTime.getMinutes()
+      scheduledTime?.getHours() ?? 9,
+      scheduledTime?.getMinutes() ?? 0
     );
     setScheduledTime(newDate);
     setIsCalendarOpen(false);
   };
   
-    const handleTimeChange = (value: string, unit: 'hour' | 'minute' | 'ampm') => {
+  const handleTimeChange = (value: string, unit: 'hour' | 'minute' | 'ampm') => {
       let newDate = scheduledTime || new Date();
       if (unit === 'hour') {
           const currentAmPm = newDate.getHours() >= 12 ? 'PM' : 'AM';
@@ -195,9 +158,9 @@ export default function EditCandidatePage() {
       setScheduledTime(newDate);
   };
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!name || !email || !status || !department || !positionId || !problemId || !scheduledTime) {
+    if (!name || !email || !status || !departmentId || !positionId || !problemId || !scheduledTime) {
       toast({
         variant: 'destructive',
         title: 'Missing Fields',
@@ -205,20 +168,56 @@ export default function EditCandidatePage() {
       });
       return;
     }
-    const formData = { id: params.id, name, email, status, department, positionId, problemId, accessCode, scheduledTime: scheduledTime.toISOString() };
-    console.log(formData);
-    toast({
-      title: 'Candidate Updated!',
-      description: `The details for "${name}" have been successfully updated.`,
-    });
-    router.push('/admin/candidates');
+    if (!firestore || !candidateId) return;
+
+    setIsSaving(true);
+    try {
+        const candidateDoc = doc(firestore, 'candidates', candidateId);
+        await updateDoc(candidateDoc, { 
+            name, email, status, departmentId, positionId, problemId, scheduledTime 
+        });
+        toast({
+            title: 'Candidate Updated!',
+            description: `The details for "${name}" have been successfully updated.`,
+        });
+        router.push('/admin/candidates');
+    } catch(error: any) {
+        toast({
+            variant: 'destructive',
+            title: 'Update Failed',
+            description: error.message,
+        });
+    } finally {
+        setIsSaving(false);
+    }
   };
+
+  const isLoading = isLoadingCandidate || isLoadingDepts || isLoadingPos || isLoadingProblems;
 
   if (isLoading) {
     return (
-        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-          <p>Loading...</p>
+      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+        <div className="flex items-center gap-4">
+            <Skeleton className="h-7 w-7" />
+            <div className="space-y-1">
+                <Skeleton className="h-8 w-40" />
+                <Skeleton className="h-4 w-72" />
+            </div>
         </div>
+        <Card>
+            <CardContent className="space-y-4 pt-6">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2"><Skeleton className="h-4 w-20" /><Skeleton className="h-10 w-full" /></div>
+                  <div className="space-y-2"><Skeleton className="h-4 w-20" /><Skeleton className="h-10 w-full" /></div>
+                </div>
+                 <div className="space-y-2"><Skeleton className="h-4 w-20" /><Skeleton className="h-10 w-full" /></div>
+                 <div className="space-y-2"><Skeleton className="h-4 w-20" /><Skeleton className="h-10 w-full" /></div>
+            </CardContent>
+            <CardFooter>
+                <Skeleton className="h-10 w-32" />
+            </CardFooter>
+        </Card>
+      </div>
     )
   }
   
@@ -251,6 +250,7 @@ export default function EditCandidatePage() {
                   id="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                  disabled={isSaving}
                 />
               </div>
               <div className="grid gap-2">
@@ -260,13 +260,14 @@ export default function EditCandidatePage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  disabled={isSaving}
                 />
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                     <Label htmlFor="status">Status</Label>
-                    <Select onValueChange={setStatus} value={status}>
+                    <Select onValueChange={setStatus} value={status} disabled={isSaving}>
                         <SelectTrigger id="status">
                         <SelectValue placeholder="Select a status" />
                         </SelectTrigger>
@@ -282,7 +283,7 @@ export default function EditCandidatePage() {
                     <Label htmlFor="access-code">Access Code</Label>
                     <div className="flex items-center gap-2">
                         <Input id="access-code" value={accessCode} readOnly className="font-mono bg-muted" />
-                        <Button type="button" variant="outline" size="icon" onClick={() => handleCopy(accessCode)}>
+                        <Button type="button" variant="outline" size="icon" onClick={() => handleCopy(accessCode)} disabled={isSaving}>
                             <Copy className="h-4 w-4" />
                         </Button>
                     </div>
@@ -291,14 +292,14 @@ export default function EditCandidatePage() {
             <div className="grid md:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                     <Label htmlFor="department">Department</Label>
-                    <Select onValueChange={handleDepartmentChange} value={department}>
+                    <Select onValueChange={handleDepartmentChange} value={departmentId} disabled={isSaving}>
                         <SelectTrigger id="department">
                             <SelectValue placeholder="Select a department" />
                         </SelectTrigger>
                         <SelectContent>
-                            {departments.map((dept) => (
-                                <SelectItem key={dept} value={dept}>
-                                {dept}
+                            {(departments || []).map((dept) => (
+                                <SelectItem key={dept.id} value={dept.id}>
+                                {dept.name}
                                 </SelectItem>
                             ))}
                         </SelectContent>
@@ -306,7 +307,7 @@ export default function EditCandidatePage() {
                 </div>
                 <div className="grid gap-2">
                     <Label htmlFor="position">Position</Label>
-                    <Select onValueChange={handlePositionChange} value={positionId} disabled={!department}>
+                    <Select onValueChange={handlePositionChange} value={positionId} disabled={!departmentId || isSaving}>
                         <SelectTrigger id="position">
                             <SelectValue placeholder="Select a position" />
                         </SelectTrigger>
@@ -322,7 +323,7 @@ export default function EditCandidatePage() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="problem">Assign Problem</Label>
-              <Select onValueChange={setProblemId} value={problemId} disabled={!positionId}>
+              <Select onValueChange={setProblemId} value={problemId} disabled={!positionId || isSaving}>
                   <SelectTrigger id="problem">
                       <SelectValue placeholder="Select a coding problem" />
                   </SelectTrigger>
@@ -347,6 +348,7 @@ export default function EditCandidatePage() {
                             "justify-start text-left font-normal",
                             !scheduledTime && "text-muted-foreground"
                             )}
+                            disabled={isSaving}
                         >
                             <CalendarIcon className="mr-2 h-4 w-4" />
                             {scheduledTime ? format(scheduledTime, "PPP") : <span>Pick a date</span>}
@@ -365,7 +367,7 @@ export default function EditCandidatePage() {
                       <Select
                         onValueChange={(value) => handleTimeChange(value, 'hour')}
                         value={String(scheduledTime ? scheduledTime.getHours() % 12 || 12 : '').padStart(2, '0')}
-                        disabled={!scheduledTime}
+                        disabled={!scheduledTime || isSaving}
                     >
                         <SelectTrigger>
                             <SelectValue placeholder="HH" />
@@ -379,7 +381,7 @@ export default function EditCandidatePage() {
                     <Select
                         onValueChange={(value) => handleTimeChange(value, 'minute')}
                         value={String(scheduledTime?.getMinutes() ?? '').padStart(2, '0')}
-                        disabled={!scheduledTime}
+                        disabled={!scheduledTime || isSaving}
                     >
                         <SelectTrigger>
                             <SelectValue placeholder="MM" />
@@ -393,7 +395,7 @@ export default function EditCandidatePage() {
                     <Select
                         onValueChange={(value) => handleTimeChange(value, 'ampm')}
                         value={scheduledTime && scheduledTime.getHours() >= 12 ? 'PM' : 'AM'}
-                        disabled={!scheduledTime}
+                        disabled={!scheduledTime || isSaving}
                     >
                         <SelectTrigger>
                             <SelectValue />
@@ -407,7 +409,10 @@ export default function EditCandidatePage() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button type="submit">Update Candidate</Button>
+            <Button type="submit" disabled={isSaving || isLoading}>
+                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Update Candidate
+            </Button>
           </CardFooter>
         </Card>
       </form>

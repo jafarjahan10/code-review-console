@@ -26,4 +26,28 @@ export type Problem = {
     departmentId: string;
     positionId: string;
 }
+
+export type Submission = {
+    id: string;
+    candidateId: string;
+    problemId: string;
+    codeHTML: string;
+    codeCSS: string;
+    codeJS: string;
+    submissionTime: any;
+};
     
+export type Candidate = {
+    id: string;
+    name: string;
+    email: string;
+    status: 'Invited' | 'In Progress' | 'Completed' | 'Pending';
+    problemId: string;
+    positionId: string;
+    departmentId: string;
+    scheduledTime: any;
+    accessCode: string;
+    submissionId: string | null;
+    remarks: any[];
+    submitTime: any | null;
+}

@@ -46,26 +46,14 @@ service cloud.firestore {
     }
 
     /**
-     * @description Grants candidates access to their own profiles.
+     * @description Grants admin and user roles read/write access to candidate profiles.
      * @path /candidates/{candidateId}
-     * @allow (get) Authenticated user can read their own profile data.
-     * @allow (list) Authenticated user can list their own profile data.
-     * @allow (create) Authenticated user can create their own profile.
-     * @allow (update) Authenticated user can update their own profile.
-     * @allow (delete) Authenticated user can delete their own profile.
-     * @deny (get) Authenticated user cannot read another user's profile data.
-     * @deny (list) Authenticated user cannot list another user's profile data.
-     * @deny (create) Authenticated user cannot create profile with different ID.
-     * @deny (update) Authenticated user cannot update another user's profile data.
-     * @deny (delete) Authenticated user cannot delete another user's profile data.
-     * @principle Enforces document ownership for candidate profiles.
+     * @allow (get, list) Authenticated user with admin or user role can read/list profiles.
+     * @allow (create, update, delete) Authenticated user with admin or user role can modify profiles.
+     * @principle Enforces role-based access for candidate management.
      */
     match /candidates/{candidateId} {
-      allow get: if isOwner(candidateId);
-      allow list: if isOwner(candidateId);
-      allow create: if isOwner(candidateId);
-      allow update: if isOwner(candidateId);
-      allow delete: if isOwner(candidateId);
+      allow read, write: if isSignedIn() && (isAdmin() || isUser());
     }
     
     /**

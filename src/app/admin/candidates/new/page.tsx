@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { ArrowLeft, Calendar as CalendarIcon } from 'lucide-react';
+import { ArrowLeft, Calendar as CalendarIcon, Loader2 } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -21,37 +21,10 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format, setHours, setMinutes, getDate, getMonth, getYear } from 'date-fns';
 import { cn } from '@/lib/utils';
-
-// Mock data - in a real app, this would be fetched from an API
-const departments = ["Engineering", "Design", "Product", "Marketing", "HR"];
-const initialPositions = [
-  { id: "pos_1", title: "Senior Frontend Developer", department: "Engineering" },
-  { id: "pos_2", title: "UX/UI Designer", department: "Design" },
-  { id: "pos_3", title: "Product Manager", department: "Product" },
-  { id: "pos_4", title: "Junior Backend Developer", department: "Engineering" },
-];
-const initialProblems = [
-  {
-    id: "prob_1",
-    title: "FizzBuzz Challenge",
-    positionId: "pos_1",
-  },
-  {
-    id: "prob_2",
-    title: "Palindrome Checker",
-    positionId: "pos_2",
-  },
-  {
-    id: "prob_3",
-    title: "Two Sum",
-    positionId: "pos_1",
-  },
-  {
-    id: "prob_4",
-    title: "Implement a Debounce Function",
-    positionId: "pos_4",
-  },
-];
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { addDoc, collection } from 'firebase/firestore';
+import type { Department, Position, Problem } from '@/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const generateAccessCode = (length = 6) => {
     const chars = 'ABCDEFGHIJKLMNPQRSTUVWXYZ123456789';
@@ -66,26 +39,38 @@ const generateAccessCode = (length = 6) => {
 export default function InviteCandidatePage() {
   const router = useRouter();
   const { toast } = useToast();
+  const firestore = useFirestore();
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [department, setDepartment] = useState('');
+  const [departmentId, setDepartmentId] = useState('');
   const [positionId, setPositionId] = useState('');
   const [problemId, setProblemId] = useState('');
   const [scheduledTime, setScheduledTime] = useState<Date | undefined>();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  
+  const deptsColRef = useMemoFirebase(() => (firestore ? collection(firestore, 'departments') : null), [firestore]);
+  const { data: departments, isLoading: isLoadingDepts } = useCollection<Department>(deptsColRef);
+  
+  const posColRef = useMemoFirebase(() => (firestore ? collection(firestore, 'positions') : null), [firestore]);
+  const { data: positions, isLoading: isLoadingPos } = useCollection<Position>(posColRef);
+
+  const problemsColRef = useMemoFirebase(() => (firestore ? collection(firestore, 'problems') : null), [firestore]);
+  const { data: problems, isLoading: isLoadingProblems } = useCollection<Problem>(problemsColRef);
 
   const availablePositions = useMemo(() => {
-    if (!department) return [];
-    return initialPositions.filter(p => p.department === department);
-  }, [department]);
+    if (!departmentId || !positions) return [];
+    return positions.filter(p => p.departmentId === departmentId);
+  }, [departmentId, positions]);
 
   const availableProblems = useMemo(() => {
-    if (!positionId) return [];
-    return initialProblems.filter(p => p.positionId === positionId);
-  }, [positionId]);
+    if (!positionId || !problems) return [];
+    return problems.filter(p => p.positionId === positionId);
+  }, [positionId, problems]);
 
   const handleDepartmentChange = (value: string) => {
-    setDepartment(value);
+    setDepartmentId(value);
     setPositionId('');
     setProblemId('');
   }
@@ -139,9 +124,9 @@ export default function InviteCandidatePage() {
       setScheduledTime(newDate);
   };
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!name || !email || !department || !positionId || !problemId || !scheduledTime) {
+    if (!name || !email || !departmentId || !positionId || !problemId || !scheduledTime) {
       toast({
         variant: 'destructive',
         title: 'Missing Fields',
@@ -149,15 +134,68 @@ export default function InviteCandidatePage() {
       });
       return;
     }
+    if (!firestore) return;
+
+    setIsSaving(true);
     const accessCode = generateAccessCode();
-    const formData = { name, email, department, positionId, problemId, accessCode, scheduledTime: scheduledTime.toISOString() };
-    console.log(formData);
-    toast({
-      title: 'Candidate Added!',
-      description: `${name} has been added. Access Code: ${accessCode}`,
-    });
-    router.push('/admin/candidates');
+    try {
+        await addDoc(collection(firestore, 'candidates'), { 
+            name, 
+            email, 
+            departmentId, 
+            positionId, 
+            problemId, 
+            accessCode, 
+            scheduledTime,
+            status: "Invited",
+            remarks: [],
+            submitTime: null,
+            submissionId: null,
+        });
+        toast({
+          title: 'Candidate Added!',
+          description: `${name} has been added. Access Code: ${accessCode}`,
+        });
+        router.push('/admin/candidates');
+    } catch(error: any) {
+        toast({
+            variant: "destructive",
+            title: "Creation Failed",
+            description: error.message
+        });
+    } finally {
+        setIsSaving(false);
+    }
   };
+  
+  const isLoading = isLoadingDepts || isLoadingPos || isLoadingProblems;
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+        <div className="flex items-center gap-4">
+            <Skeleton className="h-7 w-7" />
+            <div className="space-y-1">
+                <Skeleton className="h-8 w-40" />
+                <Skeleton className="h-4 w-72" />
+            </div>
+        </div>
+        <Card>
+            <CardContent className="space-y-4 pt-6">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2"><Skeleton className="h-4 w-20" /><Skeleton className="h-10 w-full" /></div>
+                  <div className="space-y-2"><Skeleton className="h-4 w-20" /><Skeleton className="h-10 w-full" /></div>
+                </div>
+                 <div className="space-y-2"><Skeleton className="h-4 w-20" /><Skeleton className="h-10 w-full" /></div>
+                 <div className="space-y-2"><Skeleton className="h-4 w-20" /><Skeleton className="h-10 w-full" /></div>
+            </CardContent>
+            <CardFooter>
+                <Skeleton className="h-10 w-32" />
+            </CardFooter>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -189,6 +227,7 @@ export default function InviteCandidatePage() {
                   placeholder="e.g., John Doe"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                  disabled={isSaving}
                 />
               </div>
               <div className="grid gap-2">
@@ -199,20 +238,21 @@ export default function InviteCandidatePage() {
                   placeholder="e.g., john.doe@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  disabled={isSaving}
                 />
               </div>
             </div>
              <div className="grid md:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                     <Label htmlFor="department">Department</Label>
-                    <Select onValueChange={handleDepartmentChange} value={department}>
+                    <Select onValueChange={handleDepartmentChange} value={departmentId} disabled={isSaving}>
                         <SelectTrigger id="department">
                             <SelectValue placeholder="Select a department" />
                         </SelectTrigger>
                         <SelectContent>
-                            {departments.map((dept) => (
-                                <SelectItem key={dept} value={dept}>
-                                {dept}
+                            {(departments || []).map((dept) => (
+                                <SelectItem key={dept.id} value={dept.id}>
+                                {dept.name}
                                 </SelectItem>
                             ))}
                         </SelectContent>
@@ -220,7 +260,7 @@ export default function InviteCandidatePage() {
                 </div>
                 <div className="grid gap-2">
                     <Label htmlFor="position">Position</Label>
-                    <Select onValueChange={handlePositionChange} value={positionId} disabled={!department}>
+                    <Select onValueChange={handlePositionChange} value={positionId} disabled={!departmentId || isSaving}>
                         <SelectTrigger id="position">
                             <SelectValue placeholder="Select a position" />
                         </SelectTrigger>
@@ -236,12 +276,12 @@ export default function InviteCandidatePage() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="problem">Assign Problem</Label>
-              <Select onValueChange={setProblemId} value={problemId} disabled={!positionId}>
+              <Select onValueChange={setProblemId} value={problemId} disabled={!positionId || isSaving}>
                   <SelectTrigger id="problem">
                     <SelectValue placeholder="Select a coding problem" />
                   </SelectTrigger>
                   <SelectContent>
-                    {availableProblems.map((problem) => (
+                    {(availableProblems || []).map((problem) => (
                       <SelectItem key={problem.id} value={problem.id}>
                         {problem.title}
                       </SelectItem>
@@ -261,6 +301,7 @@ export default function InviteCandidatePage() {
                           "justify-start text-left font-normal",
                           !scheduledTime && "text-muted-foreground"
                           )}
+                          disabled={isSaving}
                       >
                           <CalendarIcon className="mr-2 h-4 w-4" />
                           {scheduledTime ? format(scheduledTime, "PPP") : <span>Pick a date</span>}
@@ -279,7 +320,7 @@ export default function InviteCandidatePage() {
                   <Select
                       onValueChange={(value) => handleTimeChange(value, 'hour')}
                       value={String(scheduledTime ? scheduledTime.getHours() % 12 || 12 : '').padStart(2, '0')}
-                      disabled={!scheduledTime}
+                      disabled={!scheduledTime || isSaving}
                   >
                       <SelectTrigger>
                           <SelectValue placeholder="HH" />
@@ -293,7 +334,7 @@ export default function InviteCandidatePage() {
                   <Select
                       onValueChange={(value) => handleTimeChange(value, 'minute')}
                       value={String(scheduledTime?.getMinutes() ?? '').padStart(2, '0')}
-                      disabled={!scheduledTime}
+                      disabled={!scheduledTime || isSaving}
                   >
                       <SelectTrigger>
                           <SelectValue placeholder="MM" />
@@ -307,7 +348,7 @@ export default function InviteCandidatePage() {
                   <Select
                       onValueChange={(value) => handleTimeChange(value, 'ampm')}
                       value={scheduledTime && scheduledTime.getHours() >= 12 ? 'PM' : 'AM'}
-                      disabled={!scheduledTime}
+                      disabled={!scheduledTime || isSaving}
                   >
                       <SelectTrigger>
                           <SelectValue />
@@ -321,12 +362,13 @@ export default function InviteCandidatePage() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button type="submit">Add Candidate</Button>
+            <Button type="submit" disabled={isSaving || isLoading}>
+                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Add Candidate
+            </Button>
           </CardFooter>
         </Card>
       </form>
     </div>
   );
-
-    
-
+}

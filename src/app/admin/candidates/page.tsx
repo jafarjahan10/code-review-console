@@ -1,14 +1,11 @@
 
 'use client';
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MoreHorizontal, PlusCircle, Trash2, Pencil, Eye, Copy } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash2, Pencil, Eye, Copy, Search, ArrowUpDown } from "lucide-react";
 import Link from "next/link";
 import {
   AlertDialog,
@@ -38,77 +35,102 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import ClientDateTime from "@/components/client-date-time";
+import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { collection, doc, deleteDoc } from "firebase/firestore";
+import type { Candidate, Position, Problem } from "@/types";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
 
-
-// Mock data for candidates
-const initialCandidates = [
-  {
-    id: "cand_1",
-    name: "John Doe",
-    email: "john.doe@example.com",
-    status: "Pending",
-    scheduledTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
-    problemAssigned: "FizzBuzz Challenge",
-    positionId: "pos_1",
-    accessCode: "FJ8K2L",
-  },
-  {
-    id: "cand_2",
-    name: "Jane Smith",
-    email: "jane.smith@example.com",
-    status: "Completed",
-    scheduledTime: new Date().toISOString(),
-    problemAssigned: "Palindrome Checker",
-    positionId: "pos_2",
-    accessCode: "G4H9J1",
-  },
-  {
-    id: "cand_3",
-    name: "Sam Wilson",
-    email: "sam.wilson@example.com",
-    status: "In Progress",
-    scheduledTime: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(),
-    problemAssigned: "Two Sum",
-    positionId: "pos_1",
-    accessCode: "K2L3M4",
-  },
-  {
-    id: "cand_4",
-    name: "Alice Johnson",
-    email: "alice.j@example.com",
-    status: "Invited",
-    scheduledTime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-    problemAssigned: "Implement a Debounce Function",
-    positionId: "pos_4",
-    accessCode: "N5P6Q7",
-  },
-];
-
-const initialPositions = [
-  { id: "pos_1", title: "Senior Frontend Developer", department: "Engineering" },
-  { id: "pos_2", title: "UX/UI Designer", department: "Design" },
-  { id: "pos_3", title: "Product Manager", department: "Product" },
-  { id: "pos_4", title: "Junior Backend Developer", department: "Engineering" },
-];
-
-
-type Candidate = typeof initialCandidates[0];
 
 export default function CandidatesPage() {
   const { toast } = useToast();
-  const [candidates, setCandidates] = useState<Candidate[]>(initialCandidates);
+  const firestore = useFirestore();
+
   const [candidateToDelete, setCandidateToDelete] = useState<Candidate | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'ascending' });
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 10;
+  
+  const candidatesColRef = useMemoFirebase(() => firestore ? collection(firestore, 'candidates') : null, [firestore]);
+  const { data: candidates, isLoading: isLoadingCandidates } = useCollection<Candidate>(candidatesColRef);
 
-  const handleDelete = () => {
-    if (!candidateToDelete) return;
+  const positionsColRef = useMemoFirebase(() => firestore ? collection(firestore, 'positions') : null, [firestore]);
+  const { data: positions, isLoading: isLoadingPositions } = useCollection<Position>(positionsColRef);
+  
+  const problemsColRef = useMemoFirebase(() => firestore ? collection(firestore, 'problems') : null, [firestore]);
+  const { data: problems, isLoading: isLoadingProblems } = useCollection<Problem>(problemsColRef);
 
-    // In a real app, you would make an API call here.
-    setCandidates(candidates.filter((c) => c.id !== candidateToDelete.id));
-    toast({
-      title: "Candidate Removed",
-      description: `The candidate "${candidateToDelete.name}" has been successfully removed.`,
+  const positionsMap = useMemo(() => {
+    if (!positions) return new Map();
+    return new Map(positions.map(p => [p.id, p.title]));
+  }, [positions]);
+  
+  const problemsMap = useMemo(() => {
+    if (!problems) return new Map();
+    return new Map(problems.map(p => [p.id, p.title]));
+  }, [problems]);
+  
+  const filteredAndSortedCandidates = useMemo(() => {
+    if (!candidates) return [];
+
+    let filtered = candidates.filter(candidate => {
+        const positionName = positionsMap.get(candidate.positionId) || '';
+        const problemName = problemsMap.get(candidate.problemId) || '';
+
+        return candidate.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               candidate.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               positionName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               problemName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               candidate.status.toLowerCase().includes(searchTerm.toLowerCase());
     });
-    setCandidateToDelete(null);
+
+    filtered.sort((a, b) => {
+        const aValue = a[sortConfig.key as keyof Candidate] ?? '';
+        const bValue = b[sortConfig.key as keyof Candidate] ?? '';
+        
+        if (aValue < bValue) return sortConfig.direction === 'ascending' ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === 'ascending' ? 1 : -1;
+        return 0;
+    });
+
+    return filtered;
+
+  }, [candidates, searchTerm, sortConfig, positionsMap, problemsMap]);
+  
+  const totalPages = Math.ceil(filteredAndSortedCandidates.length / itemsPerPage);
+  const paginatedCandidates = useMemo(() => {
+    const startIndex = (page - 1) * itemsPerPage;
+    return filteredAndSortedCandidates.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredAndSortedCandidates, page, itemsPerPage]);
+  
+  const requestSort = (key: keyof Candidate) => {
+    let direction = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+    setPage(1);
+  };
+
+  const handleDelete = async () => {
+    if (!candidateToDelete || !firestore) return;
+
+    try {
+        await deleteDoc(doc(firestore, "candidates", candidateToDelete.id));
+        toast({
+            title: "Candidate Removed",
+            description: `The candidate "${candidateToDelete.name}" has been successfully removed.`,
+        });
+    } catch(error: any) {
+         toast({
+            variant: "destructive",
+            title: "Removal Failed",
+            description: error.message,
+        });
+    } finally {
+        setCandidateToDelete(null);
+    }
   };
   
   const handleCopy = (text: string) => {
@@ -119,6 +141,7 @@ export default function CandidatesPage() {
     });
   };
 
+  const isLoading = isLoadingCandidates || isLoadingPositions || isLoadingProblems;
 
   return (
     <>
@@ -143,26 +166,56 @@ export default function CandidatesPage() {
           </div>
         </div>
 
+        <div className="relative">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+                placeholder="Search by name, email, position..."
+                value={searchTerm}
+                onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setPage(1);
+                }}
+                className="pl-8 w-full max-w-sm"
+            />
+        </div>
+
         <Card>
           <CardContent className="pt-6">
             <div className="hidden md:block">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="whitespace-nowrap">Candidate</TableHead>
+                    <TableHead className="whitespace-nowrap cursor-pointer" onClick={() => requestSort('name')}>
+                        Candidate <ArrowUpDown className="ml-2 h-4 w-4 inline-block" />
+                    </TableHead>
                     <TableHead className="whitespace-nowrap">Position</TableHead>
                     <TableHead className="whitespace-nowrap">Problem Assigned</TableHead>
-                    <TableHead className="whitespace-nowrap">Status</TableHead>
+                    <TableHead className="whitespace-nowrap cursor-pointer" onClick={() => requestSort('status')}>
+                        Status <ArrowUpDown className="ml-2 h-4 w-4 inline-block" />
+                    </TableHead>
                     <TableHead className="whitespace-nowrap">Access Code</TableHead>
-                    <TableHead className="whitespace-nowrap">Scheduled For</TableHead>
+                    <TableHead className="whitespace-nowrap cursor-pointer" onClick={() => requestSort('scheduledTime')}>
+                        Scheduled For <ArrowUpDown className="ml-2 h-4 w-4 inline-block" />
+                    </TableHead>
                     <TableHead>
                       <span className="sr-only">Actions</span>
                     </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {candidates.map((candidate) => {
-                    const position = initialPositions.find(p => p.id === candidate.positionId);
+                  {isLoading ? (
+                    Array.from({length: itemsPerPage}).map((_, i) => (
+                        <TableRow key={i}>
+                            <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-1/4" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-1/4" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-1/4" /></TableCell>
+                            <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
+                        </TableRow>
+                    ))
+                  ) : paginatedCandidates.map((candidate) => {
                     return (
                     <TableRow key={candidate.id}>
                       <TableCell className="whitespace-nowrap">
@@ -180,9 +233,9 @@ export default function CandidatesPage() {
                         </div>
                       </TableCell>
                        <TableCell className="whitespace-nowrap text-muted-foreground">
-                        {position?.title || 'N/A'}
+                        {positionsMap.get(candidate.positionId) || 'N/A'}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap">{candidate.problemAssigned}</TableCell>
+                      <TableCell className="whitespace-nowrap">{problemsMap.get(candidate.problemId) || 'N/A'}</TableCell>
                       <TableCell className="whitespace-nowrap">
                         <Badge variant={
                             candidate.status === 'Completed' ? 'default' :
@@ -243,8 +296,8 @@ export default function CandidatesPage() {
               </Table>
             </div>
             <div className="md:hidden space-y-4">
-               {candidates.map((candidate) => {
-                 const position = initialPositions.find(p => p.id === candidate.positionId);
+               {paginatedCandidates.map((candidate) => {
+                 const position = positionsMap.get(candidate.positionId);
                  return (
                 <Card key={candidate.id} className="p-4">
                    <div className="flex justify-between items-start">
@@ -255,8 +308,8 @@ export default function CandidatesPage() {
                           </Avatar>
                         <div className="w-full">
                           <p className="font-medium">{candidate.name}</p>
-                          <p className="text-sm text-muted-foreground">{position?.title || 'N/A'}</p>
-                          <p className="text-sm text-muted-foreground">{candidate.problemAssigned}</p>
+                          <p className="text-sm text-muted-foreground">{position || 'N/A'}</p>
+                          <p className="text-sm text-muted-foreground">{problemsMap.get(candidate.problemId) || 'N/A'}</p>
                            <p className="text-sm text-muted-foreground">Scheduled: <ClientDateTime date={candidate.scheduledTime} /></p>
                           <div className="flex items-center gap-2 mt-1 font-mono text-sm">
                             <span>{candidate.accessCode}</span>
@@ -320,6 +373,29 @@ export default function CandidatesPage() {
             </div>
           </CardContent>
         </Card>
+        
+        <div className="flex items-center justify-end space-x-2 py-4">
+            <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+                disabled={page === 1}
+            >
+                Previous
+            </Button>
+             <span className="text-sm text-muted-foreground">
+                Page {page} of {totalPages}
+            </span>
+            <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={page === totalPages || totalPages === 0}
+            >
+                Next
+            </Button>
+        </div>
+
       </div>
 
        <AlertDialog open={!!candidateToDelete} onOpenChange={(isOpen) => !isOpen && setCandidateToDelete(null)}>
