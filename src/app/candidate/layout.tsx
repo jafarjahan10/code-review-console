@@ -25,14 +25,13 @@ export default function CandidateLayout({
   const pathname = usePathname();
 
   useEffect(() => {
-    // Wait until the authentication check is complete
     if (isUserLoading) {
-      return;
+      return; // Wait until the user's auth state is resolved
     }
-    
-    // If not loading and there's no user, redirect to login page.
-    // Allow access to the login page itself to avoid a redirect loop.
-    if (!user && pathname !== '/login') {
+
+    // If the check is complete and there's no user, redirect them.
+    // Exclude admin login to prevent redirect loops if they land there.
+    if (!user && pathname !== '/login' && !pathname.startsWith('/admin')) {
       router.push('/login');
     }
   }, [isUserLoading, user, router, pathname]);
@@ -50,8 +49,8 @@ export default function CandidateLayout({
     }
   }
 
-  // While checking for user, show a loading skeleton UI
-  if (isUserLoading && pathname !== '/login') {
+  // While checking for user, show a loading skeleton UI for any protected route
+  if (isUserLoading && pathname !== '/login' && !pathname.startsWith('/admin')) {
       return (
          <div className="flex flex-col min-h-screen">
             <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
@@ -66,18 +65,18 @@ export default function CandidateLayout({
       );
   }
 
-  // If there's no user and we're not on the login page, render nothing
+  // If there's no user and we're not on the login page yet, render nothing
   // as the redirect will happen shortly. This prevents flashing content.
-  if (!user && pathname !== '/login') {
+  if (!user && pathname !== '/login' && !pathname.startsWith('/admin')) {
     return null;
   }
   
-  // If we are on the login page, just render the children (the login form)
-  if (pathname === '/login') {
+  // If we are on the login page (or an admin page, handled by its own layout), just render the children
+  if (pathname === '/login' || pathname.startsWith('/admin')) {
     return <>{children}</>;
   }
 
-  // If user is authenticated, show the main layout
+  // If user is authenticated, show the main layout for candidate routes
   return (
       <div className="flex flex-col min-h-screen">
         <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
