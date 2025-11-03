@@ -86,14 +86,27 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Technology name is required' }, { status: 400 });
         }
 
-        const newTechnology = {
+        const docRef = await addDoc(collection(firestore, TECHNOLOGIES_COLLECTION), {
             name,
             createdAt: serverTimestamp(),
+        });
+        
+        // Fetch the document we just created to get the server-generated timestamp
+        const newDocSnap = await getDoc(docRef);
+        const newTechnology = newDocSnap.data();
+
+        if (!newTechnology) {
+             throw new Error("Failed to retrieve newly created document.");
+        }
+
+        const responseData = {
+            id: newDocSnap.id,
+            name: newTechnology.name,
+            // Convert Firestore Timestamp to JSON-serializable ISO string
+            createdAt: (newTechnology.createdAt as Timestamp).toDate().toISOString(), 
         };
 
-        const docRef = await addDoc(collection(firestore, TECHNOLOGIES_COLLECTION), newTechnology);
-
-        return NextResponse.json({ id: docRef.id, ...newTechnology }, { status: 201 });
+        return NextResponse.json(responseData, { status: 201 });
 
     } catch (error: any) {
         console.error('Error creating technology:', error);
