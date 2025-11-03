@@ -285,30 +285,6 @@ export default function SettingsPage() {
                         </CardContent>
                     </form>
                   </Card>
-
-                  <Card>
-                  <CardHeader>
-                      <CardTitle>Notifications</CardTitle>
-                      <CardDescription>Manage how you receive notifications.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                      <div className="flex items-center justify-between">
-                          <div>
-                              <Label htmlFor="new-submission-emails">New Submissions</Label>
-                              <p className="text-sm text-muted-foreground">Receive an email for every new submission.</p>
-                          </div>
-                          <Switch id="new-submission-emails" defaultChecked />
-                      </div>
-                      <div className="flex items-center justify-between">
-                          <div>
-                              <Label htmlFor="candidate-completed-emails">Candidate Completed</Label>
-                              <p className="text-sm text-muted-foreground">Receive an email when a candidate completes a challenge.</p>
-                          </div>
-                          <Switch id="candidate-completed-emails" defaultChecked />
-                      </div>
-                      <Button>Update Notifications</Button>
-                  </CardContent>
-                  </Card>
               </div>
           </TabsContent>
           <TabsContent value="interview-panel" className="space-y-4">
@@ -489,3 +465,5 @@ export default function SettingsPage() {
     </>
   );
 }
+
+    
