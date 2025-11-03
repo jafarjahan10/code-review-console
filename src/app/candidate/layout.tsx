@@ -29,9 +29,10 @@ export default function CandidateLayout({
       return; // Wait until the user's auth state is resolved
     }
 
-    // If the check is complete and there's no user, redirect them.
-    // Exclude admin login to prevent redirect loops if they land there.
-    if (!user && pathname !== '/login' && !pathname.startsWith('/admin')) {
+    const isPublicPage = pathname === '/login' || pathname.startsWith('/admin');
+
+    // If the check is complete, there's no user, and we are not on a public page, redirect.
+    if (!user && !isPublicPage) {
       router.push('/login');
     }
   }, [isUserLoading, user, router, pathname]);
@@ -49,8 +50,10 @@ export default function CandidateLayout({
     }
   }
 
+  const isPublicPage = pathname === '/login' || pathname.startsWith('/admin');
+
   // While checking for user, show a loading skeleton UI for any protected route
-  if (isUserLoading && pathname !== '/login' && !pathname.startsWith('/admin')) {
+  if (isUserLoading && !isPublicPage) {
       return (
          <div className="flex flex-col min-h-screen">
             <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
@@ -65,14 +68,14 @@ export default function CandidateLayout({
       );
   }
 
-  // If there's no user and we're not on the login page yet, render nothing
+  // If there's no user and we're not on a public page yet, render nothing
   // as the redirect will happen shortly. This prevents flashing content.
-  if (!user && pathname !== '/login' && !pathname.startsWith('/admin')) {
+  if (!user && !isPublicPage) {
     return null;
   }
   
-  // If we are on the login page (or an admin page, handled by its own layout), just render the children
-  if (pathname === '/login' || pathname.startsWith('/admin')) {
+  // If we are on a public page, just render the children
+  if (isPublicPage) {
     return <>{children}</>;
   }
 
