@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
 
 
 export default function AdminLayout({
@@ -17,18 +18,36 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, isUserLoading } = useUser();
+  const { user, adminUser, isUserLoading } = useUser();
+  const { toast } = useToast();
   const isLoginPage = pathname === '/admin' || pathname === '/admin/login';
 
   useEffect(() => {
-    if (!isUserLoading && !user && !isLoginPage) {
+    if (isUserLoading) return; // Wait until user auth state is resolved
+
+    // If no user is logged in at all, redirect to the admin login page.
+    if (!user && !isLoginPage) {
       router.push('/admin/login');
+      return;
     }
-  }, [isUserLoading, user, isLoginPage, router]);
+
+    // If a user is logged in, but we can't find their profile in the 'admins' collection,
+    // or their role is not 'Admin' or 'User', they are not authorized.
+    if (user && !adminUser && !isLoginPage) {
+        toast({
+            variant: "destructive",
+            title: "Permission Denied",
+            description: "You are not authorized to access this page."
+        });
+        // Redirect them to the candidate login, as they are not an admin/user.
+        router.push('/login');
+        return;
+    }
+
+  }, [isUserLoading, user, adminUser, isLoginPage, router, toast]);
 
 
-  // Immediately show loading state if auth check is running and it's not the login page.
-  // This prevents the content flash.
+  // Show a loading skeleton while the user and their role are being verified.
   if (isUserLoading && !isLoginPage) {
     return (
         <div className="flex" style={{height: '100dvh'}}>
@@ -52,43 +71,43 @@ export default function AdminLayout({
     )
   }
 
-  // If on login page, or if authenticated, render the layout.
-  // If unauthenticated, the useEffect above will have already triggered a redirect.
-  if (isLoginPage || user) {
-    if(isLoginPage) {
-        return <>{children}</>;
-    }
+  // Render the login page without the admin sidebar.
+  if (isLoginPage) {
+      return <>{children}</>;
+  }
       
+  // If the user is authenticated and authorized, show the admin panel.
+  if (user && adminUser) {
     return (
         <div className="flex" style={{height: '100dvh'}}>
-        <div className="hidden md:flex">
-            <AdminSidebar />
-        </div>
-        <main className="flex-1 bg-background overflow-y-auto no-scrollbar">
-            <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:hidden">
-            <Sheet>
-                <SheetTrigger asChild>
-                <Button variant="outline" size="icon">
-                    <Menu className="h-6 w-6" />
-                    <span className="sr-only">Toggle navigation menu</span>
-                </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="p-0 w-64">
-                    <SheetHeader className="sr-only">
-                        <SheetTitle>Admin Menu</SheetTitle>
-                        <SheetDescription>Navigation links for the admin dashboard.</SheetDescription>
-                    </SheetHeader>
+            <div className="hidden md:flex">
                 <AdminSidebar />
-                </SheetContent>
-            </Sheet>
-            </header>
-            {children}
-        </main>
+            </div>
+            <main className="flex-1 bg-background overflow-y-auto no-scrollbar">
+                <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:hidden">
+                <Sheet>
+                    <SheetTrigger asChild>
+                    <Button variant="outline" size="icon">
+                        <Menu className="h-6 w-6" />
+                        <span className="sr-only">Toggle navigation menu</span>
+                    </Button>
+                    </SheetTrigger>
+                    <SheetContent side="left" className="p-0 w-64">
+                        <SheetHeader className="sr-only">
+                            <SheetTitle>Admin Menu</SheetTitle>
+                            <SheetDescription>Navigation links for the admin dashboard.</SheetDescription>
+                        </SheetHeader>
+                    <AdminSidebar />
+                    </SheetContent>
+                </Sheet>
+                </header>
+                {children}
+            </main>
         </div>
     );
   }
 
-  // Fallback for the brief moment before redirection for unauthenticated users.
+  // Fallback for the brief moment before redirection for unauthenticated/unauthorized users.
   return (
     <div className="flex h-screen w-full items-center justify-center">
         <p>Loading...</p>
