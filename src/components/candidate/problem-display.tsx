@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,36 +13,62 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, Lock, Clock, ArrowRight } from "lucide-react";
+import { Lock, Clock, ArrowRight } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-
-// Mock data, to be replaced by actual data fetching
-const MOCK_CANDIDATE_DATA = {
-  name: "Alex Doe",
-  problem: {
-    id: "prob_123",
-    title: "Implement a Debounce Function",
-    difficulty: "Medium",
-    description: "Your task is to implement a debounce function in JavaScript. The function should delay invoking a passed-in function until after `wait` milliseconds have elapsed since the last time it was invoked.",
-  },
-  // Set scheduled time to 20 seconds in the future for demonstration
-  scheduledTime: new Date(Date.now() + 20 * 1000).toISOString(),
-};
+import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
+import { doc } from 'firebase/firestore';
+import type { Candidate, Problem } from "@/types";
 
 type AccessState = 'loading' | 'denied' | 'granted' | 'error';
 
+const toDate = (timestamp: any): Date | undefined => {
+    if (timestamp?.toDate) {
+      return timestamp.toDate();
+    }
+    if (typeof timestamp === 'string' || typeof timestamp === 'number') {
+      return new Date(timestamp);
+    }
+    return timestamp;
+};
+
 export default function ProblemDisplay() {
+  const firestore = useFirestore();
+  const [candidateId, setCandidateId] = useState<string | null>(null);
+  
   const [accessState, setAccessState] = useState<AccessState>('loading');
   const [reason, setReason] = useState("");
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
+    setCandidateId(sessionStorage.getItem('candidateId'));
+  }, []);
+
+  const candidateDocRef = useMemoFirebase(() => (firestore && candidateId ? doc(firestore, 'candidates', candidateId) : null), [firestore, candidateId]);
+  const { data: candidate, isLoading: isLoadingCandidate } = useDoc<Candidate>(candidateDocRef);
+
+  const problemDocRef = useMemoFirebase(() => (firestore && candidate?.problemId ? doc(firestore, 'problems', candidate.problemId) : null), [firestore, candidate]);
+  const { data: problem, isLoading: isLoadingProblem } = useDoc<Problem>(problemDocRef);
+
+  useEffect(() => {
+    if (isLoadingCandidate || isLoadingProblem) {
+        setAccessState('loading');
+        return;
+    }
+    
+    if (!candidate || !problem) {
+        if (!isLoadingCandidate && !isLoadingProblem) {
+            setAccessState('error');
+            setReason("Could not load your candidate or problem information. Please try logging in again.");
+        }
+        return;
+    }
+
     const checkAccess = () => {
       try {
         const now = new Date();
-        const scheduledTime = new Date(MOCK_CANDIDATE_DATA.scheduledTime);
+        const scheduledTime = toDate(candidate.scheduledTime);
         
-        if (now >= scheduledTime) {
+        if (scheduledTime && now >= scheduledTime) {
           setAccessState('granted');
           setReason("Access granted. You may now start the challenge.");
         } else {
@@ -58,7 +84,6 @@ export default function ProblemDisplay() {
 
     checkAccess();
     
-    // Set up a timer to re-check access periodically if denied
     const interval = setInterval(() => {
       setCurrentTime(new Date());
       if(accessState !== 'granted'){
@@ -67,7 +92,8 @@ export default function ProblemDisplay() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [accessState]);
+
+  }, [candidate, problem, isLoadingCandidate, isLoadingProblem, accessState]);
 
 
   if (accessState === 'loading') {
@@ -98,8 +124,8 @@ export default function ProblemDisplay() {
     );
   }
 
-  if (accessState === 'denied') {
-    const scheduledDate = new Date(MOCK_CANDIDATE_DATA.scheduledTime);
+  if (accessState === 'denied' && candidate) {
+    const scheduledDate = toDate(candidate.scheduledTime);
     return (
       <Card className="w-full max-w-2xl text-center">
         <CardHeader>
@@ -113,34 +139,38 @@ export default function ProblemDisplay() {
           <div className="p-4 bg-muted rounded-lg">
             <p className="text-sm text-muted-foreground">Access unlocks in</p>
             <p className="text-3xl font-bold font-mono text-primary">
-              {formatDistanceToNow(scheduledDate, { addSuffix: false })}
+              {scheduledDate ? formatDistanceToNow(scheduledDate, { addSuffix: false }) : 'Calculating...'}
             </p>
           </div>
         </CardContent>
         <CardFooter className="flex-col gap-2 text-sm text-muted-foreground">
-            <p><Clock className="inline-block mr-1 h-4 w-4" />Scheduled Time: {scheduledDate.toLocaleString()}</p>
+            <p><Clock className="inline-block mr-1 h-4 w-4" />Scheduled Time: {scheduledDate ? scheduledDate.toLocaleString() : '...'}</p>
             <p>{reason}</p>
         </CardFooter>
       </Card>
     );
   }
 
-  return (
-    <Card className="w-full max-w-2xl">
-      <CardHeader>
-        <CardTitle className="font-headline text-3xl">{MOCK_CANDIDATE_DATA.problem.title}</CardTitle>
-        <CardDescription>Difficulty: {MOCK_CANDIDATE_DATA.problem.difficulty}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <p className="text-muted-foreground">{MOCK_CANDIDATE_DATA.problem.description}</p>
-      </CardContent>
-      <CardFooter>
-        <Button asChild size="lg">
-          <Link href="/candidate/problem">
-            Start Challenge <ArrowRight className="ml-2 h-5 w-5" />
-          </Link>
-        </Button>
-      </CardFooter>
-    </Card>
-  );
+  if (accessState === 'granted' && problem) {
+    return (
+        <Card className="w-full max-w-2xl">
+        <CardHeader>
+            <CardTitle className="font-headline text-3xl">{problem.title}</CardTitle>
+            <CardDescription>Difficulty: {problem.difficulty}</CardDescription>
+        </CardHeader>
+        <CardContent>
+            <p className="text-muted-foreground">{problem.description}</p>
+        </CardContent>
+        <CardFooter>
+            <Button asChild size="lg">
+            <Link href="/candidate/problem">
+                Start Challenge <ArrowRight className="ml-2 h-5 w-5" />
+            </Link>
+            </Button>
+        </CardFooter>
+        </Card>
+    );
+  }
+
+  return null; // Should not be reached in normal flow
 }

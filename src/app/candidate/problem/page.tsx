@@ -1,29 +1,36 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import CodeEditor from "@/components/candidate/code-editor";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-
-
-// Mock data
-const MOCK_PROBLEM = {
-  id: "prob_123",
-  title: "Implement a Debounce Function",
-  difficulty: "Medium",
-  description: "Your task is to implement a debounce function in JavaScript. The function should delay invoking a passed-in function until after `wait` milliseconds have elapsed since the last time it was invoked.\n\nThe debounced function should come with a `cancel` method to cancel delayed function invocations and a `flush` method to immediately invoke them.",
-  details: [
-    "It should not immediately call the function.",
-    "It should call the function only once after the wait time.",
-    "It should reset the timer on subsequent calls.",
-    "The `cancel` method should prevent the function from being called.",
-    "The `flush` method should call the function immediately."
-  ],
-  technologies: ["HTML", "CSS", "JS"]
-};
+import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import type { Candidate, Problem } from '@/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ProblemPage() {
+  const router = useRouter();
+  const firestore = useFirestore();
+  const [candidateId, setCandidateId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const id = sessionStorage.getItem('candidateId');
+    if (!id) {
+        router.push('/login');
+    } else {
+        setCandidateId(id);
+    }
+  }, [router]);
+
+  const candidateDocRef = useMemoFirebase(() => (firestore && candidateId ? doc(firestore, 'candidates', candidateId) : null), [firestore, candidateId]);
+  const { data: candidate, isLoading: isLoadingCandidate } = useDoc<Candidate>(candidateDocRef);
+
+  const problemDocRef = useMemoFirebase(() => (firestore && candidate?.problemId ? doc(firestore, 'problems', candidate.problemId) : null), [firestore, candidate]);
+  const { data: problem, isLoading: isLoadingProblem } = useDoc<Problem>(problemDocRef);
+
 
    useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -54,27 +61,50 @@ export default function ProblemPage() {
     };
   }, []);
 
+  const isLoading = isLoadingCandidate || isLoadingProblem;
+
+  if (isLoading || !problem || !candidate) {
+    return (
+        <div className="grid md:grid-cols-2 gap-4 p-4" style={{height: 'calc(100dvh - 64px)'}}>
+            <Card className="flex flex-col">
+                <CardHeader>
+                    <Skeleton className="h-8 w-3/4 mb-2" />
+                    <Skeleton className="h-4 w-1/4" />
+                </CardHeader>
+                 <CardContent>
+                    <Skeleton className="h-4 w-full mb-2" />
+                    <Skeleton className="h-4 w-full mb-2" />
+                    <Skeleton className="h-4 w-5/6" />
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <Skeleton className="h-10 w-1/4" />
+                </CardHeader>
+                <CardContent>
+                    <Skeleton className="h-64 w-full" />
+                </CardContent>
+            </Card>
+        </div>
+    )
+  }
+
 
   return (
-    <div className="grid md:grid-cols-2 gap-4 p-4 no-scrollbar overflow-y-auto select-none" style={{height: 'calc(100dvh - 64px)'}} onContextMenu={(e) => e.preventDefault()}>
+    <div className="grid md:grid-cols-2 gap-4 p-4 no-scrollbar overflow-y-auto" style={{height: 'calc(100dvh - 64px)'}} onContextMenu={(e) => e.preventDefault()}>
       <Card className="flex flex-col">
         <CardHeader>
-          <CardTitle className="font-headline text-2xl">{MOCK_PROBLEM.title}</CardTitle>
-          <CardDescription>Difficulty: {MOCK_PROBLEM.difficulty}</CardDescription>
+          <CardTitle className="font-headline text-2xl">{problem.title}</CardTitle>
+          <CardDescription>Difficulty: {problem.difficulty}</CardDescription>
         </CardHeader>
         <ScrollArea className="flex-1">
           <CardContent>
-            <p className="text-foreground mb-4">{MOCK_PROBLEM.description}</p>
-            <h3 className="font-semibold text-lg mb-2">Requirements:</h3>
-            <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
-              {MOCK_PROBLEM.details.map((detail, i) => <li key={i}>{detail}</li>)}
-            </ul>
+            <p className="text-foreground mb-4">{problem.description}</p>
           </CardContent>
         </ScrollArea>
       </Card>
 
-      <CodeEditor problem={MOCK_PROBLEM} />
+      <CodeEditor candidate={candidate} problem={problem} />
     </div>
   );
 }
-

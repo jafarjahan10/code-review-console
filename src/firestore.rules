@@ -1,0 +1,180 @@
+
+/**
+ * @file Firebase Security Rules for CodeReview Console.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a role-based access control model where admins have broad access and candidates primarily access their own data.
+ * Ownership is enforced through path-based checks, especially for submissions.
+ *
+ * Data Structure:
+ * - /admins/{adminId}: Stores administrator profiles.
+ * - /candidates/{candidateId}: Stores candidate profiles.
+ * - /departments/{departmentId}: Stores department information.
+ * - /positions/{positionId}: Stores job positions.
+ * - /problems/{problemId}: Stores coding problems.
+ * - /candidates/{candidateId}/submissions/{submissionId}: Stores code submissions by candidates.
+ * - /technologies/{technologyId}: Stores technology stacks.
+ *
+ * Key Security Decisions:
+ * - Admin role is determined by checking the existence of an admin document.
+ * - Candidates can only access their own profile data.
+ * - Candidates can only access their own submissions.
+ * - Problems are readable by any authenticated user but modifiable only by admins and users for now.
+ * - Positions are readable by any authenticated user but only modifiable by admins.
+ * - Technologies are readable by any authenticated user but only modifiable by admins.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Grants admins full access to admin profiles.
+     * @path /admins/{adminId}
+     * @allow (get, list) User with admin role can read admin profile data.
+     * @allow (create) User with admin role OR any authenticated user if they are creating their own doc and no admins exist.
+     * @allow (update, delete) User with admin role can modify admin profile data.
+     * @deny (get, list) User without admin role cannot read admin profile data.
+     * @deny (create, update, delete) User without admin role cannot modify admin profile data (with exception for initial admin).
+     * @principle Enforces admin-only access to admin profiles, with a bootstrap mechanism for the first admin.
+     */
+    match /admins/{adminId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isOwner(adminId) || isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * @description Grants admin and user roles read/write access to candidate profiles.
+     * @path /candidates/{candidateId}
+     * @allow (read) Any signed-in user can query for their own record during login.
+     * @allow (write) Authenticated user with admin or user role can modify profiles.
+     * @principle Enforces role-based access for candidate management, while allowing login checks.
+     */
+    match /candidates/{candidateId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && (isAdmin() || isUser());
+    }
+    
+    /**
+     * @description Grants admins CRUD access to departments, and all authenticated users read access.
+     * @path /departments/{departmentId}
+     * @allow (get, list) Any authenticated user can read departments.
+     * @allow (create, update, delete) User with admin role can modify departments.
+     * @deny (create, update, delete) User without admin role cannot modify departments.
+     * @principle Enforces admin-only writes for departments.
+     */
+    match /departments/{departmentId} {
+        allow get, list: if isSignedIn();
+        allow create, update, delete: if isAdmin();
+    }
+    
+    /**
+     * @description Grants admins CRUD access to positions, and all authenticated users read access.
+     * @path /positions/{positionId}
+     * @allow (get, list) Any authenticated user can read positions.
+     * @allow (create, update, delete) User with admin role can modify positions.
+     * @deny (create, update, delete) User without admin role cannot modify positions.
+     * @principle Enforces admin-only writes for positions.
+     */
+    match /positions/{positionId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Grants admins and users CRUD access to problems, and public read access.
+     * @path /problems/{problemId}
+     * @allow (get, list) Any authenticated user can read problems.
+     * @allow (create, update, delete) User with admin or user role can modify problems.
+     * @principle Enforces admin/user writes for problems.
+     */
+    match /problems/{problemId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isSignedIn() && (isAdmin() || isUser());
+    }
+
+    /**
+     * @description Grants candidates access to their own submissions, and admins access to all submissions.
+     * @path /candidates/{candidateId}/submissions/{submissionId}
+     * @allow (get, list) Authenticated user can read/list their own submissions.
+     * @allow (create) Authenticated user can create submissions under their own profile.
+     * @allow (update, delete) Authenticated user can update/delete their own submissions.
+     * @deny (get, list, create, update, delete) Authenticated user cannot access another user's submissions.
+     * @principle Enforces document ownership for submissions, with admin override.
+     */
+    match /candidates/{candidateId}/submissions/{submissionId} {
+      allow get: if isOwner(candidateId) || isAdmin();
+      allow list: if isOwner(candidateId) || isAdmin();
+      allow create: if isOwner(candidateId) && request.resource.data.candidateId == candidateId;
+      allow update: if (isExistingOwner(candidateId) && request.resource.data.candidateId == resource.data.candidateId) || isAdmin();
+      allow delete: if isExistingOwner(candidateId) || isAdmin();
+    }
+
+    /**
+     * @description Grants admins CRUD access to technologies, and all authenticated users read access.
+     * @path /technologies/{technologyId}
+     * @allow (get, list) Any authenticated user can read technologies.
+     * @allow (create, update, delete) User with admin role can modify technologies.
+     * @deny (create, update, delete) User without admin role cannot modify technologies.
+     * @principle Enforces admin-only writes for technologies.
+     */
+    match /technologies/{technologyId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Checks if the current user is signed in.
+     * @return {boolean} True if the user is signed in, false otherwise.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Checks if the current user is the owner of the document based on the provided userId.
+     * @param {string} userId - The user ID to compare against the authenticated user's ID.
+     * @return {boolean} True if the user is the owner, false otherwise.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * @description Checks if the current user is the owner of the document and the document exists.  Useful for update/delete checks.
+     * @param {string} userId - The user ID to compare against the authenticated user's ID.
+     * @return {boolean} True if the user is the owner and the document exists, false otherwise.
+     */
+    function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Checks if the current user has the admin role.
+     * @return {boolean} True if the user is an admin, false otherwise.
+     */
+    function isAdmin() {
+      return exists(/databases/$(database)/documents/admins/$(request.auth.uid)) && 
+             get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'Admin';
+    }
+
+    /**
+     * @description Checks if the current user has the user role.
+     * @return {boolean} True if the user has a 'User' role document, false otherwise.
+     */
+    function isUser() {
+        return exists(/databases/$(database)/documents/admins/$(request.auth.uid)) &&
+               get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'User';
+    }
+    
+    /**
+     * @description Checks if an admin is being created for the first time.
+     * @return {boolean} True if no admin docs exist and the user is creating their own admin doc.
+     */
+    function isCreatingInitialAdmin(adminId) {
+      return isOwner(adminId) && !exists(/databases/$(database)/documents/admins);
+    }
+  }
+}

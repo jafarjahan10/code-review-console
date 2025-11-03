@@ -2,38 +2,43 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Logo from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import ProblemDisplay from "@/components/candidate/problem-display";
-import { useRouter } from 'next/navigation';
-import { useUser } from '@/firebase';
-
+import { useUser, useAuth } from '@/firebase';
+import { signOut } from 'firebase/auth';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Home() {
   const router = useRouter();
   const { user, isUserLoading } = useUser();
-  const [candidateId, setCandidateId] = useState<string | null>(null);
+  const auth = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
-    // This now relies on Firebase Auth state and sessionStorage for candidate data
-    const storedCandidateId = sessionStorage.getItem('candidateId');
-    setCandidateId(storedCandidateId);
-
+    // If auth state is determined and there's no user, redirect to login.
     if (!isUserLoading && !user) {
       router.push('/login');
     }
   }, [isUserLoading, user, router]);
 
-  const handleLogout = () => {
-    sessionStorage.removeItem('candidateId');
-    sessionStorage.removeItem('candidateData');
-    // Firebase sign out will be handled by the sidebar/header component
-    router.push('/login');
+  const handleLogout = async () => {
+    try {
+      if (auth) {
+        await signOut(auth);
+      }
+      sessionStorage.clear();
+      router.push('/login');
+      toast({ title: "Logged out successfully." });
+    } catch (error: any) {
+       toast({ variant: 'destructive', title: "Logout Failed", description: error.message });
+    }
   }
 
-  if (isUserLoading || (!user && !candidateId)) {
+  // Show a loading indicator while checking auth state.
+  if (isUserLoading) {
     return (
        <div className="flex min-h-screen items-center justify-center">
         <p>Loading...</p>
@@ -41,20 +46,26 @@ export default function Home() {
     )
   }
 
-  return (
-    <div className="flex flex-col min-h-screen">
-       <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
-        <Logo />
-        <div className="flex-1 text-center">
-        </div>
-        <Button variant="ghost" size="icon" onClick={handleLogout}>
-            <LogOut className="h-5 w-5" />
-            <span className="sr-only">Log Out</span>
-        </Button>
-      </header>
-      <main className="flex-1 bg-muted/40 flex items-center justify-center p-4">
-        <ProblemDisplay />
-      </main>
-    </div>
-  );
+  // Only render the page content if the user is authenticated.
+  if (user) {
+    return (
+      <div className="flex flex-col min-h-screen">
+         <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
+          <Logo />
+          <div className="flex-1 text-center">
+          </div>
+          <Button variant="ghost" size="icon" onClick={handleLogout}>
+              <LogOut className="h-5 w-5" />
+              <span className="sr-only">Log Out</span>
+          </Button>
+        </header>
+        <main className="flex-1 bg-muted/40 flex items-center justify-center p-4">
+          <ProblemDisplay />
+        </main>
+      </div>
+    );
+  }
+
+  // Render nothing or a fallback while redirecting
+  return null;
 }

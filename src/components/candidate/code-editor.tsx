@@ -1,6 +1,7 @@
 
 "use client"
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
@@ -23,41 +24,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useFirestore } from "@/firebase";
+import { collection, addDoc, doc, updateDoc, serverTimestamp } from "firebase/firestore";
+import type { Candidate, Problem } from "@/types";
 
 const getInitialCode = (tech: string) => {
     switch (tech.toLowerCase()) {
         case "html":
-            return `<h1>Code Challenge</h1>
-<p>Implement your solution below and see the live preview.</p>
-<button id="myButton">Click me</button>
-<p>Button clicked <span id="count">0</span> times.</p>`;
+            return `<!-- Your HTML code here -->\n<h1>Code Challenge</h1>`;
         case "css":
-            return `body {
-  font-family: sans-serif;
-  background-color: #f0f0f0;
-  padding: 1rem;
-}
-button {
-  padding: 8px 16px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-  cursor: pointer;
-}`;
+            return `/* Your CSS code here */\nbody {\n  font-family: sans-serif;\n}`;
         case "js":
-            return `// Your debounce implementation here
-function debounce(func, wait) {
-  // ...
-}
-
-const button = document.getElementById('myButton');
-const countSpan = document.getElementById('count');
-let count = 0;
-
-button.addEventListener('click', () => {
-  count++;
-  countSpan.innerText = count;
-  // Example usage of your debounce function would go here
-});`;
+            return `// Your JavaScript code here\nconsole.log("Hello, Candidate!");`;
         default:
             return `// ${tech} code editor`;
     }
@@ -79,13 +57,14 @@ const getLanguage = (tech: string) => {
 }
 
 type CodeEditorProps = {
-    problem: {
-        technologies: string[];
-    }
+    problem: Problem;
+    candidate: Candidate;
 };
 
-export default function CodeEditor({ problem }: CodeEditorProps) {
-  const technologies = useMemo(() => problem.technologies || ["JS"], [problem.technologies]);
+export default function CodeEditor({ problem, candidate }: CodeEditorProps) {
+  const router = useRouter();
+  const firestore = useFirestore();
+  const technologies = useMemo(() => problem.tags || [], [problem]);
   const [codes, setCodes] = useState<Record<string, string>>(() => {
     const initialState: Record<string, string> = {};
     technologies.forEach(tech => {
@@ -102,14 +81,50 @@ export default function CodeEditor({ problem }: CodeEditorProps) {
       setCodes(prev => ({ ...prev, [tech.toLowerCase()]: code }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setShowConfirmDialog(false);
-    console.log(codes);
-    toast({
-      title: "Submission Successful!",
-      description: "Your code has been submitted for review.",
-    });
-    setIsSubmitted(true);
+    if (!firestore) {
+      toast({ variant: 'destructive', title: "Submission Failed", description: "Database connection not found." });
+      return;
+    }
+    
+    setIsSubmitted(true); // Disable editor immediately
+
+    try {
+      const submissionsRef = collection(firestore, 'candidates', candidate.id, 'submissions');
+      const newSubmissionRef = await addDoc(submissionsRef, {
+        candidateId: candidate.id,
+        problemId: problem.id,
+        codeHTML: codes['html'] || '',
+        codeCSS: codes['css'] || '',
+        codeJS: codes['js'] || '',
+        submissionTime: serverTimestamp(),
+      });
+
+      const candidateRef = doc(firestore, 'candidates', candidate.id);
+      await updateDoc(candidateRef, {
+        status: 'Completed',
+        submissionId: newSubmissionRef.id,
+        submitTime: serverTimestamp()
+      });
+
+      toast({
+        title: "Submission Successful!",
+        description: "Your code has been submitted for review.",
+      });
+      
+      // Redirect to a thank you page or back home after a delay
+      setTimeout(() => router.push('/'), 3000);
+
+    } catch (error: any) {
+      console.error("Submission error:", error);
+      toast({
+        variant: 'destructive',
+        title: "Submission Failed",
+        description: error.message || "An unexpected error occurred.",
+      });
+      setIsSubmitted(false); // Re-enable editor on failure
+    }
   };
 
   const editorStyles = {
@@ -130,7 +145,7 @@ export default function CodeEditor({ problem }: CodeEditorProps) {
         <Card className="flex-1 flex flex-col">
           <Tabs defaultValue={technologies[0]?.toLowerCase()} className="flex-1 flex flex-col">
             <CardHeader className="flex-row items-center justify-between gap-4">
-              <TabsList className={`grid w-full ${technologies.length > 1 ? 'max-w-xs' : ''} grid-cols-${technologies.length}`}>
+              <TabsList className={`grid w-full ${technologies.length > 1 ? `max-w-xs grid-cols-${technologies.length}` : 'grid-cols-1'}`}>
                 {technologies.map(tech => (
                     <TabsTrigger key={tech} value={tech.toLowerCase()}>{tech}</TabsTrigger>
                 ))}
@@ -149,7 +164,7 @@ export default function CodeEditor({ problem }: CodeEditorProps) {
                     return (
                         <TabsContent key={tech} value={lowerTech} className="h-full m-0">
                             <Editor
-                            value={codes[lowerTech]}
+                            value={codes[lowerTech] || ''}
                             onValueChange={(code) => handleCodeChange(lowerTech, code)}
                             highlight={(code) => highlight(code, languages[language] || languages.clike, language)}
                             padding={10}
