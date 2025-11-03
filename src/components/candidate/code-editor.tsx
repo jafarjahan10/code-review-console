@@ -25,6 +25,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { Candidate, Problem } from "@/types";
+import { cn } from "@/lib/utils";
 
 const getInitialCode = (tech: string) => {
     switch (tech.toLowerCase()) {
