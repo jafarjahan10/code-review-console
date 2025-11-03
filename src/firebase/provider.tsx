@@ -108,6 +108,8 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   // Memoize the context value
   const contextValue = useMemo((): FirebaseContextState => {
     const servicesAvailable = !!(firebaseApp && firestore && auth);
+    const isOverallLoading = userAuthState.isUserLoading || (userAuthState.user && isAdminUserLoading);
+
     return {
       areServicesAvailable: servicesAvailable,
       firebaseApp: servicesAvailable ? firebaseApp : null,
@@ -115,7 +117,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       auth: servicesAvailable ? auth : null,
       user: userAuthState.user,
       adminUser: adminUser,
-      isUserLoading: userAuthState.isUserLoading || isAdminUserLoading,
+      isUserLoading: isOverallLoading,
       userError: userAuthState.userError,
     };
   }, [firebaseApp, firestore, auth, userAuthState, adminUser, isAdminUserLoading]);
