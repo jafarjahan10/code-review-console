@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { PlusCircle, Trash2, Loader2 } from "lucide-react";
+import { PlusCircle, Trash2, Loader2, Search } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -71,6 +71,11 @@ export default function SettingsPage() {
   const [isAddingInterviewer, setIsAddingInterviewer] = useState(false);
   const [interviewerToDelete, setInterviewerToDelete] = useState<WithId<AdminUser> | null>(null);
 
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+
   // Fetch Admins
   const adminsColRef = useMemoFirebase(() => firestore ? collection(firestore, 'admins') : null, [firestore]);
   const { data: interviewers, isLoading: isLoadingAdmins } = useCollection<AdminUser>(adminsColRef);
@@ -81,8 +86,27 @@ export default function SettingsPage() {
   
   const departments = departmentsData || [];
 
-  const currentUserInPanel = interviewers?.find(interviewer => interviewer.id === currentUser?.uid);
+  const currentUserInPanel = useMemo(() => {
+    if (!currentUser || !interviewers) return null;
+    return interviewers.find(interviewer => interviewer.id === currentUser.uid);
+  }, [currentUser, interviewers]);
+
   const currentUserRole = currentUserInPanel?.role;
+
+  // Search and Pagination Logic
+  const filteredInterviewers = useMemo(() => {
+    if (!interviewers) return [];
+    return interviewers.filter(interviewer =>
+      (interviewer.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+       interviewer.email.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+  }, [interviewers, searchTerm]);
+
+  const totalPages = Math.ceil(filteredInterviewers.length / itemsPerPage);
+  const paginatedInterviewers = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredInterviewers.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredInterviewers, currentPage, itemsPerPage]);
 
 
   useEffect(() => {
@@ -360,6 +384,18 @@ export default function SettingsPage() {
                       <CardDescription>Manage your existing interview panel.</CardDescription>
                   </CardHeader>
                   <CardContent>
+                      <div className="mb-4 relative">
+                          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                          <Input
+                              placeholder="Search by name or email..."
+                              value={searchTerm}
+                              onChange={(e) => {
+                                  setSearchTerm(e.target.value);
+                                  setCurrentPage(1); // Reset to first page on search
+                              }}
+                              className="pl-8 w-full"
+                          />
+                      </div>
                       <Table>
                           <TableHeader>
                               <TableRow>
@@ -370,7 +406,7 @@ export default function SettingsPage() {
                               </TableRow>
                           </TableHeader>
                           <TableBody>
-                              {interviewers && interviewers.map((interviewer) => (
+                              {paginatedInterviewers && paginatedInterviewers.map((interviewer) => (
                                   <TableRow key={interviewer.id}>
                                       <TableCell>
                                           <div className="flex items-center gap-3">
@@ -414,6 +450,27 @@ export default function SettingsPage() {
                               ))}
                           </TableBody>
                       </Table>
+                       <div className="flex items-center justify-end space-x-2 py-4">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                disabled={currentPage === 1}
+                            >
+                                Previous
+                            </Button>
+                            <span className="text-sm text-muted-foreground">
+                                Page {currentPage} of {totalPages}
+                            </span>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                disabled={currentPage === totalPages}
+                            >
+                                Next
+                            </Button>
+                        </div>
                   </CardContent>
                </Card>
           </TabsContent>
@@ -520,3 +577,5 @@ export default function SettingsPage() {
     </>
   );
 }
+
+    
