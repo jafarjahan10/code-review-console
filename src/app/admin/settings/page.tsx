@@ -80,8 +80,10 @@ export default function SettingsPage() {
   const [isAddingInterviewer, setIsAddingInterviewer] = useState(false);
   const [interviewerToDelete, setInterviewerToDelete] = useState<WithId<AdminUser> | null>(null);
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [interviewerSearchTerm, setInterviewerSearchTerm] = useState("");
+  const [interviewerCurrentPage, setInterviewerCurrentPage] = useState(1);
+  const [departmentSearchTerm, setDepartmentSearchTerm] = useState("");
+  const [departmentCurrentPage, setDepartmentCurrentPage] = useState(1);
   const itemsPerPage = 5;
   const [isAddUserDialogOpen, setAddUserDialogOpen] = useState(false);
   const [isAddDeptDialogOpen, setAddDeptDialogOpen] = useState(false);
@@ -104,20 +106,34 @@ export default function SettingsPage() {
 
   const currentUserRole = currentUserInPanel?.role;
 
-  // Search and Pagination Logic
+  // Search and Pagination Logic for Interviewers
   const filteredInterviewers = useMemo(() => {
     if (!interviewers) return [];
     return interviewers.filter(interviewer =>
-      (interviewer.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-       interviewer.email.toLowerCase().includes(searchTerm.toLowerCase()))
+      (interviewer.name?.toLowerCase().includes(interviewerSearchTerm.toLowerCase()) ||
+       interviewer.email.toLowerCase().includes(interviewerSearchTerm.toLowerCase()))
     );
-  }, [interviewers, searchTerm]);
+  }, [interviewers, interviewerSearchTerm]);
 
-  const totalPages = Math.ceil(filteredInterviewers.length / itemsPerPage);
+  const totalInterviewerPages = Math.ceil(filteredInterviewers.length / itemsPerPage);
   const paginatedInterviewers = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
+    const startIndex = (interviewerCurrentPage - 1) * itemsPerPage;
     return filteredInterviewers.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredInterviewers, currentPage, itemsPerPage]);
+  }, [filteredInterviewers, interviewerCurrentPage, itemsPerPage]);
+
+  // Search and Pagination Logic for Departments
+  const filteredDepartments = useMemo(() => {
+    if (!departments) return [];
+    return departments.filter(department =>
+      department.name.toLowerCase().includes(departmentSearchTerm.toLowerCase())
+    );
+  }, [departments, departmentSearchTerm]);
+
+  const totalDepartmentPages = Math.ceil(filteredDepartments.length / itemsPerPage);
+  const paginatedDepartments = useMemo(() => {
+    const startIndex = (departmentCurrentPage - 1) * itemsPerPage;
+    return filteredDepartments.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredDepartments, departmentCurrentPage, itemsPerPage]);
 
 
   useEffect(() => {
@@ -323,11 +339,13 @@ export default function SettingsPage() {
                                   <Input id="email" type="email" value={currentUser?.email || ''} disabled />
                               </div>
                           </div>
-                          <Button type="submit" disabled={isProfileUpdating}>
+                      </CardContent>
+                      <CardFooter>
+                         <Button type="submit" disabled={isProfileUpdating}>
                             {isProfileUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Update Profile
                           </Button>
-                      </CardContent>
+                      </CardFooter>
                       </form>
                   </Card>
 
@@ -354,11 +372,13 @@ export default function SettingsPage() {
                                     </div>
                                 </div>
                             </div>
-                            <Button type="submit" disabled={isPasswordUpdating} className="mt-4">
+                        </CardContent>
+                         <CardFooter>
+                           <Button type="submit" disabled={isPasswordUpdating}>
                                 {isPasswordUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 Update Password
                             </Button>
-                        </CardContent>
+                         </CardFooter>
                     </form>
                   </Card>
               </div>
@@ -410,10 +430,10 @@ export default function SettingsPage() {
                           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                           <Input
                               placeholder="Search by name or email..."
-                              value={searchTerm}
+                              value={interviewerSearchTerm}
                               onChange={(e) => {
-                                  setSearchTerm(e.target.value);
-                                  setCurrentPage(1); // Reset to first page on search
+                                  setInterviewerSearchTerm(e.target.value);
+                                  setInterviewerCurrentPage(1); // Reset to first page on search
                               }}
                               className="pl-8 w-full"
                           />
@@ -476,19 +496,19 @@ export default function SettingsPage() {
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                                disabled={currentPage === 1}
+                                onClick={() => setInterviewerCurrentPage(prev => Math.max(prev - 1, 1))}
+                                disabled={interviewerCurrentPage === 1}
                             >
                                 Previous
                             </Button>
                             <span className="text-sm text-muted-foreground">
-                                Page {currentPage} of {totalPages}
+                                Page {interviewerCurrentPage} of {totalInterviewerPages}
                             </span>
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                                disabled={currentPage === totalPages}
+                                onClick={() => setInterviewerCurrentPage(prev => Math.min(prev + 1, totalInterviewerPages))}
+                                disabled={interviewerCurrentPage === totalInterviewerPages}
                             >
                                 Next
                             </Button>
@@ -537,6 +557,18 @@ export default function SettingsPage() {
                        )}
                   </CardHeader>
                   <CardContent>
+                       <div className="mb-4 relative">
+                          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                          <Input
+                              placeholder="Search by department name..."
+                              value={departmentSearchTerm}
+                              onChange={(e) => {
+                                  setDepartmentSearchTerm(e.target.value);
+                                  setDepartmentCurrentPage(1); // Reset to first page on search
+                              }}
+                              className="pl-8 w-full"
+                          />
+                      </div>
                       <Table>
                           <TableHeader>
                               <TableRow>
@@ -545,7 +577,7 @@ export default function SettingsPage() {
                               </TableRow>
                           </TableHeader>
                           <TableBody>
-                              {departments && departments.map((dept) => (
+                              {paginatedDepartments && paginatedDepartments.map((dept) => (
                                   <TableRow key={dept.id}>
                                       <TableCell className="font-medium">{dept.name}</TableCell>
                                       {currentUserRole === 'Admin' && (
@@ -560,6 +592,27 @@ export default function SettingsPage() {
                               ))}
                           </TableBody>
                       </Table>
+                       <div className="flex items-center justify-end space-x-2 py-4">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setDepartmentCurrentPage(prev => Math.max(prev - 1, 1))}
+                                disabled={departmentCurrentPage === 1}
+                            >
+                                Previous
+                            </Button>
+                            <span className="text-sm text-muted-foreground">
+                                Page {departmentCurrentPage} of {totalDepartmentPages}
+                            </span>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setDepartmentCurrentPage(prev => Math.min(prev + 1, totalDepartmentPages))}
+                                disabled={departmentCurrentPage === totalDepartmentPages}
+                            >
+                                Next
+                            </Button>
+                        </div>
                   </CardContent>
                </Card>
           </TabsContent>
