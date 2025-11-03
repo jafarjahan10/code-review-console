@@ -54,7 +54,7 @@ service cloud.firestore {
      */
     match /candidates/{candidateId} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn() && (isAdmin() || isUser());
+      allow write: if isSignedIn() && (isAdmin() || isUser() || isOwner(candidateId));
     }
     
     /**
@@ -107,7 +107,7 @@ service cloud.firestore {
     match /candidates/{candidateId}/submissions/{submissionId} {
       allow get: if isOwner(candidateId) || isAdmin();
       allow list: if isOwner(candidateId) || isAdmin();
-      allow create: if isSignedIn() && request.resource.data.candidateId == candidateId;
+      allow create: if isOwner(candidateId) && request.resource.data.candidateId == candidateId;
       allow update: if (isExistingOwner(candidateId) && request.resource.data.candidateId == resource.data.candidateId) || isAdmin();
       allow delete: if isExistingOwner(candidateId) || isAdmin();
     }
