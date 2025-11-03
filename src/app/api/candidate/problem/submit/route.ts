@@ -1,16 +1,14 @@
 
 import { NextResponse } from 'next/server';
-import { initializeApp, getApps, App } from 'firebase-admin/app';
+import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
-import { firebaseConfig } from '@/firebase/config';
 
 // Initialize Firebase Admin SDK
 let adminApp: App;
 if (!getApps().length) {
-  adminApp = initializeApp({
-    // If you have service account credentials, add them here
-    // credential: admin.credential.cert(serviceAccount)
-  });
+  // initializeApp() with no parameters will use Application Default Credentials
+  // in the App Hosting environment.
+  adminApp = initializeApp();
 } else {
   adminApp = getApps()[0];
 }
@@ -27,16 +25,19 @@ export async function POST(request: Request) {
     }
 
     // 1. Create a new submission document in the top-level 'submissions' collection
-    const submissionData = {
+    const submissionCollection = db.collection('submissions');
+    const submissionRef = await submissionCollection.add({
       candidateId,
       problemId,
       codeHTML: codeHTML || '',
       codeCSS: codeCSS || '',
       codeJS: codeJS || '',
       submissionTime: Timestamp.now(),
-    };
+    });
+    
+    // As a separate step, update the new doc with its own ID
+    await submissionRef.update({ id: submissionRef.id });
 
-    const submissionRef = await db.collection('submissions').add(submissionData);
 
     // 2. Update the candidate's document with the new submission ID and status
     const candidateRef = db.doc(`candidates/${candidateId}`);
@@ -53,5 +54,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to process submission', details: error.message }, { status: 500 });
   }
 }
-
-    
