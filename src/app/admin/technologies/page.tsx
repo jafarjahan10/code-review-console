@@ -210,7 +210,7 @@ export default function TechnologiesPage() {
                       {tech.name}
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
-                      <ClientDateTime date={tech.createdAt} />
+                      <ClientDateTime date={tech.createdAt?.toDate ? tech.createdAt.toDate() : tech.createdAt} />
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>

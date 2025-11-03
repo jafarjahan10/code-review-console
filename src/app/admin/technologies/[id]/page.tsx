@@ -100,7 +100,7 @@ export default function ViewTechnologyPage() {
             </div>
              <div className="space-y-2">
                 <p className="text-sm font-medium">Created At</p>
-                <p className="text-muted-foreground"><ClientDateTime date={technology.createdAt} /></p>
+                <p className="text-muted-foreground"><ClientDateTime date={technology.createdAt?.toDate ? technology.createdAt.toDate() : technology.createdAt} /></p>
             </div>
           </CardContent>
         </Card>
