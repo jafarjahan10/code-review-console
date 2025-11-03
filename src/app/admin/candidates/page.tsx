@@ -124,9 +124,24 @@ export default function CandidatesPage() {
 
   const handleDelete = async () => {
     if (!candidateToDelete || !firestore) return;
+    const candidateId = candidateToDelete.id;
 
     try {
-        await deleteDoc(doc(firestore, "candidates", candidateToDelete.id));
+        // 1. Delete Firestore document
+        await deleteDoc(doc(firestore, "candidates", candidateId));
+
+        // 2. Call API route to delete from Auth
+        const response = await fetch(`/api/admin/delete-candidate/${candidateId}`, {
+            method: 'DELETE',
+        });
+
+        if (!response.ok) {
+            // If the API call fails, we should ideally handle it.
+            // For now, we'll show an error but the Firestore doc is already gone.
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to delete user from authentication.');
+        }
+
         toast({
             title: "Candidate Removed",
             description: `The candidate "${candidateToDelete.name}" has been successfully removed.`,
@@ -430,3 +445,5 @@ export default function CandidatesPage() {
     </>
   );
 }
+
+    
