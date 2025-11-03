@@ -70,7 +70,7 @@ export default function SettingsPage() {
 
   // Fetch Admins
   const adminsColRef = useMemoFirebase(() => collection(firestore, 'admins'), [firestore]);
-  const { data: interviewers = [], isLoading: isLoadingAdmins } = useCollection<AdminUser>(adminsColRef);
+  const { data: interviewers, isLoading: isLoadingAdmins } = useCollection<AdminUser>(adminsColRef);
   
   // Fetch Departments
   const deptsColRef = useMemoFirebase(() => collection(firestore, 'departments'), [firestore]);
@@ -78,7 +78,7 @@ export default function SettingsPage() {
 
 
   const currentUserRole = useMemo(() => {
-    if (!currentUser || !interviewers.length) return null;
+    if (!currentUser || !interviewers) return null;
     const adminData = interviewers.find(interviewer => interviewer.id === currentUser.uid);
     return adminData?.role;
   }, [currentUser, interviewers]);
@@ -355,7 +355,7 @@ export default function SettingsPage() {
                               </TableRow>
                           </TableHeader>
                           <TableBody>
-                              {interviewers.map((interviewer) => (
+                              {interviewers && interviewers.map((interviewer) => (
                                   <TableRow key={interviewer.id}>
                                       <TableCell>
                                           <div className="flex items-center gap-3">
@@ -490,3 +490,4 @@ export default function SettingsPage() {
   );
 }
 
+    
