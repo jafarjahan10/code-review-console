@@ -1,6 +1,6 @@
 
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useUser } from '@/firebase';
 import AdminSidebar from "@/components/admin/admin-sidebar";
@@ -20,6 +20,14 @@ export default function AdminLayout({
   const router = useRouter();
   const { user, adminUser, isUserLoading } = useUser();
   const { toast } = useToast();
+  const [wasOnAdmin, setWasOnAdmin] = useState(false);
+
+  useEffect(() => {
+    if (pathname.startsWith('/admin')) {
+      setWasOnAdmin(true);
+    }
+  }, [pathname]);
+
   const isLoginPage = pathname === '/admin' || pathname === '/admin/login';
 
   useEffect(() => {
@@ -39,12 +47,18 @@ export default function AdminLayout({
             title: "Permission Denied",
             description: "You are not authorized to access this page."
         });
-        // Redirect them to the candidate login, as they are not an admin/user.
-        router.push('/login');
+        
+        // If the user was trying to access an admin page, redirect to admin login.
+        if (wasOnAdmin || pathname.startsWith('/admin')) {
+            router.push('/admin/login');
+        } else {
+            // Fallback for other cases, though less likely in this layout.
+            router.push('/login');
+        }
         return;
     }
 
-  }, [isUserLoading, user, adminUser, isLoginPage, router, toast]);
+  }, [isUserLoading, user, adminUser, isLoginPage, router, toast, wasOnAdmin, pathname]);
 
 
   // Show a loading skeleton while the user and their role are being verified.
