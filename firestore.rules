@@ -35,8 +35,8 @@ service cloud.firestore {
      * @principle Enforces admin-only access to admin profiles, with a bootstrap mechanism for the first admin.
      */
     match /admins/{adminId} {
-      allow get: if isAdmin();
-      allow list: if isAdmin();
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
       allow create: if isOwner(adminId);
       allow update: if isAdmin();
       allow delete: if isAdmin();
