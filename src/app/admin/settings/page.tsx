@@ -74,7 +74,7 @@ export default function SettingsPage() {
   
   // Fetch Departments
   const deptsColRef = useMemoFirebase(() => collection(firestore, 'departments'), [firestore]);
-  const { data: departments = [], isLoading: isLoadingDepts } = useCollection<Department>(deptsColRef);
+  const { data: departments, isLoading: isLoadingDepts } = useCollection<Department>(deptsColRef);
 
 
   const currentUserRole = useMemo(() => {
@@ -185,7 +185,7 @@ export default function SettingsPage() {
       toast({ variant: "destructive", title: "Department name cannot be empty." });
       return;
     }
-    if (departments.find(d => d.name.toLowerCase() === newDepartment.toLowerCase())) {
+    if (departments && departments.find(d => d.name.toLowerCase() === newDepartment.toLowerCase())) {
         toast({ variant: "destructive", title: "Department already exists." });
         return;
     }
@@ -426,7 +426,7 @@ export default function SettingsPage() {
                               </TableRow>
                           </TableHeader>
                           <TableBody>
-                              {departments.map((dept) => (
+                              {departments && departments.map((dept) => (
                                   <TableRow key={dept.id}>
                                       <TableCell className="font-medium">{dept.name}</TableCell>
                                       {currentUserRole === 'Admin' && (
