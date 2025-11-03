@@ -1,4 +1,5 @@
 
+
 export type Technology = {
     id: string;
     name: string;
@@ -35,6 +36,7 @@ export type Submission = {
     codeCSS: string;
     codeJS: string;
     submissionTime: any;
+    remarks: any[];
 };
     
 export type Candidate = {
@@ -51,3 +53,4 @@ export type Candidate = {
     remarks: any[];
     submitTime: any | null;
 }
+

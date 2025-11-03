@@ -26,6 +26,7 @@ export async function POST(request: Request) {
 
     // 1. Generate a new document reference in the 'submissions' collection to get an ID upfront.
     const submissionRef = db.collection('submissions').doc();
+    const submissionTime = Timestamp.now();
 
     // 2. Create the submission document using a single `set` operation.
     await submissionRef.set({
@@ -35,7 +36,8 @@ export async function POST(request: Request) {
       codeHTML: codeHTML || '',
       codeCSS: codeCSS || '',
       codeJS: codeJS || '',
-      submissionTime: Timestamp.now(),
+      submissionTime: submissionTime,
+      remarks: [],
     });
 
     // 3. Update the candidate's document with the new submission ID and status
@@ -43,7 +45,7 @@ export async function POST(request: Request) {
     await candidateRef.update({
       status: 'Completed',
       submissionId: submissionRef.id,
-      submitTime: Timestamp.now(),
+      submitTime: submissionTime,
     });
 
     return NextResponse.json({ message: 'Submission successful', submissionId: submissionRef.id });
