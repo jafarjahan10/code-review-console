@@ -25,17 +25,17 @@ export default function CandidateLayout({
   const pathname = usePathname();
 
   useEffect(() => {
+    // Wait until Firebase has checked the auth state.
     if (isUserLoading) {
-      return; // Wait until the user's auth state is resolved
+      return;
     }
 
-    const isPublicPage = pathname === '/login' || pathname.startsWith('/admin');
-
-    // If the check is complete, there's no user, and we are not on a public page, redirect.
-    if (!user && !isPublicPage) {
-      router.push('/login');
+    // If the auth check is complete, and there's no user,
+    // redirect to the login page unless they are already there or in the admin section.
+    if (!user && pathname !== '/login' && !pathname.startsWith('/admin')) {
+        router.push('/login');
     }
-  }, [isUserLoading, user, router, pathname]);
+  }, [isUserLoading, user, pathname, router]);
 
 
   const handleLogout = async () => {
@@ -50,10 +50,10 @@ export default function CandidateLayout({
     }
   }
 
-  const isPublicPage = pathname === '/login' || pathname.startsWith('/admin');
+  const isLoginPage = pathname === '/login' || pathname.startsWith('/admin');
 
   // While checking for user, show a loading skeleton UI for any protected route
-  if (isUserLoading && !isPublicPage) {
+  if (isUserLoading && !isLoginPage) {
       return (
          <div className="flex flex-col min-h-screen">
             <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
@@ -70,12 +70,12 @@ export default function CandidateLayout({
 
   // If there's no user and we're not on a public page yet, render nothing
   // as the redirect will happen shortly. This prevents flashing content.
-  if (!user && !isPublicPage) {
+  if (!user && !isLoginPage) {
     return null;
   }
   
   // If we are on a public page, just render the children
-  if (isPublicPage) {
+  if (isLoginPage) {
     return <>{children}</>;
   }
 
