@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
@@ -31,8 +30,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useAuth, useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, doc, setDoc, deleteDoc, addDoc } from "firebase/firestore";
-import { createUserWithEmailAndPassword, updatePassword, updateProfile } from "firebase/auth";
+import { getAuth, createUserWithEmailAndPassword, updatePassword, updateProfile, signOut } from "firebase/auth";
 import type { WithId } from "@/firebase";
+import { initializeApp, deleteApp } from "firebase/app";
+import { firebaseConfig } from "@/firebase/config";
 
 
 type AdminUser = {
@@ -74,8 +75,8 @@ export default function SettingsPage() {
   
   // Fetch Departments
   const deptsColRef = useMemoFirebase(() => firestore ? collection(firestore, 'departments') : null, [firestore]);
-  const { data: departments, isLoading: isLoadingDepts } = useCollection<Department>(deptsColRef);
-
+  const { data: departmentsData, isLoading: isLoadingDepts } = useCollection<Department>(deptsColRef);
+  const departments = departmentsData || [];
 
   const currentUserRole = useMemo(() => {
     if (!currentUser || !interviewers) return null;
@@ -139,10 +140,17 @@ export default function SettingsPage() {
         return;
     }
     setIsAddingInterviewer(true);
+    
+    // 1. Create a secondary, temporary Firebase app instance.
+    const tempAppName = `temp-user-creation-${Date.now()}`;
+    const tempApp = initializeApp(firebaseConfig, tempAppName);
+    const tempAuth = getAuth(tempApp);
 
     try {
-        const { user: newInterviewer } = await createUserWithEmailAndPassword(auth, interviewerEmail, interviewerPassword);
+        // 2. Create the new user in the temporary app instance.
+        const { user: newInterviewer } = await createUserWithEmailAndPassword(tempAuth, interviewerEmail, interviewerPassword);
         
+        // 3. Save the new user's data to Firestore using the main app instance.
         const adminDocRef = doc(firestore, 'admins', newInterviewer.uid);
         await setDoc(adminDocRef, {
             id: newInterviewer.uid,
@@ -150,6 +158,9 @@ export default function SettingsPage() {
             role: 'User',
             name: interviewerEmail.split('@')[0],
         });
+        
+        // 4. Sign out the new user from the temporary instance.
+        await signOut(tempAuth);
         
         setInterviewerEmail('');
         setInterviewerPassword('');
@@ -161,6 +172,8 @@ export default function SettingsPage() {
     } catch (error: any) {
         toast({ variant: "destructive", title: "Failed to add interviewer", description: error.message });
     } finally {
+        // 5. Clean up the temporary app instance.
+        await deleteApp(tempApp);
         setIsAddingInterviewer(false);
     }
   };
@@ -402,7 +415,7 @@ export default function SettingsPage() {
                               </TableRow>
                           </TableHeader>
                           <TableBody>
-                              {departments && departments.map((dept) => (
+                              {departments.map((dept) => (
                                   <TableRow key={dept.id}>
                                       <TableCell className="font-medium">{dept.name}</TableCell>
                                       {currentUserRole === 'Admin' && (
