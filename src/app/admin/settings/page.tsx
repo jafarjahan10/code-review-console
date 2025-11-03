@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -69,6 +69,12 @@ export default function SettingsPage() {
   const [isPasswordUpdating, setIsPasswordUpdating] = useState(false);
   const [isAddingInterviewer, setIsAddingInterviewer] = useState(false);
   const [interviewerToDelete, setInterviewerToDelete] = useState<WithId<AdminUser> | null>(null);
+
+  const currentUserRole = useMemo(() => {
+    if (!currentUser || !interviewers.length) return null;
+    const adminData = interviewers.find(interviewer => interviewer.id === currentUser.uid);
+    return adminData?.role;
+  }, [currentUser, interviewers]);
 
 
   useEffect(() => {
@@ -302,31 +308,33 @@ export default function SettingsPage() {
               </div>
           </TabsContent>
           <TabsContent value="interview-panel" className="space-y-4">
-              <Card>
-                  <CardHeader>
-                      <CardTitle>Add Interviewer</CardTitle>
-                      <CardDescription>Invite a new interviewer to the panel by email.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                      <form onSubmit={handleAddInterviewer} className="space-y-4">
-                          <div className="flex flex-col md:flex-row items-end gap-4">
-                            <div className="flex-1 w-full space-y-2">
-                                <Label htmlFor="interviewer-email">Email</Label>
-                                <Input id="interviewer-email" type="email" placeholder="interviewer@example.com" value={interviewerEmail} onChange={(e) => setInterviewerEmail(e.target.value)} disabled={isAddingInterviewer} />
+              {currentUserRole === 'Admin' && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Add Interviewer</CardTitle>
+                        <CardDescription>Invite a new interviewer to the panel by email.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <form onSubmit={handleAddInterviewer} className="space-y-4">
+                            <div className="flex flex-col md:flex-row items-end gap-4">
+                              <div className="flex-1 w-full space-y-2">
+                                  <Label htmlFor="interviewer-email">Email</Label>
+                                  <Input id="interviewer-email" type="email" placeholder="interviewer@example.com" value={interviewerEmail} onChange={(e) => setInterviewerEmail(e.target.value)} disabled={isAddingInterviewer} />
+                              </div>
+                              <div className="flex-1 w-full space-y-2">
+                                  <Label htmlFor="interviewer-password">Set Password</Label>
+                                  <Input id="interviewer-password" type="password" placeholder="Set a temporary password" value={interviewerPassword} onChange={(e) => setInterviewerPassword(e.target.value)} disabled={isAddingInterviewer} />
+                              </div>
                             </div>
-                            <div className="flex-1 w-full space-y-2">
-                                <Label htmlFor="interviewer-password">Password</Label>
-                                <Input id="interviewer-password" type="password" placeholder="Set a password" value={interviewerPassword} onChange={(e) => setInterviewerPassword(e.target.value)} disabled={isAddingInterviewer} />
-                            </div>
-                           </div>
-                          <Button type="submit" className="w-full md:w-auto" disabled={isAddingInterviewer}>
-                              {isAddingInterviewer && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                              <PlusCircle className="mr-2 h-4 w-4" />
-                              Add Interviewer
-                          </Button>
-                      </form>
-                  </CardContent>
-              </Card>
+                            <Button type="submit" className="w-full md:w-auto" disabled={isAddingInterviewer}>
+                                {isAddingInterviewer && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                <PlusCircle className="mr-2 h-4 w-4" />
+                                Add Interviewer
+                            </Button>
+                        </form>
+                    </CardContent>
+                </Card>
+              )}
                <Card>
                   <CardHeader>
                       <CardTitle>Interview Panel</CardTitle>
@@ -339,7 +347,7 @@ export default function SettingsPage() {
                                   <TableHead>Name</TableHead>
                                   <TableHead className="hidden md:table-cell">Email</TableHead>
                                   <TableHead className="hidden md:table-cell">Role</TableHead>
-                                  <TableHead><span className="sr-only">Actions</span></TableHead>
+                                  {currentUserRole === 'Admin' && <TableHead><span className="sr-only">Actions</span></TableHead>}
                               </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -359,12 +367,14 @@ export default function SettingsPage() {
                                       </TableCell>
                                       <TableCell className="hidden md:table-cell">{interviewer.email}</TableCell>
                                        <TableCell className="hidden md:table-cell">{interviewer.role}</TableCell>
-                                      <TableCell className="text-right">
-                                          <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setInterviewerToDelete(interviewer)} disabled={currentUser?.uid === interviewer.id}>
-                                              <Trash2 className="h-4 w-4" />
-                                              <span className="sr-only">Remove</span>
-                                          </Button>
-                                      </TableCell>
+                                      {currentUserRole === 'Admin' && (
+                                        <TableCell className="text-right">
+                                            <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setInterviewerToDelete(interviewer)} disabled={currentUser?.uid === interviewer.id}>
+                                                <Trash2 className="h-4 w-4" />
+                                                <span className="sr-only">Remove</span>
+                                            </Button>
+                                        </TableCell>
+                                      )}
                                   </TableRow>
                               ))}
                           </TableBody>
@@ -471,5 +481,3 @@ export default function SettingsPage() {
     </>
   );
 }
-
-    
