@@ -185,9 +185,6 @@ export default function ProblemDisplay() {
             <CardDescription>Difficulty: {problem.difficulty}</CardDescription>
         </CardHeader>
         <CardContent>
-            <div className="prose max-w-none dark:prose-invert">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{problem.description}</ReactMarkdown>
-            </div>
         </CardContent>
         <CardFooter>
             <Button onClick={handleStartChallenge} size="lg" disabled={isStarting}>
