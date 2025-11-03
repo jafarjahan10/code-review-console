@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 const navItems = [
   { href: "/admin/dashboard", icon: Home, label: "Dashboard" },
   { href: "/admin/problems", icon: FileCode, label: "Problems" },
-  { href: "/admin/stacks", icon: Layers, label: "Technologies" },
+  { href: "/admin/technologies", icon: Layers, label: "Technologies" },
   { href: "/admin/positions", icon: Briefcase, label: "Positions" },
   { href: "/admin/candidates", icon: Users, label: "Candidates" },
   { href: "/admin/submissions", icon: BookCopy, label: "Submissions" },
