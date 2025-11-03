@@ -36,12 +36,16 @@ export async function GET(request: NextRequest) {
     const constraints: QueryConstraint[] = [];
 
     if (search) {
-      constraints.push(where('name', '>=', search));
-      constraints.push(where('name', '<=', search + '\uf8ff'));
+      constraints.push(where('name_lowercase', '>=', search.toLowerCase()));
+      constraints.push(where('name_lowercase', '<=', search.toLowerCase() + '\uf8ff'));
     }
 
     if (sortBy) {
-      constraints.push(orderBy(sortBy, sortOrder));
+      // Searching on name_lowercase, but sorting on original name field
+      const sortField = sortBy === 'name' ? 'name_lowercase' : sortBy;
+      constraints.push(orderBy(sortField, sortOrder));
+    } else {
+      constraints.push(orderBy('createdAt', 'desc'));
     }
     
     // For pagination: get all docs and slice them. Not efficient for large datasets.
@@ -56,10 +60,12 @@ export async function GET(request: NextRequest) {
 
     const technologies: Technology[] = paginatedDocs.map(doc => {
       const data = doc.data();
+      // Handle cases where createdAt might be null
+      const createdAt = data.createdAt ? (data.createdAt as Timestamp).toDate().toISOString() : new Date().toISOString();
       return {
         id: doc.id,
         name: data.name,
-        createdAt: (data.createdAt as Timestamp).toDate().toISOString(),
+        createdAt: createdAt,
       };
     });
 
@@ -88,6 +94,7 @@ export async function POST(request: NextRequest) {
 
         const docRef = await addDoc(collection(firestore, TECHNOLOGIES_COLLECTION), {
             name,
+            name_lowercase: name.toLowerCase(),
             createdAt: serverTimestamp(),
         });
         

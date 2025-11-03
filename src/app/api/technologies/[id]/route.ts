@@ -18,10 +18,12 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         }
 
         const data = docSnap.data();
+        const createdAt = data.createdAt ? (data.createdAt as Timestamp).toDate().toISOString() : new Date().toISOString();
+
         const technology = {
             id: docSnap.id,
             name: data.name,
-            createdAt: (data.createdAt as Timestamp).toDate().toISOString(),
+            createdAt: createdAt,
         };
 
         return NextResponse.json(technology);
@@ -45,7 +47,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         }
 
         const docRef = doc(firestore, TECHNOLOGIES_COLLECTION, id);
-        await updateDoc(docRef, { name });
+        await updateDoc(docRef, { 
+            name,
+            name_lowercase: name.toLowerCase() 
+        });
 
         return NextResponse.json({ message: 'Technology updated successfully' });
 
@@ -75,4 +80,3 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
         return NextResponse.json({ error: error.message || 'Failed to delete technology' }, { status: 500 });
     }
 }
-
