@@ -3,6 +3,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import { initializeFirebase } from '@/firebase/server-init';
 import { Timestamp } from 'firebase-admin/firestore';
 
+// Helper to safely convert a value to a Date object
+const toDate = (timestamp: any): Date | null => {
+    if (!timestamp) return null;
+    if (timestamp instanceof Timestamp) {
+      return timestamp.toDate();
+    }
+    if (timestamp._seconds) { // Handle object format from Firestore
+        return new Date(timestamp._seconds * 1000);
+    }
+    if (typeof timestamp === 'string' || typeof timestamp === 'number') {
+      const d = new Date(timestamp);
+      return isNaN(d.getTime()) ? null : d;
+    }
+    return null;
+};
+
 export async function GET(req: NextRequest) {
   try {
     const { firestore } = initializeFirebase();
@@ -56,7 +72,7 @@ export async function GET(req: NextRequest) {
                 valB = b.candidate?.name || '';
                 break;
             case 'problemTitle':
-                valA = b.problem?.title || '';
+                valA = a.problem?.title || '';
                 valB = b.problem?.title || '';
                 break;
             case 'status':
@@ -64,8 +80,8 @@ export async function GET(req: NextRequest) {
                 valB = b.candidate?.status || '';
                 break;
             case 'submissionTime':
-                valA = a.submissionTime instanceof Timestamp ? a.submissionTime.toMillis() : 0;
-                valB = b.submissionTime instanceof Timestamp ? b.submissionTime.toMillis() : 0;
+                valA = toDate(a.submissionTime)?.getTime() ?? 0;
+                valB = toDate(b.submissionTime)?.getTime() ?? 0;
                 break;
             default:
                 valA = 0;
@@ -83,7 +99,19 @@ export async function GET(req: NextRequest) {
     const paginatedSubmissions = allSubmissions.slice(startIndex, endIndex);
     const hasNextPage = endIndex < allSubmissions.length;
 
-    return NextResponse.json({ submissions: paginatedSubmissions, hasNextPage });
+    // Convert Timestamps to ISO strings for JSON serialization
+    const serializableSubmissions = paginatedSubmissions.map(sub => ({
+        ...sub,
+        submissionTime: toDate(sub.submissionTime)?.toISOString() || null,
+        candidate: {
+            ...sub.candidate,
+            scheduledTime: toDate(sub.candidate?.scheduledTime)?.toISOString() || null,
+            submitTime: toDate(sub.candidate?.submitTime)?.toISOString() || null,
+        }
+    }));
+
+
+    return NextResponse.json({ submissions: serializableSubmissions, hasNextPage });
 
   } catch (error: any) {
     console.error('Error fetching submissions:', error);

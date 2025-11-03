@@ -1,6 +1,6 @@
 
 'use client';
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Submission, Candidate, Problem } from '@/types';
 import ClientDateTime from '@/components/client-date-time';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
 
 const toDate = (timestamp: any): Date | undefined => {
     if (!timestamp) return undefined;
@@ -45,60 +47,103 @@ const toDate = (timestamp: any): Date | undefined => {
 
 export default function SubmissionsPage() {
   const { toast } = useToast();
-  const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const firestore = useFirestore();
+
   const [searchTerm, setSearchTerm] = useState("");
+  const [sortConfig, setSortConfig] = useState({ key: 'submissionTime', direction: 'desc' });
   const [page, setPage] = useState(1);
-  const [limit] = useState(10);
-  const [sort, setSort] = useState<{ by: string, order: 'asc' | 'desc' }>({ by: 'submissionTime', order: 'desc' });
-  const [hasNextPage, setHasNextPage] = useState(false);
+  const itemsPerPage = 10;
+  
+  const submissionsColRef = useMemoFirebase(() => firestore ? collection(firestore, 'submissions') : null, [firestore]);
+  const { data: submissions, isLoading: isLoadingSubmissions } = useCollection<Submission>(submissionsColRef);
+  
+  const candidatesColRef = useMemoFirebase(() => firestore ? collection(firestore, 'candidates') : null, [firestore]);
+  const { data: candidates, isLoading: isLoadingCandidates } = useCollection<Candidate>(candidatesColRef);
+  
+  const problemsColRef = useMemoFirebase(() => firestore ? collection(firestore, 'problems') : null, [firestore]);
+  const { data: problems, isLoading: isLoadingProblems } = useCollection<Problem>(problemsColRef);
+
+  const candidatesMap = useMemo(() => {
+    if (!candidates) return new Map();
+    return new Map(candidates.map(c => [c.id, c]));
+  }, [candidates]);
+
+  const problemsMap = useMemo(() => {
+    if (!problems) return new Map();
+    return new Map(problems.map(p => [p.id, p]));
+  }, [problems]);
+
+  const enrichedSubmissions = useMemo(() => {
+    if (!submissions || !candidatesMap.size || !problemsMap.size) return [];
+    
+    return submissions.map(sub => ({
+      ...sub,
+      candidate: candidatesMap.get(sub.candidateId),
+      problem: problemsMap.get(sub.problemId),
+    }));
+  }, [submissions, candidatesMap, problemsMap]);
 
 
-  const fetchSubmissions = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const params = new URLSearchParams({
-        page: String(page),
-        limit: String(limit),
-        search: searchTerm,
-        sortBy: sort.by,
-        sortOrder: sort.order,
-      });
-      const response = await fetch(`/api/submissions?${params.toString()}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch submissions');
-      }
-      const data = await response.json();
-      setSubmissions(data.submissions);
-      setHasNextPage(data.hasNextPage);
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Failed to load submissions',
-        description: error.message,
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [page, limit, searchTerm, sort, toast]);
+  const filteredAndSortedSubmissions = useMemo(() => {
+    if (!enrichedSubmissions) return [];
 
-  useEffect(() => {
-    fetchSubmissions();
-  }, [fetchSubmissions]);
+    let filtered = enrichedSubmissions.filter(sub => {
+        const candidateName = sub.candidate?.name?.toLowerCase() || '';
+        const candidateEmail = sub.candidate?.email?.toLowerCase() || '';
+        const problemTitle = sub.problem?.title?.toLowerCase() || '';
+        const status = sub.candidate?.status?.toLowerCase() || '';
+        return candidateName.includes(searchTerm.toLowerCase()) || 
+               candidateEmail.includes(searchTerm.toLowerCase()) || 
+               problemTitle.includes(searchTerm.toLowerCase()) ||
+               status.includes(searchTerm.toLowerCase());
+    });
+
+    filtered.sort((a, b) => {
+        let valA, valB;
+        
+        switch (sortConfig.key) {
+            case 'candidateName':
+                valA = a.candidate?.name || '';
+                valB = b.candidate?.name || '';
+                break;
+            case 'problemTitle':
+                valA = a.problem?.title || '';
+                valB = b.problem?.title || '';
+                break;
+            case 'status':
+                valA = a.candidate?.status || '';
+                valB = b.candidate?.status || '';
+                break;
+            case 'submissionTime':
+            default:
+                valA = toDate(a.submissionTime)?.getTime() || 0;
+                valB = toDate(b.submissionTime)?.getTime() || 0;
+        }
+
+        if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    return filtered;
+
+  }, [enrichedSubmissions, searchTerm, sortConfig]);
+
+  const totalPages = Math.ceil(filteredAndSortedSubmissions.length / itemsPerPage);
+  const paginatedSubmissions = useMemo(() => {
+    const startIndex = (page - 1) * itemsPerPage;
+    return filteredAndSortedSubmissions.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredAndSortedSubmissions, page, itemsPerPage]);
 
   const handleSort = (column: string) => {
     setSort(currentSort => ({
-      by: column,
-      order: currentSort.by === column && currentSort.order === 'asc' ? 'desc' : 'asc',
+      key: column,
+      order: currentSort.key === column && currentSort.order === 'asc' ? 'desc' : 'asc',
     }));
     setPage(1); // Reset to first page on sort change
   };
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-    setPage(1); // Reset to first page on new search
-  };
-
+  
+  const isLoading = isLoadingSubmissions || isLoadingCandidates || isLoadingProblems;
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -118,7 +163,10 @@ export default function SubmissionsPage() {
             <Input
                 placeholder="Search by candidate, problem..."
                 value={searchTerm}
-                onChange={handleSearchChange}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setPage(1);
+                }}
                 className="pl-8 w-full max-w-sm"
             />
         </div>
@@ -164,7 +212,7 @@ export default function SubmissionsPage() {
                         <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
                     </TableRow>
                 ))
-              ) : submissions.map((submission: any) => {
+              ) : paginatedSubmissions.map((submission: any) => {
                 const status = submission.candidate?.status || 'Pending';
                 
                 return (
@@ -173,7 +221,7 @@ export default function SubmissionsPage() {
                     <div className="flex items-center gap-3">
                       <Avatar className="hidden h-9 w-9 sm:flex">
                         <AvatarImage src={`https://avatar.vercel.sh/${submission.candidate?.email}.png`} alt="Avatar" />
-                        <AvatarFallback>{submission.candidate?.name.charAt(0) || '?'}</AvatarFallback>
+                        <AvatarFallback>{submission.candidate?.name?.charAt(0) || '?'}</AvatarFallback>
                       </Avatar>
                       <div className="grid gap-0.5">
                         <p className="font-medium">{submission.candidate?.name || 'Unknown'}</p>
@@ -183,7 +231,7 @@ export default function SubmissionsPage() {
                          <div className="md:hidden text-sm text-muted-foreground">
                           <p>{submission.problem?.title || 'N/A'}</p>
                            <Badge 
-                              variant={status === 'Completed' ? 'default' : 'destructive'}
+                              variant={status === 'Completed' ? 'default' : 'secondary'}
                               className={`mt-1 ${status === 'Completed' ? 'bg-green-600 hover:bg-green-600/80' : ''}`}
                             >
                               {status}
@@ -195,8 +243,16 @@ export default function SubmissionsPage() {
                   <TableCell className="whitespace-nowrap hidden md:table-cell">{submission.problem?.title || 'N/A'}</TableCell>
                   <TableCell className="whitespace-nowrap hidden md:table-cell">
                     <Badge 
-                      variant={status === 'Completed' ? 'default' : 'destructive'}
-                      className={status === 'Completed' ? 'bg-green-600 hover:bg-green-600/80' : ''}
+                       variant={
+                          status === 'Completed' ? 'default' :
+                          status === 'Pending' ? 'default' :
+                          status === 'In Progress' ? 'default' : 'secondary'
+                        }
+                        className={
+                          status === 'Completed' ? 'bg-green-600 hover:bg-green-600/80' :
+                          status === 'Pending' ? 'bg-orange-600 hover:bg-orange-600/80' :
+                          status === 'In Progress' ? 'bg-blue-600 hover:bg-blue-600/80' : ''
+                        }
                     >
                       {status}
                     </Badge>
@@ -238,11 +294,14 @@ export default function SubmissionsPage() {
             >
                 Previous
             </Button>
+             <span className="text-sm text-muted-foreground">
+                Page {page} of {totalPages}
+            </span>
             <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setPage(p => p + 1)}
-                disabled={!hasNextPage}
+                onClick={() => setPage(p => Math.min(p + 1, totalPages))}
+                disabled={page >= totalPages}
             >
                 Next
             </Button>
