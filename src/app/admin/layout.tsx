@@ -40,7 +40,7 @@ export default function AdminLayout({
     }
 
     // If a user is logged in, but we can't find their profile in the 'admins' collection,
-    // or their role is not 'Admin' or 'User', they are not authorized.
+    // they are not authorized. This check runs after the loading is complete.
     if (user && !adminUser && !isLoginPage) {
         toast({
             variant: "destructive",
@@ -122,9 +122,25 @@ export default function AdminLayout({
   }
 
   // Fallback for the brief moment before redirection for unauthenticated/unauthorized users.
+  // This renders the loading skeleton instead of children, preventing the content flash.
   return (
-    <div className="flex h-screen w-full items-center justify-center">
-        <p>Loading...</p>
-    </div>
+     <div className="flex" style={{height: '100dvh'}}>
+        <div className="hidden md:flex">
+            <div className="w-64 h-full border-r p-4 space-y-4">
+                <Skeleton className="h-8 w-32" />
+                <div className="space-y-2 pt-4">
+                    <Skeleton className="h-8 w-full" />
+                    <Skeleton className="h-8 w-full" />
+                    <Skeleton className="h-8 w-full" />
+                    <Skeleton className="h-8 w-full" />
+                </div>
+            </div>
+        </div>
+        <main className="flex-1 p-8">
+            <Skeleton className="h-10 w-64 mb-4" />
+            <Skeleton className="h-4 w-96 mb-8" />
+            <Skeleton className="w-full h-96" />
+        </main>
+      </div>
   );
 }
