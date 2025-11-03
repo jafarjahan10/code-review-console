@@ -28,6 +28,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { useAuth, useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, doc, setDoc, deleteDoc, addDoc } from "firebase/firestore";
 import { getAuth, createUserWithEmailAndPassword, updatePassword, updateProfile, signOut, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
@@ -74,6 +83,7 @@ export default function SettingsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
+  const [isAddUserDialogOpen, setAddUserDialogOpen] = useState(false);
 
 
   // Fetch Admins
@@ -208,6 +218,7 @@ export default function SettingsPage() {
         
         setInterviewerEmail('');
         setInterviewerPassword('');
+        setAddUserDialogOpen(false);
         toast({
             title: "Interviewer Added",
             description: "The new user has been successfully added to the panel.",
@@ -351,37 +362,46 @@ export default function SettingsPage() {
               </div>
           </TabsContent>
           <TabsContent value="interview-panel" className="space-y-4">
-              {currentUserRole === 'Admin' && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Add Interviewer</CardTitle>
-                        <CardDescription>Invite a new interviewer to the panel by email.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <form onSubmit={handleAddInterviewer} className="space-y-4">
-                            <div className="flex flex-col md:flex-row items-end gap-4">
-                              <div className="flex-1 w-full space-y-2">
-                                  <Label htmlFor="interviewer-email">Email</Label>
-                                  <Input id="interviewer-email" type="email" placeholder="interviewer@example.com" value={interviewerEmail} onChange={(e) => setInterviewerEmail(e.target.value)} disabled={isAddingInterviewer} />
-                              </div>
-                              <div className="flex-1 w-full space-y-2">
-                                  <Label htmlFor="interviewer-password">Set Password</Label>
-                                  <Input id="interviewer-password" type="password" placeholder="Set a temporary password" value={interviewerPassword} onChange={(e) => setInterviewerPassword(e.target.value)} disabled={isAddingInterviewer} />
-                              </div>
-                            </div>
-                            <Button type="submit" className="w-full md:w-auto" disabled={isAddingInterviewer}>
-                                {isAddingInterviewer && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                <PlusCircle className="mr-2 h-4 w-4" />
-                                Add Interviewer
-                            </Button>
-                        </form>
-                    </CardContent>
-                </Card>
-              )}
                <Card>
-                  <CardHeader>
-                      <CardTitle>Interview Panel</CardTitle>
-                      <CardDescription>Manage your existing interview panel.</CardDescription>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                      <div className="space-y-1">
+                        <CardTitle>Interview Panel</CardTitle>
+                        <CardDescription>Manage your existing interview panel.</CardDescription>
+                      </div>
+                       {currentUserRole === 'Admin' && (
+                         <Dialog open={isAddUserDialogOpen} onOpenChange={setAddUserDialogOpen}>
+                            <DialogTrigger asChild>
+                                <Button>
+                                    <PlusCircle className="mr-2 h-4 w-4" />
+                                    Add Interviewer
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                <DialogTitle>Add Interviewer</DialogTitle>
+                                <DialogDescription>
+                                    Invite a new interviewer to the panel by email.
+                                </DialogDescription>
+                                </DialogHeader>
+                                <form onSubmit={handleAddInterviewer} className="space-y-4 py-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="interviewer-email">Email</Label>
+                                        <Input id="interviewer-email" type="email" placeholder="interviewer@example.com" value={interviewerEmail} onChange={(e) => setInterviewerEmail(e.target.value)} disabled={isAddingInterviewer} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="interviewer-password">Set Password</Label>
+                                        <Input id="interviewer-password" type="password" placeholder="Set a temporary password" value={interviewerPassword} onChange={(e) => setInterviewerPassword(e.target.value)} disabled={isAddingInterviewer} />
+                                    </div>
+                                    <DialogFooter>
+                                        <Button type="submit" className="w-full md:w-auto" disabled={isAddingInterviewer}>
+                                            {isAddingInterviewer && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                            Add Interviewer
+                                        </Button>
+                                    </DialogFooter>
+                                </form>
+                            </DialogContent>
+                        </Dialog>
+                       )}
                   </CardHeader>
                   <CardContent>
                       <div className="mb-4 relative">
