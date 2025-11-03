@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback, useTransition } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -36,101 +36,68 @@ import { useToast } from "@/hooks/use-toast";
 import { Technology } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import ClientDateTime from "@/components/client-date-time";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { collection, deleteDoc, doc } from "firebase/firestore";
 
 export default function TechnologiesPage() {
   const { toast } = useToast();
-  const [technologies, setTechnologies] = useState<Technology[]>([]);
-  const [techToDelete, setTechToDelete] = useState<Technology | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sort, setSort] = useState({ by: 'createdAt', order: 'desc' });
+  const firestore = useFirestore();
 
+  const technologiesColRef = useMemoFirebase(() => firestore ? collection(firestore, 'technologies') : null, [firestore]);
+  const { data: allTechnologies, isLoading } = useCollection<Technology>(technologiesColRef);
+
+  const [techToDelete, setTechToDelete] = useState<Technology | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
-  const [startAfterCursors, setStartAfterCursors] = useState<string[]>(['']);
-  const [hasNextPage, setHasNextPage] = useState(false);
+  const [sort, setSort] = useState({ by: 'createdAt', order: 'desc' });
 
-  const [isPending, startTransition] = useTransition();
+  const filteredAndSortedTechnologies = useMemo(() => {
+    if (!allTechnologies) return [];
+    
+    let filtered = allTechnologies.filter(tech => 
+        tech.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
-  const fetchTechnologies = useCallback(async (newPage: number) => {
-    setIsLoading(true);
+    filtered.sort((a, b) => {
+        const aVal = a[sort.by as keyof Technology] || '';
+        const bVal = b[sort.by as keyof Technology] || '';
+
+        if (aVal < bVal) return sort.order === 'asc' ? -1 : 1;
+        if (aVal > bVal) return sort.order === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    return filtered;
+
+  }, [allTechnologies, searchTerm, sort]);
+
+  const paginatedTechnologies = useMemo(() => {
+    const startIndex = (page - 1) * limit;
+    return filteredAndSortedTechnologies.slice(startIndex, startIndex + limit);
+  }, [filteredAndSortedTechnologies, page, limit]);
+
+  const hasNextPage = useMemo(() => {
+    return page * limit < filteredAndSortedTechnologies.length;
+  }, [page, limit, filteredAndSortedTechnologies]);
+  
+  const handleDelete = async () => {
+    if (!techToDelete || !firestore) return;
+
     try {
-      const currentCursor = startAfterCursors[newPage - 1] || '';
-      
-      const params = new URLSearchParams({
-        limit: String(limit),
-        search: searchTerm,
-        sortBy: sort.by,
-        sortOrder: sort.order,
+      const techDocRef = doc(firestore, "technologies", techToDelete.id);
+      await deleteDoc(techDocRef);
+
+      toast({
+        title: "Technology Deleted",
+        description: `The technology "${techToDelete.name}" has been successfully deleted.`,
       });
-
-      if (newPage > 1 && currentCursor) {
-        params.append('startAfter', currentCursor);
-      }
-      
-      const response = await fetch(`/api/technologies?${params.toString()}`);
-      if (!response.ok) throw new Error("Failed to fetch");
-      const data = await response.json();
-
-      setTechnologies(data.technologies);
-      setHasNextPage(data.hasNextPage);
-      
-      if (data.hasNextPage && data.technologies.length > 0) {
-        const lastDocId = data.technologies[data.technologies.length - 1].id;
-        const newCursors = [...startAfterCursors];
-        newCursors[newPage] = lastDocId;
-        setStartAfterCursors(newCursors);
-      }
-
-    } catch (error) {
+    } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Error fetching technologies",
-        description: "Could not load the list of technologies.",
+        title: "Deletion Failed",
+        description: error.message,
       });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [limit, searchTerm, sort, toast, startAfterCursors]);
-
-  useEffect(() => {
-    startTransition(() => {
-        fetchTechnologies(page);
-    });
-  }, [page, fetchTechnologies]);
-
-  useEffect(() => {
-    // Reset pagination on search or sort change
-    setPage(1);
-    setStartAfterCursors(['']);
-    startTransition(() => {
-        fetchTechnologies(1);
-    });
-  }, [searchTerm, sort]);
-
-
-  const handleDelete = async () => {
-    if (!techToDelete) return;
-
-    try {
-        const response = await fetch(`/api/technologies/${techToDelete.id}`, {
-            method: 'DELETE',
-        });
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to delete technology.');
-        }
-        toast({
-            title: "Technology Deleted",
-            description: `The technology "${techToDelete.name}" has been successfully deleted.`,
-        });
-        fetchTechnologies(page); // Refresh the list
-    } catch (error: any) {
-         toast({
-            variant: "destructive",
-            title: "Deletion Failed",
-            description: error.message,
-        });
     } finally {
       setTechToDelete(null);
     }
@@ -142,10 +109,12 @@ export default function TechnologiesPage() {
     } else {
       setSort({ by: column, order: 'desc' });
     }
+    setPage(1);
   };
   
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
+    setPage(1); // Reset to first page on new search
   };
 
 
@@ -212,7 +181,7 @@ export default function TechnologiesPage() {
                       <TableCell><Skeleton className="h-8 w-8" /></TableCell>
                     </TableRow>
                   ))
-                ) : technologies.map((tech) => (
+                ) : paginatedTechnologies.map((tech) => (
                   <TableRow key={tech.id}>
                     <TableCell className="font-medium whitespace-nowrap">
                       {tech.name}
@@ -267,7 +236,7 @@ export default function TechnologiesPage() {
             variant="outline"
             size="sm"
             onClick={() => setPage(p => Math.max(1, p - 1))}
-            disabled={page <= 1 || isLoading}
+            disabled={page <= 1}
           >
             Previous
           </Button>
@@ -275,7 +244,7 @@ export default function TechnologiesPage() {
             variant="outline"
             size="sm"
             onClick={() => setPage(p => p + 1)}
-            disabled={!hasNextPage || isLoading}
+            disabled={!hasNextPage}
           >
             Next
           </Button>

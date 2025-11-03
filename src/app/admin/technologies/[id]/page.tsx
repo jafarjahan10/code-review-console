@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -16,37 +16,29 @@ import { ArrowLeft } from 'lucide-react';
 import { Technology } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import ClientDateTime from '@/components/client-date-time';
+import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
 
 
 export default function ViewTechnologyPage() {
   const router = useRouter();
   const params = useParams();
   const { toast } = useToast();
-  const [technology, setTechnology] = useState<Technology | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const firestore = useFirestore();
+  
+  const techId = params.id as string;
+  const techDocRef = useMemoFirebase(() => (firestore && techId ? doc(firestore, 'technologies', techId) : null), [firestore, techId]);
+  const { data: technology, isLoading, error } = useDoc<Technology>(techDocRef);
 
   useEffect(() => {
-    const techId = params.id as string;
-    if (techId) {
-        setIsLoading(true);
-        fetch(`/api/technologies/${techId}`)
-            .then(res => {
-                if (!res.ok) throw new Error("Failed to fetch");
-                return res.json();
-            })
-            .then(data => {
-                setTechnology(data);
-            })
-            .catch(() => {
-                toast({
-                    variant: 'destructive',
-                    title: 'Technology not found',
-                });
-                router.push('/admin/technologies');
-            })
-            .finally(() => setIsLoading(false));
+    if(error){
+        toast({
+            variant: 'destructive',
+            title: 'Technology not found',
+        });
+        router.push('/admin/technologies');
     }
-  }, [params.id, router, toast]);
+  }, [error, router, toast]);
 
 
   if (isLoading) {

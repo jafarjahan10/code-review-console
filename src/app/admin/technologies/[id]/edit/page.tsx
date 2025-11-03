@@ -15,38 +15,53 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useDoc, useFirestore } from '@/firebase';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { Technology } from '@/types';
 
 export default function EditTechnologyPage() {
   const router = useRouter();
   const params = useParams();
   const { toast } = useToast();
+  const firestore = useFirestore();
+  
+  const techId = params.id as string;
+  const techDocRef = useMemo(() => firestore && techId ? doc(firestore, "technologies", techId) : null, [firestore, techId]);
+  
   const [name, setName] = useState('');
+  const [initialName, setInitialName] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    const techId = params.id as string;
-    if (!techId) return;
-    
-    setIsLoading(true);
-    fetch(`/api/technologies/${techId}`)
-        .then(res => {
-            if (!res.ok) throw new Error("Technology not found");
-            return res.json();
-        })
-        .then(data => {
-            setName(data.name);
-            setIsLoading(false);
-        })
-        .catch(() => {
-            toast({
-                variant: 'destructive',
-                title: 'Technology not found',
-                description: 'The requested technology could not be found.',
+    if (techId && firestore) {
+        setIsLoading(true);
+        getDoc(doc(firestore, "technologies", techId))
+            .then(docSnap => {
+                if (docSnap.exists()) {
+                    const techData = docSnap.data() as Omit<Technology, 'id'>;
+                    setName(techData.name);
+                    setInitialName(techData.name);
+                } else {
+                    toast({
+                        variant: 'destructive',
+                        title: 'Technology not found',
+                    });
+                    router.push('/admin/technologies');
+                }
+            })
+            .catch(error => {
+                 toast({
+                    variant: 'destructive',
+                    title: 'Error fetching data',
+                    description: error.message,
+                });
+            })
+            .finally(() => {
+                setIsLoading(false);
             });
-            router.push('/admin/technologies');
-        });
-  }, [params.id, router, toast]);
+    }
+  }, [techId, firestore, router, toast]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -58,23 +73,19 @@ export default function EditTechnologyPage() {
       });
       return;
     }
+    if (!techDocRef) return;
+
     setIsSaving(true);
     try {
-        const response = await fetch(`/api/technologies/${params.id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name }),
+        await updateDoc(techDocRef, { 
+            name,
+            name_lowercase: name.toLowerCase() 
         });
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to update technology');
-        }
         toast({
             title: 'Technology Updated!',
             description: `The technology "${name}" has been successfully updated.`,
         });
         router.push('/admin/technologies');
-        router.refresh();
     } catch(error: any) {
         toast({
             variant: "destructive",

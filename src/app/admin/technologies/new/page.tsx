@@ -14,10 +14,13 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { ArrowLeft, Loader2 } from 'lucide-react';
+import { useFirestore } from '@/firebase';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 
 export default function NewTechnologyPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const firestore = useFirestore();
   const [name, setName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -31,26 +34,24 @@ export default function NewTechnologyPage() {
       });
       return;
     }
+    if (!firestore) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Firestore not available' });
+        return;
+    }
     setIsLoading(true);
 
     try {
-        const response = await fetch('/api/technologies', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name }),
+        await addDoc(collection(firestore, 'technologies'), {
+            name,
+            name_lowercase: name.toLowerCase(),
+            createdAt: serverTimestamp(),
         });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to create technology.');
-        }
 
         toast({
             title: 'Technology Created!',
             description: `The technology "${name}" has been successfully created.`,
         });
         router.push('/admin/technologies');
-        router.refresh(); // To see the new item in the list
     } catch (error: any) {
         toast({
             variant: "destructive",
