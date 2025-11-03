@@ -26,6 +26,17 @@ import { doc, updateDoc, collection } from 'firebase/firestore';
 import type { Candidate, Department, Position, Problem } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
+const toDate = (timestamp: any): Date | undefined => {
+    if (timestamp?.toDate) {
+      return timestamp.toDate();
+    }
+    if (typeof timestamp === 'string' || typeof timestamp === 'number') {
+      return new Date(timestamp);
+    }
+    return timestamp;
+};
+
+
 export default function EditCandidatePage() {
   const router = useRouter();
   const params = useParams();
@@ -66,11 +77,7 @@ export default function EditCandidatePage() {
       setProblemId(candidate.problemId);
       setAccessCode(candidate.accessCode);
       if (candidate.scheduledTime) {
-          const date = typeof candidate.scheduledTime === 'string' 
-              ? new Date(candidate.scheduledTime)
-              // @ts-ignore
-              : candidate.scheduledTime.toDate();
-          setScheduledTime(date);
+          setScheduledTime(toDate(candidate.scheduledTime));
       }
     }
   }, [candidate]);
