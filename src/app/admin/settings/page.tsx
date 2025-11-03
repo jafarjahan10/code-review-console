@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useAuth, useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, doc, setDoc, deleteDoc, addDoc } from "firebase/firestore";
-import { getAuth, createUserWithEmailAndPassword, updatePassword, updateProfile, signOut } from "firebase/auth";
+import { getAuth, createUserWithEmailAndPassword, updatePassword, updateProfile, signOut, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 import type { WithId } from "@/firebase";
 import { initializeApp, deleteApp } from "firebase/app";
 import { firebaseConfig } from "@/firebase/config";
@@ -55,6 +55,7 @@ export default function SettingsPage() {
   const { user: currentUser, isUserLoading } = useUser();
 
   const [name, setName] = useState('');
+  const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
@@ -76,6 +77,7 @@ export default function SettingsPage() {
   // Fetch Departments
   const deptsColRef = useMemoFirebase(() => firestore ? collection(firestore, 'departments') : null, [firestore]);
   const { data: departmentsData, isLoading: isLoadingDepts } = useCollection<Department>(deptsColRef);
+  
   const departments = departmentsData || [];
 
   const currentUserRole = useMemo(() => {
@@ -110,28 +112,38 @@ export default function SettingsPage() {
   
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentUser) return;
+    if (!currentUser || !currentUser.email) return;
+
+    if (!oldPassword) {
+      toast({ variant: "destructive", title: "Old password is required." });
+      return;
+    }
     if (newPassword !== confirmPassword) {
-        toast({ variant: "destructive", title: "Passwords do not match." });
+        toast({ variant: "destructive", title: "New passwords do not match." });
         return;
     }
     if (newPassword.length < 6) {
-        toast({ variant: "destructive", title: "Password must be at least 6 characters." });
+        toast({ variant: "destructive", title: "New password must be at least 6 characters." });
         return;
     }
 
     setIsPasswordUpdating(true);
     try {
+        const credential = EmailAuthProvider.credential(currentUser.email, oldPassword);
+        await reauthenticateWithCredential(currentUser, credential);
         await updatePassword(currentUser, newPassword);
+        
         toast({ title: "Password updated successfully!" });
+        setOldPassword('');
         setNewPassword('');
         setConfirmPassword('');
     } catch (error: any) {
-        toast({ variant: "destructive", title: "Failed to update password", description: error.message });
+        toast({ variant: "destructive", title: "Failed to update password", description: "Please check your old password and try again." });
     } finally {
         setIsPasswordUpdating(false);
     }
   };
+
 
   const handleAddInterviewer = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -281,17 +293,23 @@ export default function SettingsPage() {
                             <CardDescription>Update your login password.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                             <div className="grid md:grid-cols-2 gap-4">
+                            <div className="grid gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="new-password">New Password</Label>
-                                    <Input id="new-password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="New password" />
+                                    <Label htmlFor="old-password">Old Password</Label>
+                                    <Input id="old-password" type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} placeholder="Your current password" />
                                 </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="confirm-password">Confirm New Password</Label>
-                                    <Input id="confirm-password" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Confirm password" />
+                                <div className="grid md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="new-password">New Password</Label>
+                                        <Input id="new-password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="New password" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="confirm-password">Confirm New Password</Label>
+                                        <Input id="confirm-password" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Confirm new password" />
+                                    </div>
                                 </div>
                             </div>
-                            <Button type="submit" disabled={isPasswordUpdating}>
+                            <Button type="submit" disabled={isPasswordUpdating} className="mt-4">
                                 {isPasswordUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 Update Password
                             </Button>
@@ -478,5 +496,3 @@ export default function SettingsPage() {
     </>
   );
 }
-
-    
