@@ -1,3 +1,4 @@
+
 import { initializeFirebase } from '@/firebase';
 import { Technology } from '@/types';
 import {
@@ -12,7 +13,12 @@ import {
   QueryDocumentSnapshot,
   DocumentData,
   Timestamp,
+  addDoc,
+  serverTimestamp,
+  getDoc,
+  doc,
 } from 'firebase/firestore';
+import { headers } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
 const { firestore } = initializeFirebase();
@@ -25,16 +31,11 @@ export async function GET(request: NextRequest) {
     const sortBy = searchParams.get('sortBy') || 'createdAt';
     const sortOrder = searchParams.get('sortOrder') === 'asc' ? 'asc' : 'desc';
     const page = parseInt(searchParams.get('page') || '1', 10);
-    const pageSize = parseInt(searchParams.get('limit') || '10', 10);
-    const lastVisibleId = searchParams.get('lastVisible');
+    const limitParam = parseInt(searchParams.get('limit') || '10', 10);
 
     const constraints: QueryConstraint[] = [];
 
-    // Note: Firestore does not support case-insensitive search or partial string matching natively.
-    // A simple equality where clause is used here. For more complex search, a third-party service like Algolia is recommended.
     if (search) {
-      // This is a basic search. For full-text search, consider a dedicated search service.
-      // This query requires a composite index on name and the sortBy field.
       constraints.push(where('name', '>=', search));
       constraints.push(where('name', '<=', search + '\uf8ff'));
     }
@@ -42,43 +43,60 @@ export async function GET(request: NextRequest) {
     if (sortBy) {
       constraints.push(orderBy(sortBy, sortOrder));
     }
-
-    let lastDoc: QueryDocumentSnapshot<DocumentData> | undefined;
-    if (lastVisibleId && page > 1) {
-        const lastDocRef = (await getDocs(query(collection(firestore, TECHNOLOGIES_COLLECTION), where('id', '==', lastVisibleId)))).docs[0];
-        if (lastDocRef) {
-            lastDoc = lastDocRef;
-            constraints.push(startAfter(lastDoc));
-        }
-    }
     
-    constraints.push(limit(pageSize));
-    
-    const q = query(collection(firestore, TECHNOLOGIES_COLLECTION), ...constraints);
-    const querySnapshot = await getDocs(q);
+    // For pagination: get all docs and slice them. Not efficient for large datasets.
+    // Firestore's cursor-based pagination is better but more complex to implement with page numbers.
+    const allDocsQuery = query(collection(firestore, TECHNOLOGIES_COLLECTION), ...constraints);
+    const allDocsSnapshot = await getDocs(allDocsQuery);
 
-    const technologies: Technology[] = querySnapshot.docs.map(doc => {
+    const startIndex = (page - 1) * limitParam;
+    const endIndex = startIndex + limitParam;
+    
+    const paginatedDocs = allDocsSnapshot.docs.slice(startIndex, endIndex);
+
+    const technologies: Technology[] = paginatedDocs.map(doc => {
       const data = doc.data();
       return {
         id: doc.id,
         name: data.name,
-        // Convert Firestore Timestamp to ISO string
         createdAt: (data.createdAt as Timestamp).toDate().toISOString(),
       };
     });
 
-    const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
-
     return NextResponse.json({
         technologies,
-        lastVisibleId: lastVisible ? lastVisible.id : null,
         page,
-        pageSize,
-        hasNextPage: querySnapshot.docs.length === pageSize,
+        limit: limitParam,
+        hasNextPage: endIndex < allDocsSnapshot.docs.length,
     });
 
   } catch (error: any) {
     console.error('Error fetching technologies:', error);
     return NextResponse.json({ error: error.message || 'Failed to fetch technologies' }, { status: 500 });
   }
+}
+
+
+export async function POST(request: NextRequest) {
+    try {
+        const body = await request.json();
+        const { name } = body;
+
+        if (!name) {
+            return NextResponse.json({ error: 'Technology name is required' }, { status: 400 });
+        }
+
+        const newTechnology = {
+            name,
+            createdAt: serverTimestamp(),
+        };
+
+        const docRef = await addDoc(collection(firestore, TECHNOLOGIES_COLLECTION), newTechnology);
+
+        return NextResponse.json({ id: docRef.id, ...newTechnology }, { status: 201 });
+
+    } catch (error: any) {
+        console.error('Error creating technology:', error);
+        return NextResponse.json({ error: error.message || 'Failed to create technology' }, { status: 500 });
+    }
 }

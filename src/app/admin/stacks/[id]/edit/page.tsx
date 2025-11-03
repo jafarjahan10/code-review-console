@@ -13,14 +13,8 @@ import { Label } from '@/components/ui/label';
 import { useRouter, useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
-
-const initialTechnologies = [
-  { id: "tech_1", name: "HTML" },
-  { id: "tech_2", name: "CSS" },
-  { id: "tech_3", name: "JS" },
-  { id: "tech_4", name: "Python" },
-];
+import { ArrowLeft, Loader2 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function EditTechnologyPage() {
   const router = useRouter();
@@ -28,25 +22,33 @@ export default function EditTechnologyPage() {
   const { toast } = useToast();
   const [name, setName] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    const techId = params.id;
-    const techToEdit = initialTechnologies.find(s => s.id === techId);
-
-    if (techToEdit) {
-      setName(techToEdit.name);
-    } else {
-      toast({
-        variant: 'destructive',
-        title: 'Technology not found',
-        description: 'The requested technology could not be found.',
-      });
-      router.push('/admin/stacks');
-    }
-    setIsLoading(false);
+    const techId = params.id as string;
+    if (!techId) return;
+    
+    setIsLoading(true);
+    fetch(`/api/technologies/${techId}`)
+        .then(res => {
+            if (!res.ok) throw new Error("Technology not found");
+            return res.json();
+        })
+        .then(data => {
+            setName(data.name);
+            setIsLoading(false);
+        })
+        .catch(() => {
+            toast({
+                variant: 'destructive',
+                title: 'Technology not found',
+                description: 'The requested technology could not be found.',
+            });
+            router.push('/admin/stacks');
+        });
   }, [params.id, router, toast]);
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!name) {
       toast({
@@ -56,16 +58,55 @@ export default function EditTechnologyPage() {
       });
       return;
     }
-    console.log({ id: params.id, name });
-    toast({
-      title: 'Technology Updated!',
-      description: `The technology "${name}" has been successfully updated.`,
-    });
-    router.push('/admin/stacks');
+    setIsSaving(true);
+    try {
+        const response = await fetch(`/api/technologies/${params.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name }),
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to update technology');
+        }
+        toast({
+            title: 'Technology Updated!',
+            description: `The technology "${name}" has been successfully updated.`,
+        });
+        router.push('/admin/stacks');
+        router.refresh();
+    } catch(error: any) {
+        toast({
+            variant: "destructive",
+            title: 'Update Failed',
+            description: error.message,
+        });
+    } finally {
+        setIsSaving(false);
+    }
   };
 
   if (isLoading) {
-    return <div className="flex-1 space-y-4 p-4 md:p-8 pt-6"><p>Loading...</p></div>;
+    return (
+        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+             <div className="flex items-center gap-4">
+                <Skeleton className="h-7 w-7" />
+                <div className="space-y-1">
+                    <Skeleton className="h-8 w-48" />
+                    <Skeleton className="h-4 w-64" />
+                </div>
+            </div>
+            <Card>
+                <CardContent className="pt-6">
+                    <Skeleton className="h-6 w-24 mb-2" />
+                    <Skeleton className="h-10 w-full" />
+                </CardContent>
+                <CardFooter>
+                    <Skeleton className="h-10 w-32" />
+                </CardFooter>
+            </Card>
+        </div>
+    )
   }
 
   return (
@@ -96,16 +137,18 @@ export default function EditTechnologyPage() {
                     id="name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
+                    disabled={isSaving}
                 />
             </div>
           </CardContent>
           <CardFooter>
-            <Button type="submit">Update Technology</Button>
+            <Button type="submit" disabled={isSaving}>
+                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Update Technology
+            </Button>
           </CardFooter>
         </Card>
       </form>
     </div>
   );
 }
-
-    

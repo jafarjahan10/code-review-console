@@ -13,14 +13,15 @@ import { Label } from '@/components/ui/label';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 
 export default function NewTechnologyPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [name, setName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!name) {
       toast({
@@ -30,13 +31,35 @@ export default function NewTechnologyPage() {
       });
       return;
     }
-    // In a real app, you would handle the API submission here.
-    console.log({ name });
-    toast({
-      title: 'Technology Created!',
-      description: `The technology "${name}" has been successfully created.`,
-    });
-    router.push('/admin/stacks');
+    setIsLoading(true);
+
+    try {
+        const response = await fetch('/api/technologies', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to create technology.');
+        }
+
+        toast({
+            title: 'Technology Created!',
+            description: `The technology "${name}" has been successfully created.`,
+        });
+        router.push('/admin/stacks');
+        router.refresh(); // To see the new item in the list
+    } catch (error: any) {
+        toast({
+            variant: "destructive",
+            title: 'Creation Failed',
+            description: error.message,
+        });
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   return (
@@ -68,16 +91,18 @@ export default function NewTechnologyPage() {
                     placeholder="e.g., JavaScript"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
+                    disabled={isLoading}
                 />
             </div>
           </CardContent>
           <CardFooter>
-            <Button type="submit">Submit Technology</Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Submit Technology
+            </Button>
           </CardFooter>
         </Card>
       </form>
     </div>
   );
 }
-
-    

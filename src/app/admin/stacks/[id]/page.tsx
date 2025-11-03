@@ -8,21 +8,15 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { useRouter, useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
+import { Technology } from '@/types';
+import { Skeleton } from '@/components/ui/skeleton';
+import ClientDateTime from '@/components/client-date-time';
 
-const initialTechnologies = [
-  { id: "tech_1", name: "HTML", createdAt: "2024-05-10" },
-  { id: "tech_2", name: "CSS", createdAt: "2024-05-11" },
-  { id: "tech_3", name: "JS", createdAt: "2024-05-12" },
-  { id: "tech_4", name: "Python", createdAt: "2024-05-13" },
-];
-
-type Technology = typeof initialTechnologies[0];
 
 export default function ViewTechnologyPage() {
   const router = useRouter();
@@ -32,27 +26,51 @@ export default function ViewTechnologyPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const techId = params.id;
-    const techToView = initialTechnologies.find(p => p.id === techId);
-
-    if (techToView) {
-      setTechnology(techToView);
-    } else {
-      toast({
-        variant: 'destructive',
-        title: 'Technology not found',
-        description: 'The requested technology could not be found.',
-      });
-      router.push('/admin/stacks');
+    const techId = params.id as string;
+    if (techId) {
+        setIsLoading(true);
+        fetch(`/api/technologies/${techId}`)
+            .then(res => {
+                if (!res.ok) throw new Error("Failed to fetch");
+                return res.json();
+            })
+            .then(data => {
+                setTechnology(data);
+            })
+            .catch(() => {
+                toast({
+                    variant: 'destructive',
+                    title: 'Technology not found',
+                });
+                router.push('/admin/stacks');
+            })
+            .finally(() => setIsLoading(false));
     }
-    setIsLoading(false);
   }, [params.id, router, toast]);
 
 
   if (isLoading) {
     return (
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-        <p>Loading...</p>
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-7 w-7" />
+          <Skeleton className="h-9 w-48" />
+        </div>
+        <Card>
+            <CardHeader>
+                <Skeleton className="h-6 w-32" />
+            </CardHeader>
+            <CardContent className="grid gap-6 pt-2">
+                <div className="space-y-2">
+                    <Skeleton className="h-4 w-16" />
+                    <Skeleton className="h-5 w-40" />
+                </div>
+                <div className="space-y-2">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-5 w-48" />
+                </div>
+            </CardContent>
+        </Card>
       </div>
     )
   }
@@ -90,12 +108,10 @@ export default function ViewTechnologyPage() {
             </div>
              <div className="space-y-2">
                 <p className="text-sm font-medium">Created At</p>
-                <p className="text-muted-foreground">{technology.createdAt}</p>
+                <p className="text-muted-foreground"><ClientDateTime date={technology.createdAt} /></p>
             </div>
           </CardContent>
         </Card>
     </div>
   );
 }
-
-    
