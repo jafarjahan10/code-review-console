@@ -45,7 +45,7 @@
     "firebase": "^11.9.1",
     "genkit": "^1.20.0",
     "lucide-react": "^0.475.0",
-    "next": "^14.2.3",
+    "next": "^14.2.4",
     "patch-package": "^8.0.0",
     "prismjs": "^1.29.0",
     "react": "^18.3.1",
