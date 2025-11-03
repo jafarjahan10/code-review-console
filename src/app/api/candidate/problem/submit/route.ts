@@ -26,7 +26,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // 1. Create a new submission document
+    // 1. Create a new submission document in the top-level 'submissions' collection
     const submissionData = {
       candidateId,
       problemId,
@@ -36,9 +36,9 @@ export async function POST(request: Request) {
       submissionTime: Timestamp.now(),
     };
 
-    const submissionRef = await db.collection(`candidates/${candidateId}/submissions`).add(submissionData);
+    const submissionRef = await db.collection('submissions').add(submissionData);
 
-    // 2. Update the candidate's document
+    // 2. Update the candidate's document with the new submission ID and status
     const candidateRef = db.doc(`candidates/${candidateId}`);
     await candidateRef.update({
       status: 'Completed',
@@ -53,3 +53,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to process submission', details: error.message }, { status: 500 });
   }
 }
+
+    

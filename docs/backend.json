@@ -368,18 +368,14 @@
         }
       },
       {
-        "path": "/candidates/{candidateId}/submissions/{submissionId}",
+        "path": "/submissions/{submissionId}",
         "definition": {
           "entityName": "Submission",
           "schema": {
             "$ref": "#/backend/entities/Submission"
           },
-          "description": "Stores code submissions by candidates. Submissions are stored under the candidate document, simplifying ownership checks via the path itself. Allows searching, filtering and pagination on submissions.",
+          "description": "Stores code submissions by candidates. Submissions are stored in a top-level collection to allow admins to easily query and list all submissions for review.",
           "params": [
-            {
-              "name": "candidateId",
-              "description": "The unique identifier of the candidate."
-            },
             {
               "name": "submissionId",
               "description": "The unique identifier of the submission."
@@ -404,6 +400,8 @@
         }
       }
     ],
-    "reasoning": "This Firestore structure is designed to support the CodeReview Console application, emphasizing security, scalability, and ease of debugging. It prioritizes Authorization Independence (CRITICAL) by denormalizing relevant authorization data, avoiding hierarchical `get()` calls in security rules.  Structural Segregation is applied to maintain a homogeneous security posture within each collection. Access Modeling is based on path-based ownership for user-specific data and membership maps for collaborative scenarios. Data Clarity is achieved through explicit state modeling and predictable schema.\n\n*   **/admins/{adminId}**: Stores admin profiles and roles. Admin access is controlled via existence checks in this collection (DBAC).  This enables searching, filtering, and pagination. \n*   **/candidates/{candidateId}**: Stores candidate profiles. Admin and user roles have read/write access. This enables searching, filtering and pagination.\n*   **/departments/{departmentId}**: Stores department names. Admin access is controlled via the `isAdmin()` function. This enables searching, filtering, and pagination.\n*   **/positions/{positionId}**: Stores job positions. Admins have CRUD access. This enables searching, filtering, and pagination.\n*   **/problems/{problemId}**: Stores coding problems. Admins and Users have CRUD access. This enables searching, filtering, and pagination.\n*   **/candidates/{candidateId}/submissions/{submissionId}**: Stores code submissions by candidates. Authorization Independence is achieved as submissions are stored under the candidate document, simplifying ownership checks via the path itself.  Admins can review all submissions. The candidate can only access its own submissions. This enables searching, filtering, and pagination.\n*   **/technologies/{technologyId}**: Stores technology stacks. Admin have CRUD access, authenticated users have read access. This enables searching, filtering, and pagination.\n\n**Authorization Independence (Denormalization):** The `submissions` subcollection is located under the `candidates` document. This means we do not need to make `get()` calls to the parent document to determine ownership. The path `/candidates/{candidateId}/submissions/{submissionId}` inherently defines the owner. This makes security rules more straightforward and efficient.\n\n**QAPs Support:** The structure supports secure `list` operations (QAPs) by segregating data based on access requirements. Admins can list all documents in `/problems`. Candidates can list only their own submissions in `/candidates/{candidateId}/submissions`. This segregation, combined with the enforcement of authorization rules, ensures that users can only access data they are permitted to view. Furthermore, the admin role is managed through existence checks in the `/roles_admin/{uid}` collection, which simplifies admin authorization rules and improves scalability.\n"
+    "reasoning": "This Firestore structure is designed to support the CodeReview Console application, emphasizing security, scalability, and ease of debugging. It prioritizes Authorization Independence (CRITICAL) by denormalizing relevant authorization data, avoiding hierarchical `get()` calls in security rules.  Structural Segregation is applied to maintain a homogeneous security posture within each collection. Access Modeling is based on path-based ownership for user-specific data and membership maps for collaborative scenarios. Data Clarity is achieved through explicit state modeling and predictable schema.\n\n*   **/admins/{adminId}**: Stores admin profiles and roles. Admin access is controlled via existence checks in this collection (DBAC).  This enables searching, filtering, and pagination. \n*   **/candidates/{candidateId}**: Stores candidate profiles. Admin and user roles have read/write access. This enables searching, filtering and pagination.\n*   **/departments/{departmentId}**: Stores department names. Admin access is controlled via the `isAdmin()` function. This enables searching, filtering, and pagination.\n*   **/positions/{positionId}**: Stores job positions. Admins have CRUD access. This enables searching, filtering, and pagination.\n*   **/problems/{problemId}**: Stores coding problems. Admins and Users have CRUD access. This enables searching, filtering, and pagination.\n*   **/submissions/{submissionId}**: Stores code submissions by candidates in a top-level collection. This allows admins to easily query all submissions for review. Candidates can only create their own submission, and admins have full CRUD access.\n*   **/technologies/{technologyId}**: Stores technology stacks. Admin have CRUD access, authenticated users have read access. This enables searching, filtering, and pagination.\n"
   }
 }
+
+    

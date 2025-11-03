@@ -12,13 +12,13 @@
  * - /departments/{departmentId}: Stores department information.
  * - /positions/{positionId}: Stores job positions.
  * - /problems/{problemId}: Stores coding problems.
- * - /candidates/{candidateId}/submissions/{submissionId}: Stores code submissions by candidates.
+ * - /submissions/{submissionId}: Stores code submissions by candidates.
  * - /technologies/{technologyId}: Stores technology stacks.
  *
  * Key Security Decisions:
  * - Admin role is determined by checking the existence of an admin document.
  * - Candidates can only access their own profile data.
- * - Candidates can only access their own submissions.
+ * - Submissions are in a top-level collection; candidates can only create them.
  * - Problems are readable by any authenticated user but modifiable only by admins and users for now.
  * - Positions are readable by any authenticated user but only modifiable by admins.
  * - Technologies are readable by any authenticated user but only modifiable by admins.
@@ -96,20 +96,16 @@ service cloud.firestore {
 
     /**
      * @description Grants candidates access to their own submissions, and admins access to all submissions.
-     * @path /candidates/{candidateId}/submissions/{submissionId}
-     * @allow (get, list) Authenticated user can read/list their own submissions.
-     * @allow (create) Authenticated user can create submissions under their own profile.
-     * @allow (update, delete) Authenticated user can update/delete their own submissions.
-     * @deny (get, list, create, update, delete) Authenticated user cannot access another user's submissions.
-     * @principle Enforces document ownership for submissions, with admin override.
+     * @path /submissions/{submissionId}
+     * @allow (read, write) User with admin role can manage all submissions.
+     * @allow (create) Candidate can create their own submission.
+     * @principle Enforces ownership for submission creation, with admin override for management.
      */
-    match /candidates/{candidateId}/submissions/{submissionId} {
-      allow get: if isOwner(candidateId) || isAdmin();
-      allow list: if isOwner(candidateId) || isAdmin();
-      allow create: if isOwner(candidateId) && request.resource.data.candidateId == candidateId;
-      allow update: if (isExistingOwner(candidateId) && request.resource.data.candidateId == resource.data.candidateId) || isAdmin();
-      allow delete: if isExistingOwner(candidateId) || isAdmin();
+    match /submissions/{submissionId} {
+        allow read, write: if isAdmin();
+        allow create: if isOwner(request.resource.data.candidateId);
     }
+
 
     /**
      * @description Grants admins CRUD access to technologies, and all authenticated users read access.
@@ -177,3 +173,5 @@ service cloud.firestore {
     }
   }
 }
+
+    
