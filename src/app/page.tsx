@@ -1,7 +1,6 @@
 
 'use client';
 
-import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Logo from "@/components/logo";
 import { Button } from "@/components/ui/button";
@@ -19,13 +18,6 @@ export default function Home() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
   const { toast } = useToast();
-
-  useEffect(() => {
-    // If auth state is determined and there's no user, redirect to login.
-    if (!isUserLoading && !user) {
-      router.push('/login');
-    }
-  }, [isUserLoading, user, router]);
 
   const handleLogout = async () => {
     try {
@@ -64,7 +56,7 @@ export default function Home() {
     )
   }
 
-  // Only render the page content if the user is authenticated.
+  // The parent layout now handles redirection, so we can assume user exists here.
   if (user) {
     return (
       <div className="flex flex-col min-h-screen">
@@ -84,26 +76,6 @@ export default function Home() {
     );
   }
 
-  // Render nothing or a fallback while redirecting
-  return (
-    <div className="flex flex-col min-h-screen">
-      <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
-       <Logo />
-       <div className="flex-1 text-center">
-       </div>
-       <Skeleton className="h-10 w-10 rounded-full" />
-     </header>
-     <main className="flex-1 bg-muted/40 flex items-center justify-center p-4">
-          <Card className="w-full max-w-2xl animate-pulse">
-             <CardHeader>
-                 <Skeleton className="h-8 w-3/4" />
-                 <Skeleton className="h-4 w-1/2 mt-2" />
-             </CardHeader>
-             <CardContent>
-                 <Skeleton className="h-10 w-40" />
-             </CardContent>
-         </Card>
-     </main>
-   </div>
-  );
+  // Fallback while the parent layout's redirection is in progress.
+  return null;
 }

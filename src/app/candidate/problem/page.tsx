@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import CodeEditor from "@/components/candidate/code-editor";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,17 +14,11 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 export default function ProblemPage() {
-  const router = useRouter();
   const firestore = useFirestore();
-  const { user, isUserLoading: isAuthLoading } = useUser();
+  const { user, isUserLoading } = useUser();
 
+  // The parent layout now handles auth checks, so we get the ID directly
   const candidateId = user?.uid;
-
-  useEffect(() => {
-    if (!isAuthLoading && !user) {
-      router.push('/login');
-    }
-  }, [router, user, isAuthLoading]);
 
   const candidateDocRef = useMemoFirebase(() => (firestore && candidateId ? doc(firestore, 'candidates', candidateId) : null), [firestore, candidateId]);
   const { data: candidate, isLoading: isLoadingCandidate } = useDoc<Candidate>(candidateDocRef);
@@ -62,7 +56,7 @@ export default function ProblemPage() {
     };
   }, []);
 
-  const isLoading = isAuthLoading || isLoadingCandidate || isLoadingProblem;
+  const isLoading = isUserLoading || isLoadingCandidate || isLoadingProblem;
 
   if (isLoading) {
     return (
@@ -92,10 +86,9 @@ export default function ProblemPage() {
 
   if (!problem || !candidate) {
     // This can happen briefly during loading or if data is not found.
-    // The useEffect for redirection should handle non-authenticated users.
-    // If user is authenticated but data is missing, this is a valid state to show a loader or message.
+    // The parent layout handles redirection.
     return (
-      <div className="grid md:grid-cols-2 gap-4 p-4" style={{height: 'calc(100dvh - 64px)'}}>
+      <div className="flex items-center justify-center p-4" style={{height: 'calc(100dvh - 64px)'}}>
           <p>Loading candidate data...</p>
       </div>
     );
