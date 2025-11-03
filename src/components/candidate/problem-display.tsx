@@ -13,7 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Lock, Clock, ArrowRight, Loader2 } from "lucide-react";
+import { Lock, Clock, ArrowRight, Loader2, CheckCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useFirestore, useDoc, useMemoFirebase, useUser } from "@/firebase";
 import { doc, updateDoc } from 'firebase/firestore';
@@ -22,7 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-type AccessState = 'loading' | 'denied' | 'granted' | 'error';
+type AccessState = 'loading' | 'denied' | 'granted' | 'error' | 'completed';
 
 const toDate = (timestamp: any): Date | undefined => {
     if (timestamp?.toDate) {
@@ -48,7 +48,10 @@ export default function ProblemDisplay() {
 
   useEffect(() => {
     if (!isAuthLoading && user) {
-        setCandidateId(sessionStorage.getItem('candidateId'));
+        const id = sessionStorage.getItem('candidateId');
+        if (id) {
+            setCandidateId(id);
+        }
     }
   }, [isAuthLoading, user]);
 
@@ -59,16 +62,22 @@ export default function ProblemDisplay() {
   const { data: problem, isLoading: isLoadingProblem } = useDoc<Problem>(problemDocRef);
 
   useEffect(() => {
-    if (isAuthLoading || isLoadingCandidate || isLoadingProblem) {
+    if (isAuthLoading || isLoadingCandidate || !candidate) {
         setAccessState('loading');
         return;
     }
     
-    if (!candidate || !problem) {
-        if (!isAuthLoading && !isLoadingCandidate && !isLoadingProblem) {
+    if (!problem) {
+        if (!isLoadingProblem) {
             setAccessState('error');
-            setReason("Could not load your candidate or problem information. Please try logging in again.");
+            setReason("Could not load your problem information. Please contact support.");
         }
+        return;
+    }
+
+    if (candidate.status === 'Completed') {
+        setAccessState('completed');
+        setReason("You have already submitted your solution.");
         return;
     }
 
@@ -150,6 +159,23 @@ export default function ProblemDisplay() {
         <AlertTitle>Error</AlertTitle>
         <AlertDescription>{reason}</AlertDescription>
       </Alert>
+    );
+  }
+
+  if (accessState === 'completed' && candidate) {
+    return (
+      <Card className="w-full max-w-2xl text-center">
+        <CardHeader>
+          <CheckCircle className="mx-auto h-12 w-12 text-green-600" />
+          <CardTitle className="font-headline text-2xl mt-4">Submission Received</CardTitle>
+          <CardDescription>
+            Thank you for completing the challenge.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+            <p className="text-muted-foreground">We have received your submission and our team will review it shortly. You may now close this window.</p>
+        </CardContent>
+      </Card>
     );
   }
 
