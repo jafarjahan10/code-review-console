@@ -139,13 +139,21 @@ export default function CodeEditor({ problem, candidate }: CodeEditorProps) {
     border: "1px solid hsl(var(--border))",
   };
 
+  const getGridColsClass = () => {
+    const count = technologies.length;
+    if (count === 1) return 'grid-cols-1';
+    if (count === 2) return 'grid-cols-2';
+    if (count === 3) return 'grid-cols-3';
+    return 'grid-cols-4';
+  }
+
   return (
     <>
       <div className="h-full flex flex-col">
         <Card className="flex-1 flex flex-col">
           <Tabs defaultValue={technologies[0]?.toLowerCase()} className="flex-1 flex flex-col">
             <CardHeader className="flex-row items-center justify-between gap-4">
-              <TabsList className={`grid w-full ${technologies.length > 1 ? `max-w-xs grid-cols-${technologies.length}` : 'grid-cols-1'}`}>
+              <TabsList className={`grid w-full max-w-xs ${getGridColsClass()}`}>
                 {technologies.map(tech => (
                     <TabsTrigger key={tech} value={tech.toLowerCase()}>{tech}</TabsTrigger>
                 ))}
