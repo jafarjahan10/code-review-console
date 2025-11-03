@@ -1,22 +1,11 @@
 
 import { NextResponse } from 'next/server';
-import { initializeApp, getApps, App, applicationDefault } from 'firebase-admin/app';
-import { getFirestore, Timestamp } from 'firebase-admin/firestore';
-
-// Initialize Firebase Admin SDK
-let adminApp: App;
-if (!getApps().length) {
-  adminApp = initializeApp({
-    credential: applicationDefault(),
-  });
-} else {
-  adminApp = getApps()[0];
-}
-
-const db = getFirestore(adminApp);
+import { initializeFirebase } from '@/firebase/server-init';
+import { Timestamp } from 'firebase-admin/firestore';
 
 export async function POST(request: Request) {
   try {
+    const { firestore: db } = initializeFirebase();
     const body = await request.json();
     const { candidateId, problemId, answers } = body;
 
@@ -50,6 +39,10 @@ export async function POST(request: Request) {
 
   } catch (error: any) {
     console.error('Submission API Error:', error);
-    return NextResponse.json({ error: 'Failed to process submission', details: error.message }, { status: 500 });
+    // Propagate a more specific error message if available
+    const errorMessage = error.code === 'PERMISSION_DENIED'
+      ? 'Firebase permission denied. Check your server-side authentication and Firestore rules.'
+      : 'Failed to process submission';
+    return NextResponse.json({ error: errorMessage, details: error.message }, { status: 500 });
   }
 }
