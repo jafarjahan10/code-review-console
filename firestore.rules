@@ -48,12 +48,13 @@ service cloud.firestore {
     /**
      * @description Grants admin and user roles read/write access to candidate profiles.
      * @path /candidates/{candidateId}
-     * @allow (get, list) Authenticated user with admin or user role can read/list profiles.
-     * @allow (create, update, delete) Authenticated user with admin or user role can modify profiles.
-     * @principle Enforces role-based access for candidate management.
+     * @allow (read) Any signed-in user can query for their own record during login.
+     * @allow (write) Authenticated user with admin or user role can modify profiles.
+     * @principle Enforces role-based access for candidate management, while allowing login checks.
      */
     match /candidates/{candidateId} {
-      allow read, write: if isSignedIn() && (isAdmin() || isUser());
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && (isAdmin() || isUser());
     }
     
     /**

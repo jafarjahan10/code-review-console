@@ -42,6 +42,9 @@ export default function CandidateLoginPage() {
     }
 
     try {
+        // First, sign in anonymously to get permissions for the query
+        const userCredential = await signInAnonymously(auth);
+        
         const candidatesRef = collection(firestore, 'candidates');
         const q = query(
             candidatesRef, 
@@ -52,14 +55,15 @@ export default function CandidateLoginPage() {
         const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) {
+            // If login fails, sign out the anonymous user
+            await userCredential.user.delete();
             toast({
                 variant: 'destructive',
                 title: 'Login Failed',
                 description: 'Invalid email or access code. Please try again.',
             });
         } else {
-            // Found candidate, log them in anonymously
-            const userCredential = await signInAnonymously(auth);
+            // Found candidate, proceed
             const candidateData = querySnapshot.docs[0].data();
             const candidateId = querySnapshot.docs[0].id;
             
@@ -74,6 +78,9 @@ export default function CandidateLoginPage() {
             router.push('/');
         }
     } catch (error: any) {
+        if (auth.currentUser) {
+            await auth.currentUser.delete().catch(delError => console.error("Failed to clean up anonymous user:", delError));
+        }
         toast({
             variant: 'destructive',
             title: 'An Error Occurred',
