@@ -84,6 +84,7 @@ export default function SettingsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
   const [isAddUserDialogOpen, setAddUserDialogOpen] = useState(false);
+  const [isAddDeptDialogOpen, setAddDeptDialogOpen] = useState(false);
 
 
   // Fetch Admins
@@ -262,6 +263,7 @@ export default function SettingsPage() {
         const deptsColRef = collection(firestore, 'departments');
         await addDoc(deptsColRef, { name: newDepartment.trim() });
         setNewDepartment("");
+        setAddDeptDialogOpen(false);
         toast({ title: `Department "${newDepartment.trim()}" added.` });
     } catch (error: any) {
          toast({ variant: "destructive", title: "Failed to add department", description: error.message });
@@ -495,35 +497,44 @@ export default function SettingsPage() {
                </Card>
           </TabsContent>
            <TabsContent value="departments" className="space-y-4">
-              {currentUserRole === 'Admin' && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Add Department</CardTitle>
-                        <CardDescription>Create a new department for positions.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <form onSubmit={handleAddDepartment} className="flex flex-col md:flex-row items-end gap-4">
-                            <div className="flex-1 w-full space-y-2">
-                                <Label htmlFor="department-name">Department Name</Label>
-                                <Input 
-                                id="department-name"
-                                placeholder="e.g., Quality Assurance"
-                                value={newDepartment}
-                                onChange={(e) => setNewDepartment(e.target.value)} 
-                                />
-                            </div>
-                            <Button type="submit" className="w-full md:w-auto">
-                                <PlusCircle className="mr-2 h-4 w-4" />
-                                Add Department
-                            </Button>
-                        </form>
-                    </CardContent>
-                </Card>
-              )}
                <Card>
-                  <CardHeader>
-                      <CardTitle>Manage Departments</CardTitle>
-                      <CardDescription>Your existing departments.</CardDescription>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                      <div className="space-y-1">
+                        <CardTitle>Manage Departments</CardTitle>
+                        <CardDescription>Your existing departments.</CardDescription>
+                      </div>
+                       {currentUserRole === 'Admin' && (
+                         <Dialog open={isAddDeptDialogOpen} onOpenChange={setAddDeptDialogOpen}>
+                            <DialogTrigger asChild>
+                                <Button>
+                                    <PlusCircle className="mr-2 h-4 w-4" />
+                                    Add Department
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Add Department</DialogTitle>
+                                    <DialogDescription>Create a new department for positions.</DialogDescription>
+                                </DialogHeader>
+                                <form onSubmit={handleAddDepartment} className="space-y-4 py-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="department-name">Department Name</Label>
+                                        <Input 
+                                        id="department-name"
+                                        placeholder="e.g., Quality Assurance"
+                                        value={newDepartment}
+                                        onChange={(e) => setNewDepartment(e.target.value)} 
+                                        />
+                                    </div>
+                                    <DialogFooter>
+                                        <Button type="submit" className="w-full md:w-auto">
+                                            Add Department
+                                        </Button>
+                                    </DialogFooter>
+                                </form>
+                            </DialogContent>
+                        </Dialog>
+                       )}
                   </CardHeader>
                   <CardContent>
                       <Table>
@@ -597,5 +608,3 @@ export default function SettingsPage() {
     </>
   );
 }
-
-    
