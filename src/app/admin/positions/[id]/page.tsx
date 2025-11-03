@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -14,30 +14,26 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Briefcase, Building } from 'lucide-react';
-
-const initialPositions = [
-  { id: "pos_1", title: "Senior Frontend Developer", department: "Engineering" },
-  { id: "pos_2", title: "UX/UI Designer", department: "Design" },
-  { id: "pos_3", title: "Product Manager", department: "Product" },
-  { id: "pos_4", title: "Junior Backend Developer", department: "Engineering" },
-];
-
-type Position = typeof initialPositions[0];
+import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import type { Position, Department } from '@/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ViewPositionPage() {
   const router = useRouter();
   const params = useParams();
   const { toast } = useToast();
-  const [position, setPosition] = useState<Position | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const firestore = useFirestore();
+  const positionId = params.id as string;
+
+  const positionDocRef = useMemoFirebase(() => (firestore && positionId ? doc(firestore, 'positions', positionId) : null), [firestore, positionId]);
+  const { data: position, isLoading: isLoadingPosition, error: positionError } = useDoc<Position>(positionDocRef);
+
+  const departmentDocRef = useMemoFirebase(() => (firestore && position?.departmentId ? doc(firestore, 'departments', position.departmentId) : null), [firestore, position]);
+  const { data: department, isLoading: isLoadingDepartment } = useDoc<Department>(departmentDocRef);
 
   useEffect(() => {
-    const positionId = params.id;
-    const positionToView = initialPositions.find(p => p.id === positionId);
-
-    if (positionToView) {
-      setPosition(positionToView);
-    } else {
+    if (positionError) {
       toast({
         variant: 'destructive',
         title: 'Position not found',
@@ -45,14 +41,31 @@ export default function ViewPositionPage() {
       });
       router.push('/admin/positions');
     }
-    setIsLoading(false);
-  }, [params.id, router, toast]);
+  }, [positionError, router, toast]);
 
 
-  if (isLoading) {
+  if (isLoadingPosition || isLoadingDepartment) {
     return (
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-        <p>Loading...</p>
+        <div className="flex items-center gap-4 mb-4">
+            <Skeleton className="h-7 w-7 rounded-full" />
+            <Skeleton className="h-8 w-48" />
+        </div>
+        <Card>
+            <CardHeader>
+                <Skeleton className="h-6 w-32" />
+            </CardHeader>
+            <CardContent className="pt-2 grid gap-4">
+                <div className="space-y-2">
+                    <Skeleton className="h-4 w-12" />
+                    <Skeleton className="h-5 w-1/2" />
+                </div>
+                 <div className="space-y-2">
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-6 w-24" />
+                </div>
+            </CardContent>
+        </Card>
       </div>
     )
   }
@@ -92,10 +105,12 @@ export default function ViewPositionPage() {
             </div>
              <div className="space-y-2">
                 <p className="text-sm font-medium flex items-center"><Building className="mr-2 h-4 w-4 text-muted-foreground" /> Department</p>
-                <Badge variant="secondary">{position.department}</Badge>
+                <Badge variant="secondary">{department?.name || 'N/A'}</Badge>
             </div>
           </CardContent>
         </Card>
     </div>
   );
 }
+
+    

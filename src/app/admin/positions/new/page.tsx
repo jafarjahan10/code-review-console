@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -20,19 +20,26 @@ import {
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
-
-const departments = ["Engineering", "Design", "Product", "Marketing", "HR"];
+import { ArrowLeft, Loader2 } from 'lucide-react';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, addDoc } from 'firebase/firestore';
+import type { Department } from '@/types';
 
 export default function NewPositionPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [title, setTitle] = useState('');
-  const [department, setDepartment] = useState('');
+  const firestore = useFirestore();
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const [title, setTitle] = useState('');
+  const [departmentId, setDepartmentId] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  const deptsColRef = useMemoFirebase(() => (firestore ? collection(firestore, 'departments') : null), [firestore]);
+  const { data: departments, isLoading: isLoadingDepts } = useCollection<Department>(deptsColRef);
+
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!title || !department) {
+    if (!title || !departmentId) {
       toast({
         variant: 'destructive',
         title: 'Missing Fields',
@@ -40,13 +47,25 @@ export default function NewPositionPage() {
       });
       return;
     }
-    // In a real app, you would handle the API submission here.
-    console.log({ title, department });
-    toast({
-      title: 'Position Created!',
-      description: `The position "${title}" has been successfully created.`,
-    });
-    router.push('/admin/positions');
+    if (!firestore) return;
+    
+    setIsSaving(true);
+    try {
+      await addDoc(collection(firestore, 'positions'), { title, departmentId });
+      toast({
+        title: 'Position Created!',
+        description: `The position "${title}" has been successfully created.`,
+      });
+      router.push('/admin/positions');
+    } catch(error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Creation Failed',
+        description: error.message,
+      });
+    } finally {
+        setIsSaving(false);
+    }
   };
 
   return (
@@ -78,18 +97,19 @@ export default function NewPositionPage() {
                     placeholder="e.g., Senior Frontend Developer"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
+                    disabled={isSaving}
                 />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="department">Department</Label>
-              <Select onValueChange={setDepartment} value={department}>
+              <Select onValueChange={setDepartmentId} value={departmentId} disabled={isSaving || isLoadingDepts}>
                 <SelectTrigger id="department">
                   <SelectValue placeholder="Select a department" />
                 </SelectTrigger>
                 <SelectContent>
-                  {departments.map((dept) => (
-                    <SelectItem key={dept} value={dept}>
-                      {dept}
+                  {(departments || []).map((dept) => (
+                    <SelectItem key={dept.id} value={dept.id}>
+                      {dept.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -97,10 +117,15 @@ export default function NewPositionPage() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button type="submit">Create Position</Button>
+            <Button type="submit" disabled={isSaving || isLoadingDepts}>
+                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Create Position
+            </Button>
           </CardFooter>
         </Card>
       </form>
     </div>
   );
 }
+
+    

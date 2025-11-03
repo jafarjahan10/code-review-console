@@ -9,6 +9,7 @@
  * - /admins/{adminId}: Stores administrator profiles.
  * - /candidates/{candidateId}: Stores candidate profiles.
  * - /departments/{departmentId}: Stores department information.
+ * - /positions/{positionId}: Stores job positions.
  * - /problems/{problemId}: Stores coding problems.
  * - /candidates/{candidateId}/submissions/{submissionId}: Stores code submissions by candidates.
  * - /technologies/{technologyId}: Stores technology stacks.
@@ -18,6 +19,7 @@
  * - Candidates can only access their own profile data.
  * - Candidates can only access their own submissions.
  * - Problems are publicly readable but only modifiable by admins.
+ * - Positions are readable by any authenticated user but only modifiable by admins.
  * - Technologies are readable by any authenticated user but only modifiable by admins.
  */
 rules_version = '2';
@@ -76,6 +78,19 @@ service cloud.firestore {
     match /departments/{departmentId} {
         allow get, list: if isSignedIn();
         allow create, update, delete: if isAdmin();
+    }
+    
+    /**
+     * @description Grants admins CRUD access to positions, and all authenticated users read access.
+     * @path /positions/{positionId}
+     * @allow (get, list) Any authenticated user can read positions.
+     * @allow (create, update, delete) User with admin role can modify positions.
+     * @deny (create, update, delete) User without admin role cannot modify positions.
+     * @principle Enforces admin-only writes for positions.
+     */
+    match /positions/{positionId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
     }
 
     /**
@@ -167,3 +182,4 @@ service cloud.firestore {
   }
 }
 
+    
