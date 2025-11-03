@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Briefcase, Building } from 'lucide-react';
+import { ArrowLeft, Briefcase, Building, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import Editor from "react-simple-code-editor";
 import { highlight, languages } from "prismjs/components/prism-core";
@@ -27,82 +27,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-
-
-// Mock Data
-const MOCK_CURRENT_USER_ID = "user_1"; // Assuming this is the logged-in interviewer
-
-const MOCK_SUBMISSIONS = [
-  {
-    id: "sub_1",
-    candidateName: "John Doe",
-    candidateEmail: "john.doe@example.com",
-    problemTitle: "FizzBuzz Challenge",
-    problemTechnologies: ["JS"],
-    positionId: "pos_1",
-    submittedAt: "2024-05-21T10:00:00Z",
-    code: {
-      html: ``,
-      css: ``,
-      js: `// FizzBuzz Implementation\nfor (let i = 1; i <= 100; i++) {\n  if (i % 15 === 0) console.log('FizzBuzz');\n  else if (i % 3 === 0) console.log('Fizz');\n  else if (i % 5 === 0) console.log('Buzz');\n  else console.log(i);\n}`,
-    },
-    remarks: [
-      {
-        userId: "user_2",
-        userName: "Jane Smith",
-        userEmail: "jane.s@example.com",
-        remark: "Good solution. The logic is clean and easy to follow. The use of a single loop is efficient.",
-        createdAt: "2024-05-21T11:30:00Z",
-      },
-    ],
-  },
-   {
-    id: "sub_2",
-    candidateName: "Jane Smith",
-    candidateEmail: "jane.smith@example.com",
-    problemTitle: "Palindrome Checker",
-    problemTechnologies: ["JS"],
-    positionId: "pos_2",
-    submittedAt: "2024-05-19",
-    code: {
-        html: ``,
-        css: ``,
-        js: `function isPalindrome(str) { return true; }`
-    },
-    remarks: [
-        {
-            userId: "user_1",
-            userName: "Admin User",
-            userEmail: "admin@example.com",
-            remark: "Great job!",
-            createdAt: "2024-05-20T11:30:00Z",
-        }
-    ]
-  },
-  {
-    id: "sub_3",
-    candidateName: "Sam Wilson",
-    candidateEmail: "sam.wilson@example.com",
-    problemTitle: "Two Sum",
-    problemTechnologies: ["HTML", "CSS", "JS"],
-    positionId: "pos_1",
-    submittedAt: "2024-05-23",
-    code: {
-        html: `<h1>Two Sum</h1>`,
-        css: `body { font-family: sans-serif; }`,
-        js: `function twoSum(arr, target) { return []; }`
-    },
-    remarks: [],
-  }
-];
-
-const initialPositions = [
-  { id: "pos_1", title: "Senior Frontend Developer", department: "Engineering" },
-  { id: "pos_2", title: "UX/UI Designer", department: "Design" },
-  { id: "pos_3", title: "Product Manager", department: "Product" },
-  { id: "pos_4", title: "Junior Backend Developer", department: "Engineering" },
-];
-
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { doc, setDoc, arrayUnion } from 'firebase/firestore';
+import type { Submission, Candidate, Problem, Department, Position } from '@/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type Remark = {
     userId: string;
@@ -112,94 +40,80 @@ type Remark = {
     createdAt: string;
 }
 
-type Submission = {
-    id: string;
-    candidateName: string;
-    candidateEmail: string;
-    problemTitle: string;
-    problemTechnologies: string[];
-    positionId: string;
-    submittedAt: string;
-    code: {
-        html: string;
-        css: string;
-        js: string;
-    };
-    remarks: Remark[];
-}
-
 const getLanguage = (tech: string) => {
     switch (tech.toLowerCase()) {
-        case "html":
-            return "markup";
-        case "css":
-            return "css";
-        case "js":
-            return "javascript";
-        case "python":
-            return "python";
-        default:
-            return "clike";
+        case "html": return "markup";
+        case "css": return "css";
+        case "js": return "javascript";
+        default: return "clike";
     }
 }
-
 
 export default function ViewSubmissionPage() {
   const router = useRouter();
   const params = useParams();
   const { toast } = useToast();
+  const firestore = useFirestore();
+  const { user, adminUser } = useUser();
+  const submissionId = params.id as string;
 
-  const [submission, setSubmission] = useState<Submission | null>(null);
   const [remark, setRemark] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmittingRemark, setIsSubmittingRemark] = useState(false);
+
+  const subDocRef = useMemoFirebase(() => (firestore && submissionId ? doc(firestore, 'submissions', submissionId) : null), [firestore, submissionId]);
+  const { data: submission, isLoading: isLoadingSubmission } = useDoc<Submission>(subDocRef);
+
+  const candDocRef = useMemoFirebase(() => (firestore && submission?.candidateId ? doc(firestore, 'candidates', submission.candidateId) : null), [firestore, submission]);
+  const { data: candidate, isLoading: isLoadingCandidate } = useDoc<Candidate>(candDocRef);
+
+  const probDocRef = useMemoFirebase(() => (firestore && submission?.problemId ? doc(firestore, 'problems', submission.problemId) : null), [firestore, submission]);
+  const { data: problem, isLoading: isLoadingProblem } = useDoc<Problem>(probDocRef);
   
-  const technologies = useMemo(() => submission?.problemTechnologies || [], [submission]);
-  const position = useMemo(() => initialPositions.find(p => p.id === submission?.positionId), [submission]);
+  const posDocRef = useMemoFirebase(() => (firestore && problem?.positionId ? doc(firestore, 'positions', problem.positionId) : null), [firestore, problem]);
+  const { data: position, isLoading: isLoadingPosition } = useDoc<Position>(posDocRef);
 
-  const hasAlreadyRemarked = submission?.remarks.some(r => r.userId === MOCK_CURRENT_USER_ID);
+  const deptDocRef = useMemoFirebase(() => (firestore && position?.departmentId ? doc(firestore, 'departments', position.departmentId) : null), [firestore, position]);
+  const { data: department, isLoading: isLoadingDept } = useDoc<Department>(deptDocRef);
 
-  useEffect(() => {
-    const submissionId = params.id;
-    const sub = MOCK_SUBMISSIONS.find(s => s.id === submissionId);
-    if (sub) {
-      setSubmission(sub);
-    } else {
-      toast({
-        variant: 'destructive',
-        title: 'Submission not found',
-      });
-      router.push('/admin/submissions');
-    }
-    setIsLoading(false);
-  }, [params.id, router, toast]);
 
-  const handleAddRemark = (e: React.FormEvent) => {
+  const technologies = useMemo(() => problem?.tags || [], [problem]);
+  const hasAlreadyRemarked = useMemo(() => 
+    candidate?.remarks?.some(r => r.userId === user?.uid), 
+  [candidate, user]);
+
+
+  const handleAddRemark = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!remark.trim()) {
       toast({ variant: 'destructive', title: 'Remark cannot be empty.' });
       return;
     }
-    // In a real app, this would be an API call
-    console.log({
-      submissionId: submission?.id,
-      remark,
-      userId: MOCK_CURRENT_USER_ID
-    });
-    toast({ title: 'Remark added successfully!' });
-    setRemark("");
-    // To see the update, we'd refetch data here. For mock, we'll just add it to state.
-     if (submission) {
-      const newRemark: Remark = {
-        userId: MOCK_CURRENT_USER_ID,
-        userName: "Admin User", // Mocked current user name
-        userEmail: "admin@example.com",
-        remark,
-        createdAt: new Date().toISOString(),
-      };
-      setSubmission({
-        ...submission,
-        remarks: [...submission.remarks, newRemark],
-      });
+    if (!firestore || !submission || !candidate || !user || !adminUser) return;
+    
+    setIsSubmittingRemark(true);
+
+    try {
+        const candidateRef = doc(firestore, 'candidates', candidate.id);
+        const newRemark = {
+            userId: user.uid,
+            userName: adminUser.name || 'Admin',
+            userEmail: adminUser.email,
+            remark,
+            createdAt: new Date().toISOString(),
+        };
+
+        await setDoc(candidateRef, { remarks: arrayUnion(newRemark) }, { merge: true });
+
+        toast({ title: 'Remark added successfully!' });
+        setRemark("");
+    } catch (error: any) {
+        toast({
+            variant: "destructive",
+            title: "Failed to add remark",
+            description: error.message,
+        });
+    } finally {
+        setIsSubmittingRemark(false);
     }
   };
 
@@ -213,11 +127,31 @@ export default function ViewSubmissionPage() {
     outline: "none",
   };
 
+  const isLoading = isLoadingSubmission || isLoadingCandidate || isLoadingProblem || isLoadingPosition || isLoadingDept;
 
-  if (isLoading || !submission) {
+  if (isLoading) {
     return (
+      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 h-full flex flex-col">
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-7 w-7" />
+          <div className="space-y-2">
+            <Skeleton className="h-7 w-48" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+        </div>
+        <Skeleton className="h-32 w-full" />
+        <div className="grid gap-4 lg:grid-cols-3 flex-1 min-h-0">
+          <Skeleton className="lg:col-span-2 h-full" />
+          <Skeleton className="h-full" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!submission) {
+     return (
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-        <p>Loading submission...</p>
+        <p>Submission not found.</p>
       </div>
     );
   }
@@ -236,7 +170,7 @@ export default function ViewSubmissionPage() {
                 Review Submission
             </h2>
             <p className="text-muted-foreground">
-                {submission.problemTitle} by {submission.candidateName}
+                {problem?.title} by {candidate?.name}
             </p>
         </div>
       </div>
@@ -250,17 +184,16 @@ export default function ViewSubmissionPage() {
                     <p className="text-sm font-medium flex items-center"><Briefcase className="mr-2 h-4 w-4 text-muted-foreground" /> Position</p>
                     <p className="text-muted-foreground">{position?.title || "N/A"}</p>
                 </div>
-                {position?.department && (
+                {department && (
                 <div className="space-y-2">
                     <p className="text-sm font-medium flex items-center"><Building className="mr-2 h-4 w-4 text-muted-foreground" /> Department</p>
-                    <Badge variant="secondary">{position.department}</Badge>
+                    <Badge variant="secondary">{department.name}</Badge>
                 </div>
                 )}
             </CardContent>
         </Card>
 
       <div className="grid gap-4 lg:grid-cols-3 flex-1 min-h-0">
-        {/* Left side: Code Viewer */}
         <div className="lg:col-span-2 flex flex-col">
              <Card className="flex-1 flex flex-col">
                 <CardHeader>
@@ -274,12 +207,12 @@ export default function ViewSubmissionPage() {
                         ))}
                     </TabsList>
                      {technologies.map(tech => {
-                        const lowerTech = tech.toLowerCase() as keyof Submission['code'];
+                        const lowerTech = tech.toLowerCase() as keyof Submission;
                         const language = getLanguage(tech);
                         return (
                             <TabsContent key={tech} value={lowerTech} className="mt-2 flex-1">
                                 <Editor
-                                    value={submission.code[lowerTech]}
+                                    value={submission[lowerTech] as string || ''}
                                     onValueChange={() => {}}
                                     highlight={(code) => highlight(code, languages[language] || languages.clike, language)}
                                     padding={10}
@@ -295,7 +228,6 @@ export default function ViewSubmissionPage() {
             </Card>
         </div>
 
-        {/* Right side: Remarks */}
         <div className="space-y-6">
             <Card>
                 <CardHeader>
@@ -303,9 +235,9 @@ export default function ViewSubmissionPage() {
                     <CardDescription>Feedback from the interview panel.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    {submission.remarks.length > 0 ? (
-                    submission.remarks.map((r) => (
-                      <div key={r.userId} className="flex items-start gap-4">
+                    {candidate?.remarks && candidate.remarks.length > 0 ? (
+                    candidate.remarks.map((r, index) => (
+                      <div key={index} className="flex items-start gap-4">
                           <Avatar>
                             <AvatarImage src={`https://avatar.vercel.sh/${r.userEmail}.png`} />
                             <AvatarFallback>{r.userName.charAt(0)}</AvatarFallback>
@@ -343,11 +275,15 @@ export default function ViewSubmissionPage() {
                                 value={remark}
                                 onChange={(e) => setRemark(e.target.value)}
                                 rows={5}
+                                disabled={isSubmittingRemark}
                                 />
                             </div>
                         </CardContent>
                         <CardFooter>
-                            <Button type="submit">Submit Remark</Button>
+                            <Button type="submit" disabled={isSubmittingRemark}>
+                                {isSubmittingRemark && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Submit Remark
+                            </Button>
                         </CardFooter>
                     </form>
                 </Card>

@@ -1,6 +1,6 @@
 
 'use client';
-
+import { useState, useEffect, useMemo } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,47 +25,49 @@ import {
 } from "@/components/ui/table";
 import { MoreHorizontal, Eye } from "lucide-react";
 import Link from "next/link";
+import { useToast } from '@/hooks/use-toast';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
+import type { Submission, Candidate, Problem } from '@/types';
+import ClientDateTime from '@/components/client-date-time';
 
-// Mock data for submissions
-const submissions = [
-  {
-    id: "sub_1",
-    candidateName: "John Doe",
-    candidateEmail: "john.doe@example.com",
-    problemTitle: "FizzBuzz Challenge",
-    submittedAt: "2024-05-21",
-    status: "Pending",
-    positionId: "pos_1",
-  },
-  {
-    id: "sub_2",
-    candidateName: "Jane Smith",
-    candidateEmail: "jane.smith@example.com",
-    problemTitle: "Palindrome Checker",
-    submittedAt: "2024-05-19",
-    status: "Reviewed",
-    positionId: "pos_2",
-  },
-  {
-    id: "sub_3",
-    candidateName: "Sam Wilson",
-    candidateEmail: "sam.wilson@example.com",
-    problemTitle: "Two Sum",
-    submittedAt: "2024-05-23",
-    status: "Pending",
-    positionId: "pos_1",
-  },
-];
-
-const initialPositions = [
-  { id: "pos_1", title: "Senior Frontend Developer", department: "Engineering" },
-  { id: "pos_2", title: "UX/UI Designer", department: "Design" },
-  { id: "pos_3", title: "Product Manager", department: "Product" },
-  { id: "pos_4", title: "Junior Backend Developer", department: "Engineering" },
-];
+const toDate = (timestamp: any): Date | undefined => {
+    if (timestamp?.toDate) {
+      return timestamp.toDate();
+    }
+    if (typeof timestamp === 'string' || typeof timestamp === 'number') {
+      return new Date(timestamp);
+    }
+    return timestamp;
+};
 
 
 export default function SubmissionsPage() {
+  const { toast } = useToast();
+  const firestore = useFirestore();
+
+  const submissionsColRef = useMemoFirebase(() => firestore ? collection(firestore, 'submissions') : null, [firestore]);
+  const { data: submissions, isLoading: isLoadingSubmissions } = useCollection<Submission>(submissionsColRef);
+  
+  const candidatesColRef = useMemoFirebase(() => firestore ? collection(firestore, 'candidates') : null, [firestore]);
+  const { data: candidates, isLoading: isLoadingCandidates } = useCollection<Candidate>(candidatesColRef);
+  
+  const problemsColRef = useMemoFirebase(() => firestore ? collection(firestore, 'problems') : null, [firestore]);
+  const { data: problems, isLoading: isLoadingProblems } = useCollection<Problem>(problemsColRef);
+
+  const candidatesMap = useMemo(() => {
+    if (!candidates) return new Map();
+    return new Map(candidates.map(c => [c.id, c]));
+  }, [candidates]);
+
+  const problemsMap = useMemo(() => {
+    if (!problems) return new Map();
+    return new Map(problems.map(p => [p.id, p]));
+  }, [problems]);
+
+  const isLoading = isLoadingSubmissions || isLoadingCandidates || isLoadingProblems;
+
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
@@ -85,7 +87,6 @@ export default function SubmissionsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="whitespace-nowrap">Candidate</TableHead>
-                <TableHead className="whitespace-nowrap hidden md:table-cell">Position</TableHead>
                 <TableHead className="whitespace-nowrap hidden md:table-cell">Problem</TableHead>
                 <TableHead className="whitespace-nowrap hidden md:table-cell">Status</TableHead>
                 <TableHead className="whitespace-nowrap hidden md:table-cell">Submitted At</TableHead>
@@ -95,45 +96,58 @@ export default function SubmissionsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {submissions.map((submission) => {
-                const position = initialPositions.find(p => p.id === submission.positionId);
+              {isLoading ? (
+                Array.from({length: 5}).map((_, i) => (
+                    <TableRow key={i}>
+                        <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-1/2" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-1/4" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-1/4" /></TableCell>
+                        <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
+                    </TableRow>
+                ))
+              ) : (submissions || []).map((submission) => {
+                const candidate = candidatesMap.get(submission.candidateId);
+                const problem = problemsMap.get(submission.problemId);
+                const status = candidate?.status || 'Pending';
+                
                 return (
                 <TableRow key={submission.id}>
                   <TableCell className="whitespace-nowrap">
                     <div className="flex items-center gap-3">
                       <Avatar className="hidden h-9 w-9 sm:flex">
-                        <AvatarImage src={`https://avatar.vercel.sh/${submission.candidateEmail}.png`} alt="Avatar" />
-                        <AvatarFallback>{submission.candidateName.charAt(0)}</AvatarFallback>
+                        <AvatarImage src={`https://avatar.vercel.sh/${candidate?.email}.png`} alt="Avatar" />
+                        <AvatarFallback>{candidate?.name.charAt(0) || '?'}</AvatarFallback>
                       </Avatar>
                       <div className="grid gap-0.5">
-                        <p className="font-medium">{submission.candidateName}</p>
+                        <p className="font-medium">{candidate?.name || 'Unknown'}</p>
                         <p className="text-sm text-muted-foreground hidden md:inline">
-                          {submission.candidateEmail}
+                          {candidate?.email || 'No email'}
                         </p>
                          <div className="md:hidden text-sm text-muted-foreground">
-                          <p>{position?.title || 'N/A'}</p>
-                          <p>{submission.problemTitle}</p>
+                          <p>{problem?.title || 'N/A'}</p>
                            <Badge 
-                              variant={submission.status === 'Reviewed' ? 'default' : 'destructive'}
-                              className={`mt-1 ${submission.status === 'Reviewed' ? 'bg-green-600 hover:bg-green-600/80' : ''}`}
+                              variant={status === 'Completed' ? 'default' : 'destructive'}
+                              className={`mt-1 ${status === 'Completed' ? 'bg-green-600 hover:bg-green-600/80' : ''}`}
                             >
-                              {submission.status}
+                              {status}
                             </Badge>
                         </div>
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="whitespace-nowrap hidden md:table-cell">{position?.title || 'N/A'}</TableCell>
-                  <TableCell className="whitespace-nowrap hidden md:table-cell">{submission.problemTitle}</TableCell>
+                  <TableCell className="whitespace-nowrap hidden md:table-cell">{problem?.title || 'N/A'}</TableCell>
                   <TableCell className="whitespace-nowrap hidden md:table-cell">
                     <Badge 
-                      variant={submission.status === 'Reviewed' ? 'default' : 'destructive'}
-                      className={submission.status === 'Reviewed' ? 'bg-green-600 hover:bg-green-600/80' : ''}
+                      variant={status === 'Completed' ? 'default' : 'destructive'}
+                      className={status === 'Completed' ? 'bg-green-600 hover:bg-green-600/80' : ''}
                     >
-                      {submission.status}
+                      {status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="whitespace-nowrap hidden md:table-cell">{submission.submittedAt}</TableCell>
+                  <TableCell className="whitespace-nowrap hidden md:table-cell">
+                    <ClientDateTime date={toDate(submission.submissionTime)} />
+                  </TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
