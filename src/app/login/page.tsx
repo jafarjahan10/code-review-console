@@ -15,10 +15,10 @@ import { Label } from "@/components/ui/label";
 import Logo from "@/components/logo";
 import { useRouter } from "next/navigation";
 import { useAuth, useFirestore } from "@/firebase";
-import { collection, query, where, getDocs } from "firebase/firestore";
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { doc, getDoc } from "firebase/firestore";
 
 export default function CandidateLoginPage() {
   const router = useRouter();
@@ -42,52 +42,38 @@ export default function CandidateLoginPage() {
     }
 
     try {
-        const candidatesRef = collection(firestore, 'candidates');
-        const q = query(
-            candidatesRef, 
-            where('email', '==', email), 
-            where('accessCode', '==', accessCode)
-        );
+        const userCredential = await signInWithEmailAndPassword(auth, email, accessCode);
+        const user = userCredential.user;
 
-        const querySnapshot = await getDocs(q);
+        const candidateDocRef = doc(firestore, 'candidates', user.uid);
+        const candidateDocSnap = await getDoc(candidateDocRef);
 
-        if (querySnapshot.empty) {
-            toast({
-                variant: 'destructive',
-                title: 'Login Failed',
-                description: 'Invalid email or access code. Please try again.',
-            });
+        if (candidateDocSnap.exists()) {
+             const candidateData = candidateDocSnap.data();
+             if (candidateData.accessCode === accessCode) {
+                 sessionStorage.setItem('candidateId', user.uid);
+                 toast({
+                    title: 'Login Successful!',
+                    description: `Welcome, ${candidateData.name}.`,
+                });
+                router.push('/');
+             } else {
+                throw new Error("Invalid access code.");
+             }
         } else {
-            const candidateData = querySnapshot.docs[0].data();
-            const candidateId = querySnapshot.docs[0].id;
-
-            try {
-                // Try to sign in the user.
-                await signInWithEmailAndPassword(auth, email, `p-${accessCode}`);
-            } catch (error: any) {
-                // If the user does not exist, create them.
-                if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
-                    await createUserWithEmailAndPassword(auth, email, `p-${accessCode}`);
-                } else {
-                    throw error; // Re-throw other errors
-                }
-            }
-            
-            // Store candidate info for the session
-            sessionStorage.setItem('candidateId', candidateId);
-            sessionStorage.setItem('candidateData', JSON.stringify(candidateData));
-            
-            toast({
-                title: 'Login Successful!',
-                description: `Welcome, ${candidateData.name}.`,
-            });
-            router.push('/');
+            throw new Error("No candidate profile found for this email.");
         }
     } catch (error: any) {
+        let errorMessage = "Invalid email or access code. Please try again.";
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+             errorMessage = "Invalid email or access code provided.";
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
         toast({
             variant: 'destructive',
-            title: 'An Error Occurred',
-            description: error.message,
+            title: 'Login Failed',
+            description: errorMessage,
         });
     } finally {
         setIsLoading(false);
@@ -124,7 +110,7 @@ export default function CandidateLoginPage() {
               <Label htmlFor="access-code">Access Code</Label>
               <Input 
                 id="access-code" 
-                type="text" 
+                type="password" 
                 placeholder="Enter your access code" 
                 required 
                 value={accessCode}

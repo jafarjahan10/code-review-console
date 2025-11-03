@@ -22,9 +22,13 @@ import { Calendar } from '@/components/ui/calendar';
 import { format, setHours, setMinutes, getDate, getMonth, getYear } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { addDoc, collection } from 'firebase/firestore';
+import { doc, setDoc, collection } from 'firebase/firestore';
+import { getAuth, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import type { Department, Position, Problem } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { firebaseConfig } from '@/firebase/config';
+import { initializeApp, deleteApp } from 'firebase/app';
+
 
 const generateAccessCode = (length = 6) => {
     const chars = 'ABCDEFGHIJKLMNPQRSTUVWXYZ123456789';
@@ -138,8 +142,20 @@ export default function InviteCandidatePage() {
 
     setIsSaving(true);
     const accessCode = generateAccessCode();
+    
+    // Use a temporary auth instance to create the user without signing in the admin
+    const tempAppName = `temp-candidate-creation-${Date.now()}`;
+    const tempApp = initializeApp(firebaseConfig, tempAppName);
+    const tempAuth = getAuth(tempApp);
+
     try {
-        await addDoc(collection(firestore, 'candidates'), { 
+        // Create user in Auth
+        const userCredential = await createUserWithEmailAndPassword(tempAuth, email, accessCode);
+        const newCandidateUid = userCredential.user.uid;
+
+        // Create document in Firestore with UID as doc ID
+        await setDoc(doc(firestore, 'candidates', newCandidateUid), { 
+            id: newCandidateUid, // Store UID in the document as well
             name, 
             email, 
             departmentId, 
@@ -152,18 +168,25 @@ export default function InviteCandidatePage() {
             submitTime: null,
             submissionId: null,
         });
+
+        // Sign out from temp auth instance
+        await signOut(tempAuth);
+        
         toast({
           title: 'Candidate Added!',
           description: `${name} has been added. Access Code: ${accessCode}`,
         });
         router.push('/admin/candidates');
+
     } catch(error: any) {
         toast({
             variant: "destructive",
             title: "Creation Failed",
-            description: error.message
+            description: error.message || "Could not create candidate. The email might already be in use.",
         });
     } finally {
+        // Clean up the temporary app
+        await deleteApp(tempApp);
         setIsSaving(false);
     }
   };
