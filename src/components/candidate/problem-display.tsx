@@ -15,7 +15,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Lock, Clock, ArrowRight, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
+import { useFirestore, useDoc, useMemoFirebase, useUser } from "@/firebase";
 import { doc, updateDoc } from 'firebase/firestore';
 import type { Candidate, Problem } from "@/types";
 import { useToast } from "@/hooks/use-toast";
@@ -37,6 +37,7 @@ const toDate = (timestamp: any): Date | undefined => {
 export default function ProblemDisplay() {
   const router = useRouter();
   const firestore = useFirestore();
+  const { user, isUserLoading: isAuthLoading } = useUser();
   const { toast } = useToast();
   const [candidateId, setCandidateId] = useState<string | null>(null);
   
@@ -46,8 +47,10 @@ export default function ProblemDisplay() {
   const [isStarting, setIsStarting] = useState(false);
 
   useEffect(() => {
-    setCandidateId(sessionStorage.getItem('candidateId'));
-  }, []);
+    if (!isAuthLoading && user) {
+        setCandidateId(sessionStorage.getItem('candidateId'));
+    }
+  }, [isAuthLoading, user]);
 
   const candidateDocRef = useMemoFirebase(() => (firestore && candidateId ? doc(firestore, 'candidates', candidateId) : null), [firestore, candidateId]);
   const { data: candidate, isLoading: isLoadingCandidate } = useDoc<Candidate>(candidateDocRef);
@@ -56,13 +59,13 @@ export default function ProblemDisplay() {
   const { data: problem, isLoading: isLoadingProblem } = useDoc<Problem>(problemDocRef);
 
   useEffect(() => {
-    if (isLoadingCandidate || isLoadingProblem) {
+    if (isAuthLoading || isLoadingCandidate || isLoadingProblem) {
         setAccessState('loading');
         return;
     }
     
     if (!candidate || !problem) {
-        if (!isLoadingCandidate && !isLoadingProblem) {
+        if (!isAuthLoading && !isLoadingCandidate && !isLoadingProblem) {
             setAccessState('error');
             setReason("Could not load your candidate or problem information. Please try logging in again.");
         }
@@ -99,7 +102,7 @@ export default function ProblemDisplay() {
 
     return () => clearInterval(interval);
 
-  }, [candidate, problem, isLoadingCandidate, isLoadingProblem, accessState]);
+  }, [candidate, problem, isAuthLoading, isLoadingCandidate, isLoadingProblem, accessState]);
 
   const handleStartChallenge = async () => {
     if (!firestore || !candidateId) return;
