@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import CodeEditor from "@/components/candidate/code-editor";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import type { Candidate, Problem } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -16,16 +16,25 @@ import remarkGfm from 'remark-gfm';
 export default function ProblemPage() {
   const router = useRouter();
   const firestore = useFirestore();
+  const { user, isUserLoading: isAuthLoading } = useUser();
   const [candidateId, setCandidateId] = useState<string | null>(null);
 
   useEffect(() => {
+    if (isAuthLoading) return; // Wait for auth state
+    
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+
     const id = sessionStorage.getItem('candidateId');
-    if (!id) {
+    // Also check if the session ID matches the authenticated user's ID
+    if (!id || id !== user.uid) {
         router.push('/login');
     } else {
         setCandidateId(id);
     }
-  }, [router]);
+  }, [router, user, isAuthLoading]);
 
   const candidateDocRef = useMemoFirebase(() => (firestore && candidateId ? doc(firestore, 'candidates', candidateId) : null), [firestore, candidateId]);
   const { data: candidate, isLoading: isLoadingCandidate } = useDoc<Candidate>(candidateDocRef);
@@ -63,7 +72,7 @@ export default function ProblemPage() {
     };
   }, []);
 
-  const isLoading = isLoadingCandidate || isLoadingProblem;
+  const isLoading = isAuthLoading || isLoadingCandidate || isLoadingProblem;
 
   if (isLoading || !problem || !candidate) {
     return (
