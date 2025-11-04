@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useUser } from '@/firebase';
+import { useEffect, useState } from 'react';
 
 type LogoProps = {
   className?: string;
@@ -13,6 +14,11 @@ type LogoProps = {
 const Logo: FC<LogoProps> = ({ className }) => {
   const pathname = usePathname();
   const { user, isUserLoading } = useUser();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
   
   // Determine the link's destination based on the current path.
   const href = pathname.startsWith('/admin') ? '/login' : '/admin';
@@ -22,19 +28,20 @@ const Logo: FC<LogoProps> = ({ className }) => {
         CodeReview
     </h1>
   );
+  
+  const isLinkActive = isClient && !isUserLoading && !user;
 
-  // While checking auth state, or if user is logged in, render as a plain div.
-  if (isUserLoading || user) {
-      return (
-          <div className={cn("flex items-center justify-center", className)}>
-              {logoContent}
-          </div>
-      );
-  }
-
-  // If the user is logged out, render as a link.
   return (
-    <Link href={href} className={cn("flex items-center justify-center", className)}>
+    <Link 
+        href={isLinkActive ? href : '#'} 
+        className={cn(
+            "flex items-center justify-center",
+            !isLinkActive && "pointer-events-none",
+            className
+        )}
+        aria-disabled={!isLinkActive}
+        tabIndex={isLinkActive ? 0 : -1}
+    >
       {logoContent}
     </Link>
   );
