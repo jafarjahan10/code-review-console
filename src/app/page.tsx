@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Logo from "@/components/logo";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,13 @@ export default function Home() {
   const auth = useAuth();
   const { toast } = useToast();
 
+  useEffect(() => {
+    // If auth state is done loading and there's no user, redirect.
+    if (!isUserLoading && !user) {
+      router.push('/login');
+    }
+  }, [isUserLoading, user, router]);
+
   const handleLogout = async () => {
     try {
       if (auth) {
@@ -31,8 +39,8 @@ export default function Home() {
     }
   }
 
-  // Show a loading indicator while checking auth state.
-  if (isUserLoading) {
+  // Show a loading indicator while checking auth state to prevent flash of content.
+  if (isUserLoading || !user) {
     return (
        <div className="flex flex-col min-h-screen">
          <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
@@ -56,26 +64,21 @@ export default function Home() {
     )
   }
 
-  // The parent layout now handles redirection, so we can assume user exists here.
-  if (user) {
-    return (
-      <div className="flex flex-col min-h-screen">
-         <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
-          <Logo />
-          <div className="flex-1 text-center">
-          </div>
-          <Button variant="ghost" size="icon" onClick={handleLogout}>
-              <LogOut className="h-5 w-5" />
-              <span className="sr-only">Log Out</span>
-          </Button>
-        </header>
-        <main className="flex-1 bg-muted/40 flex items-center justify-center p-4">
-          <ProblemDisplay />
-        </main>
-      </div>
-    );
-  }
-
-  // Fallback while the parent layout's redirection is in progress.
-  return null;
+  // If user is authenticated, show the main layout for candidate routes.
+  return (
+    <div className="flex flex-col min-h-screen">
+        <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
+        <Logo />
+        <div className="flex-1 text-center">
+        </div>
+        <Button variant="ghost" size="icon" onClick={handleLogout}>
+            <LogOut className="h-5 w-5" />
+            <span className="sr-only">Log Out</span>
+        </Button>
+      </header>
+      <main className="flex-1 bg-muted/40 flex items-center justify-center p-4">
+        <ProblemDisplay />
+      </main>
+    </div>
+  );
 }
