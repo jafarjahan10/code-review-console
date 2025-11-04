@@ -1,5 +1,6 @@
 import type { FC } from 'react';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 type LogoProps = {
   className?: string;
@@ -7,11 +8,11 @@ type LogoProps = {
 
 const Logo: FC<LogoProps> = ({ className }) => {
   return (
-    <div className={cn("flex items-center justify-center", className)}>
+    <Link href="/admin" className={cn("flex items-center justify-center", className)}>
       <h1 className="text-2xl font-bold font-headline tracking-tighter">
-        CodeReveiw
+        CodeReview
       </h1>
-    </div>
+    </Link>
   );
 };
 
