@@ -84,6 +84,7 @@ export default function AdminLayout({
   }
       
   // If the user is authenticated and authorized, show the admin panel.
+  // We add an explicit check here to ensure adminUser is loaded before rendering.
   if (user && adminUser) {
     return (
         <div className="flex" style={{height: '100dvh'}}>
@@ -113,9 +114,11 @@ export default function AdminLayout({
         </div>
     );
   }
-
+  
   // This is a fallback state, typically shown very briefly or if a redirect is imminent.
-  return (
+  // It renders the loading skeleton.
+  if (!isLoginPage) {
+    return (
      <div className="flex" style={{height: '100dvh'}}>
         <div className="hidden md:flex">
             <div className="w-64 h-full border-r p-4 space-y-4">
@@ -134,5 +137,8 @@ export default function AdminLayout({
             <Skeleton className="w-full h-96" />
         </main>
       </div>
-  );
+    );
+  }
+
+  return null;
 }
