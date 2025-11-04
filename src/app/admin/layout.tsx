@@ -1,6 +1,6 @@
 
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useUser } from '@/firebase';
 import AdminSidebar from "@/components/admin/admin-sidebar";
@@ -24,28 +24,34 @@ export default function AdminLayout({
   const isLoginPage = pathname === '/admin' || pathname === '/admin/login';
 
   useEffect(() => {
-    // Don't run auth checks on the login page itself or while loading.
-    if (isUserLoading || isLoginPage) return;
+    // Don't run auth checks on the login page itself or while the user state is loading.
+    if (isUserLoading || isLoginPage) {
+      return;
+    }
 
-    // If loading is finished and there's no user, redirect to login.
+    // After loading, if there's no authenticated user, redirect to login.
     if (!user) {
       router.push('/admin/login');
       return;
     }
 
-    // If there is a user, but they don't have an admin/user profile,
-    // they are not authorized for the admin section.
+    // If there is a user, but we're still waiting for their admin role to be confirmed,
+    // we don't do anything yet. The loading skeleton will be displayed.
     if (!adminUser) {
-      toast({
-          variant: "destructive",
-          title: "Permission Denied",
-          description: "You are not authorized to access this page."
-      });
-      router.push('/admin/login');
-      return;
+        // However, if the user object is loaded and the admin check is also done (isUserLoading is false)
+        // and there's STILL no adminUser, then they are not authorized.
+        if (!isUserLoading) {
+             toast({
+                variant: "destructive",
+                title: "Permission Denied",
+                description: "You are not authorized to access this page."
+            });
+            router.push('/admin/login');
+        }
+        return;
     }
 
-  }, [isUserLoading, user, adminUser, isLoginPage, router, toast, pathname]);
+  }, [isUserLoading, user, adminUser, isLoginPage, router, toast]);
 
 
   // Show a loading skeleton while the user and their role are being verified for any protected route.
@@ -108,7 +114,7 @@ export default function AdminLayout({
     );
   }
 
-  // This fallback will be shown briefly for unauthenticated users before the redirect happens.
+  // This is a fallback state, typically shown very briefly or if a redirect is imminent.
   return (
      <div className="flex" style={{height: '100dvh'}}>
         <div className="hidden md:flex">
