@@ -9,13 +9,25 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Users, FileCode, Clock, CheckCircle } from "lucide-react"
+import { Users, FileCode, Clock, CheckCircle, UserPlus, FilePlus } from "lucide-react"
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection } from 'firebase/firestore';
 import type { Problem, Candidate, Submission } from '@/types';
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import ClientDateTime from "@/components/client-date-time";
+
+type Activity = {
+    type: 'new_candidate' | 'new_problem';
+    date: Date;
+    title: string;
+    description: string;
+    href: string;
+    icon: React.ElementType;
+};
+
 
 const toDate = (timestamp: any): Date | undefined => {
     if (!timestamp) return undefined;
@@ -106,6 +118,44 @@ export default function AdminDashboard() {
         })
         .slice(0, 5);
   }, [submissions]);
+
+   const recentActivities = useMemo(() => {
+    const activities: Activity[] = [];
+
+    candidates?.forEach(c => {
+        const scheduledDate = toDate(c.scheduledTime);
+        if (scheduledDate) {
+            activities.push({
+                type: 'new_candidate',
+                date: scheduledDate,
+                title: `New Candidate: ${c.name}`,
+                description: `Invited for position ID ${c.positionId}`,
+                href: `/admin/candidates/${c.id}`,
+                icon: UserPlus,
+            });
+        }
+    });
+
+    problems?.forEach(p => {
+        // Since problems don't have a creation timestamp, we can't reliably sort them by creation time.
+        // This is a placeholder; for a real implementation, a `createdAt` field is recommended.
+        // For now, we'll add them to the list, but they won't be sorted by creation date.
+        // Let's use a trick for demo: use a far past date if no date is available.
+         activities.push({
+            type: 'new_problem',
+            date: new Date(0), // No date available, push to bottom
+            title: `New Problem: ${p.title}`,
+            description: `Difficulty: ${p.difficulty}`,
+            href: `/admin/problems/${p.id}`,
+            icon: FilePlus
+        });
+    });
+
+    return activities
+        .sort((a, b) => b.date.getTime() - a.date.getTime())
+        .slice(0, 5);
+
+  }, [candidates, problems]);
   
   const isLoading = isLoadingProblems || isLoadingCandidates || isLoadingSubmissions;
 
@@ -141,8 +191,8 @@ export default function AdminDashboard() {
           </Card>
         ))}
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-full">
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+        <Card>
           <CardHeader>
             <CardTitle className="font-headline">Recent Submissions</CardTitle>
             <CardDescription>
@@ -193,9 +243,50 @@ export default function AdminDashboard() {
             )}
           </CardContent>
         </Card>
+         <Card>
+            <CardHeader>
+                <CardTitle className="font-headline">Recent Activities</CardTitle>
+                <CardDescription>An overview of recent events in the system.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {isLoading ? (
+                    <div className="space-y-4">
+                        {Array.from({length: 3}).map((_, i) => (
+                            <div key={i} className="flex items-center gap-4">
+                                <Skeleton className="h-10 w-10 rounded-full" />
+                                <div className="flex-1 space-y-1">
+                                    <Skeleton className="h-4 w-3/4" />
+                                    <Skeleton className="h-3 w-1/2" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : recentActivities.length > 0 ? (
+                     <div className="space-y-4">
+                        {recentActivities.map((activity, index) => (
+                            <div key={index} className="flex items-center gap-4">
+                                <Avatar className="h-10 w-10">
+                                    <AvatarFallback className="bg-muted">
+                                        <activity.icon className="h-5 w-5 text-muted-foreground" />
+                                    </AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1">
+                                    <Link href={activity.href} className="font-medium hover:underline">
+                                      {activity.title}
+                                    </Link>
+                                    <p className="text-sm text-muted-foreground">
+                                        <ClientDateTime date={activity.date} />
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <p className="text-center text-sm text-muted-foreground">No recent activities found.</p>
+                )}
+            </CardContent>
+        </Card>
       </div>
     </div>
   )
 }
-
-    

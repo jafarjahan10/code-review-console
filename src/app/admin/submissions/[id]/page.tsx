@@ -316,5 +316,3 @@ export default function ViewSubmissionPage() {
     </div>
   );
 }
-
-    
