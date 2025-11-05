@@ -18,6 +18,7 @@ const mainNavItems = [
   { href: "/admin/problems", icon: FileCode, label: "Problems" },
   { href: "/admin/candidates", icon: Users, label: "Candidates" },
   { href: "/admin/submissions", icon: BookCopy, label: "Submissions" },
+  { href: "/admin/interview-panel", icon: Users, label: "Interview Panel" },
 ];
 
 const adminManagementItems = [

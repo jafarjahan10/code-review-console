@@ -16,7 +16,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PlusCircle, Trash2, Loader2, Search } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -38,13 +37,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useAuth, useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, doc, setDoc, deleteDoc, addDoc } from "firebase/firestore";
-import { getAuth, createUserWithEmailAndPassword, updatePassword, updateProfile, signOut, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
+import { collection, addDoc, deleteDoc, doc, setDoc } from "firebase/firestore";
+import { updatePassword, updateProfile, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 import type { WithId } from "@/firebase";
-import { initializeApp, deleteApp } from "firebase/app";
-import { firebaseConfig } from "@/firebase/config";
-import { Switch } from "@/components/ui/switch";
-
 
 type AdminUser = {
     id: string;
@@ -68,60 +63,32 @@ export default function SettingsPage() {
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-
-  const [interviewerEmail, setInterviewerEmail] = useState('');
-  const [interviewerPassword, setInterviewerPassword] = useState('');
   
   const [newDepartment, setNewDepartment] = useState("");
   const [departmentToDelete, setDepartmentToDelete] = useState<WithId<Department> | null>(null);
 
   const [isProfileUpdating, setIsProfileUpdating] = useState(false);
   const [isPasswordUpdating, setIsPasswordUpdating] = useState(false);
-  const [isAddingInterviewer, setIsAddingInterviewer] = useState(false);
-  const [interviewerToDelete, setInterviewerToDelete] = useState<WithId<AdminUser> | null>(null);
-
-  const [interviewerSearchTerm, setInterviewerSearchTerm] = useState("");
-  const [interviewerCurrentPage, setInterviewerCurrentPage] = useState(1);
+  
   const [departmentSearchTerm, setDepartmentSearchTerm] = useState("");
   const [departmentCurrentPage, setDepartmentCurrentPage] = useState(1);
   const itemsPerPage = 5;
-  const [isAddUserDialogOpen, setAddUserDialogOpen] = useState(false);
   const [isAddDeptDialogOpen, setAddDeptDialogOpen] = useState(false);
 
-
-  // Fetch Admins
-  const adminsColRef = useMemoFirebase(() => firestore ? collection(firestore, 'admins') : null, [firestore]);
-  const { data: interviewers, isLoading: isLoadingAdmins } = useCollection<AdminUser>(adminsColRef);
-  
-  // Fetch Departments
   const deptsColRef = useMemoFirebase(() => firestore ? collection(firestore, 'departments') : null, [firestore]);
-  const { data: departmentsData, isLoading: isLoadingDepts } = useCollection<Department>(deptsColRef);
+  const { data: departmentsData } = useCollection<Department>(deptsColRef);
   
   const departments = departmentsData || [];
 
-  const currentUserInPanel = useMemo(() => {
-    if (!currentUser || !interviewers) return null;
-    return interviewers.find(interviewer => interviewer.id === currentUser.uid);
-  }, [currentUser, interviewers]);
+  const adminsColRef = useMemoFirebase(() => firestore ? collection(firestore, 'admins') : null, [firestore]);
+  const { data: admins } = useCollection<AdminUser>(adminsColRef);
 
-  const currentUserRole = currentUserInPanel?.role;
+  const currentUserRole = useMemo(() => {
+    if (!currentUser || !admins) return null;
+    return admins.find(admin => admin.id === currentUser.uid)?.role;
+  }, [currentUser, admins]);
 
-  // Search and Pagination Logic for Interviewers
-  const filteredInterviewers = useMemo(() => {
-    if (!interviewers) return [];
-    return interviewers.filter(interviewer =>
-      (interviewer.name?.toLowerCase().includes(interviewerSearchTerm.toLowerCase()) ||
-       interviewer.email.toLowerCase().includes(interviewerSearchTerm.toLowerCase()))
-    );
-  }, [interviewers, interviewerSearchTerm]);
 
-  const totalInterviewerPages = Math.ceil(filteredInterviewers.length / itemsPerPage);
-  const paginatedInterviewers = useMemo(() => {
-    const startIndex = (interviewerCurrentPage - 1) * itemsPerPage;
-    return filteredInterviewers.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredInterviewers, interviewerCurrentPage]);
-
-  // Search and Pagination Logic for Departments
   const filteredDepartments = useMemo(() => {
     if (!departments) return [];
     return departments.filter(department =>
@@ -193,77 +160,6 @@ export default function SettingsPage() {
     }
   };
 
-  const handleRoleChange = async (userId: string, newRole: "Admin" | "User") => {
-    try {
-        const adminDocRef = doc(firestore, 'admins', userId);
-        await setDoc(adminDocRef, { role: newRole }, { merge: true });
-        toast({ title: "User role updated." });
-    } catch (error: any) {
-        toast({ variant: "destructive", title: "Failed to update role", description: error.message });
-    }
-  };
-
-
-  const handleAddInterviewer = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!interviewerEmail.trim() || !interviewerPassword.trim()) {
-        toast({ variant: "destructive", title: "Email and password cannot be empty." });
-        return;
-    }
-    setIsAddingInterviewer(true);
-    
-    // 1. Create a secondary, temporary Firebase app instance.
-    const tempAppName = `temp-user-creation-${Date.now()}`;
-    const tempApp = initializeApp(firebaseConfig, tempAppName);
-    const tempAuth = getAuth(tempApp);
-
-    try {
-        // 2. Create the new user in the temporary app instance.
-        const { user: newInterviewer } = await createUserWithEmailAndPassword(tempAuth, interviewerEmail, interviewerPassword);
-        
-        // 3. Save the new user's data to Firestore using the main app instance.
-        const adminDocRef = doc(firestore, 'admins', newInterviewer.uid);
-        await setDoc(adminDocRef, {
-            id: newInterviewer.uid,
-            email: interviewerEmail,
-            role: 'User',
-            name: interviewerEmail.split('@')[0],
-        });
-        
-        // 4. Sign out the new user from the temporary instance.
-        await signOut(tempAuth);
-        
-        setInterviewerEmail('');
-        setInterviewerPassword('');
-        setAddUserDialogOpen(false);
-        toast({
-            title: "Interviewer Added",
-            description: "The new user has been successfully added to the panel.",
-        });
-
-    } catch (error: any) {
-        toast({ variant: "destructive", title: "Failed to add interviewer", description: error.message });
-    } finally {
-        // 5. Clean up the temporary app instance.
-        await deleteApp(tempApp);
-        setIsAddingInterviewer(false);
-    }
-  };
-
-  const handleDeleteInterviewer = async () => {
-    if (!interviewerToDelete) return;
-    try {
-        const adminDocRef = doc(firestore, 'admins', interviewerToDelete.id);
-        await deleteDoc(adminDocRef);
-        toast({ title: "Interviewer Removed", description: `"${interviewerToDelete.name}" has been removed from the panel.` });
-    } catch (error: any) {
-        toast({ variant: "destructive", title: "Failed to remove interviewer", description: error.message });
-    } finally {
-        setInterviewerToDelete(null);
-    }
-  };
-
-
   const handleAddDepartment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newDepartment.trim()) {
@@ -317,7 +213,6 @@ export default function SettingsPage() {
         <Tabs defaultValue="account" className="space-y-4">
           <TabsList className="flex-wrap h-auto">
             <TabsTrigger value="account">Account</TabsTrigger>
-            <TabsTrigger value="interview-panel">Interview Panel</TabsTrigger>
             <TabsTrigger value="departments">Departments</TabsTrigger>
           </TabsList>
           <TabsContent value="account" className="space-y-4">
@@ -383,139 +278,6 @@ export default function SettingsPage() {
                   </Card>
               </div>
           </TabsContent>
-          <TabsContent value="interview-panel" className="space-y-4">
-               <Card>
-                  <CardHeader className="flex flex-row items-center justify-between">
-                      <div className="space-y-1">
-                        <CardTitle>Interview Panel</CardTitle>
-                        <CardDescription>Manage your existing interview panel.</CardDescription>
-                      </div>
-                       {currentUserRole === 'Admin' && (
-                         <Dialog open={isAddUserDialogOpen} onOpenChange={setAddUserDialogOpen}>
-                            <DialogTrigger asChild>
-                                <Button>
-                                    <PlusCircle className="mr-2 h-4 w-4" />
-                                    Add Interviewer
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                                <DialogHeader>
-                                <DialogTitle>Add Interviewer</DialogTitle>
-                                <DialogDescription>
-                                    Invite a new interviewer to the panel by email.
-                                </DialogDescription>
-                                </DialogHeader>
-                                <form onSubmit={handleAddInterviewer} className="space-y-4 py-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="interviewer-email">Email</Label>
-                                        <Input id="interviewer-email" type="email" placeholder="interviewer@example.com" value={interviewerEmail} onChange={(e) => setInterviewerEmail(e.target.value)} disabled={isAddingInterviewer} />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="interviewer-password">Set Password</Label>
-                                        <Input id="interviewer-password" type="password" placeholder="Set a temporary password" value={interviewerPassword} onChange={(e) => setInterviewerPassword(e.target.value)} disabled={isAddingInterviewer} />
-                                    </div>
-                                    <DialogFooter>
-                                        <Button type="submit" className="w-full md:w-auto" disabled={isAddingInterviewer}>
-                                            {isAddingInterviewer && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                            Add Interviewer
-                                        </Button>
-                                    </DialogFooter>
-                                </form>
-                            </DialogContent>
-                        </Dialog>
-                       )}
-                  </CardHeader>
-                  <CardContent>
-                      <div className="mb-4 relative">
-                          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                          <Input
-                              placeholder="Search by name or email..."
-                              value={interviewerSearchTerm}
-                              onChange={(e) => {
-                                  setInterviewerSearchTerm(e.target.value);
-                                  setInterviewerCurrentPage(1); // Reset to first page on search
-                              }}
-                              className="pl-8 w-full"
-                          />
-                      </div>
-                      <Table>
-                          <TableHeader>
-                              <TableRow>
-                                  <TableHead>Name</TableHead>
-                                  <TableHead className="hidden md:table-cell">Email</TableHead>
-                                  <TableHead>Role</TableHead>
-                                  {currentUserRole === 'Admin' && <TableHead><span className="sr-only">Actions</span></TableHead>}
-                              </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                              {paginatedInterviewers && paginatedInterviewers.map((interviewer) => (
-                                  <TableRow key={interviewer.id}>
-                                      <TableCell>
-                                          <div className="flex items-center gap-3">
-                                              <Avatar className="hidden h-9 w-9 sm:flex">
-                                                  <AvatarImage src={`https://avatar.vercel.sh/${interviewer.email}.png`} alt="Avatar" />
-                                                  <AvatarFallback>{interviewer.name?.charAt(0) || 'U'}</AvatarFallback>
-                                              </Avatar>
-                                              <div>
-                                                <p className="font-medium">{interviewer.name || 'No Name'}</p>
-                                                <p className="text-sm text-muted-foreground md:hidden">{interviewer.email}</p>
-                                              </div>
-                                          </div>
-                                      </TableCell>
-                                      <TableCell className="hidden md:table-cell">{interviewer.email}</TableCell>
-                                      <TableCell>
-                                        {currentUserRole === 'Admin' ? (
-                                            <div className="flex items-center space-x-2">
-                                                <Switch
-                                                    id={`role-switch-${interviewer.id}`}
-                                                    checked={interviewer.role === 'Admin'}
-                                                    onCheckedChange={(checked) =>
-                                                        handleRoleChange(interviewer.id, checked ? 'Admin' : 'User')
-                                                    }
-                                                    disabled={currentUser?.uid === interviewer.id}
-                                                />
-                                                <Label htmlFor={`role-switch-${interviewer.id}`}>{interviewer.role}</Label>
-                                            </div>
-                                        ) : (
-                                            interviewer.role
-                                        )}
-                                      </TableCell>
-                                      {currentUserRole === 'Admin' && (
-                                        <TableCell className="text-right">
-                                            <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setInterviewerToDelete(interviewer)} disabled={currentUser?.uid === interviewer.id}>
-                                                <Trash2 className="h-4 w-4" />
-                                                <span className="sr-only">Remove</span>
-                                            </Button>
-                                        </TableCell>
-                                      )}
-                                  </TableRow>
-                              ))}
-                          </TableBody>
-                      </Table>
-                       <div className="flex items-center justify-end space-x-2 py-4">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setInterviewerCurrentPage(prev => Math.max(prev - 1, 1))}
-                                disabled={interviewerCurrentPage === 1}
-                            >
-                                Previous
-                            </Button>
-                            <span className="text-sm text-muted-foreground">
-                                Page {interviewerCurrentPage} of {totalInterviewerPages}
-                            </span>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setInterviewerCurrentPage(prev => Math.min(prev + 1, totalInterviewerPages))}
-                                disabled={interviewerCurrentPage === totalInterviewerPages}
-                            >
-                                Next
-                            </Button>
-                        </div>
-                  </CardContent>
-               </Card>
-          </TabsContent>
            <TabsContent value="departments" className="space-y-4">
                <Card>
                   <CardHeader className="flex flex-row items-center justify-between">
@@ -564,7 +326,7 @@ export default function SettingsPage() {
                               value={departmentSearchTerm}
                               onChange={(e) => {
                                   setDepartmentSearchTerm(e.target.value);
-                                  setDepartmentCurrentPage(1); // Reset to first page on search
+                                  setDepartmentCurrentPage(1);
                               }}
                               className="pl-8 w-full"
                           />
@@ -618,27 +380,7 @@ export default function SettingsPage() {
           </TabsContent>
         </Tabs>
       </div>
-       <AlertDialog open={!!interviewerToDelete} onOpenChange={(isOpen) => !isOpen && setInterviewerToDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently remove the
-              interviewer &quot;{interviewerToDelete?.name}&quot;.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteInterviewer}
-              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-            >
-              Continue
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
+      
       <AlertDialog open={!!departmentToDelete} onOpenChange={(isOpen) => !isOpen && setDepartmentToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
