@@ -189,8 +189,8 @@ export default function ProblemsPage() {
                             <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
                         </TableRow>
                     ))
-                ) : paginatedProblems.map((problem) => {
-                  return (
+                ) : paginatedProblems.length > 0 ? (
+                  paginatedProblems.map((problem) => (
                     <TableRow key={problem.id}>
                       <TableCell className="font-medium whitespace-nowrap">
                         {problem.title}
@@ -260,8 +260,14 @@ export default function ProblemsPage() {
                         </DropdownMenu>
                       </TableCell>
                     </TableRow>
-                  )
-                })}
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">
+                      No problems found.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </CardContent>
@@ -313,3 +319,5 @@ export default function ProblemsPage() {
     </>
   );
 }
+
+    

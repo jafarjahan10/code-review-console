@@ -229,8 +229,8 @@ export default function CandidatesPage() {
                             <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
                         </TableRow>
                     ))
-                  ) : paginatedCandidates.map((candidate) => {
-                    return (
+                  ) : paginatedCandidates.length > 0 ? (
+                    paginatedCandidates.map((candidate) => (
                     <TableRow key={candidate.id}>
                       <TableCell className="whitespace-nowrap">
                         <div className="flex items-center gap-3">
@@ -304,86 +304,96 @@ export default function CandidatesPage() {
                         </DropdownMenu>
                       </TableCell>
                     </TableRow>
-                    )
-                  })}
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={7} className="h-24 text-center">
+                        No candidates found.
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </div>
             <div className="md:hidden space-y-4">
-               {paginatedCandidates.map((candidate) => {
-                 const position = positionsMap.get(candidate.positionId);
-                 return (
-                <Card key={candidate.id} className="p-4">
-                   <div className="flex justify-between items-start">
-                      <div className="flex items-center gap-3">
-                         <Avatar className="h-10 w-10">
-                            <AvatarImage src={`https://avatar.vercel.sh/${candidate.email}.png`} alt="Avatar" />
-                            <AvatarFallback>{candidate.name.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                        <div className="w-full">
-                          <p className="font-medium">{candidate.name}</p>
-                          <p className="text-sm text-muted-foreground">{position || 'N/A'}</p>
-                          <p className="text-sm text-muted-foreground">{problemsMap.get(candidate.problemId) || 'N/A'}</p>
-                           <p className="text-sm text-muted-foreground">Scheduled: <ClientDateTime date={candidate.scheduledTime?.toDate ? candidate.scheduledTime.toDate() : candidate.scheduledTime} /></p>
-                          <div className="flex items-center gap-2 mt-1 font-mono text-sm">
-                            <span>{candidate.accessCode}</span>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCopy(candidate.accessCode)}>
-                                <Copy className="h-4 w-4" />
-                            </Button>
+               {paginatedCandidates.length > 0 ? (
+                 paginatedCandidates.map((candidate) => {
+                   const position = positionsMap.get(candidate.positionId);
+                   return (
+                  <Card key={candidate.id} className="p-4">
+                     <div className="flex justify-between items-start">
+                        <div className="flex items-center gap-3">
+                           <Avatar className="h-10 w-10">
+                              <AvatarImage src={`https://avatar.vercel.sh/${candidate.email}.png`} alt="Avatar" />
+                              <AvatarFallback>{candidate.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                          <div className="w-full">
+                            <p className="font-medium">{candidate.name}</p>
+                            <p className="text-sm text-muted-foreground">{position || 'N/A'}</p>
+                            <p className="text-sm text-muted-foreground">{problemsMap.get(candidate.problemId) || 'N/A'}</p>
+                             <p className="text-sm text-muted-foreground">Scheduled: <ClientDateTime date={candidate.scheduledTime?.toDate ? candidate.scheduledTime.toDate() : candidate.scheduledTime} /></p>
+                            <div className="flex items-center gap-2 mt-1 font-mono text-sm">
+                              <span>{candidate.accessCode}</span>
+                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCopy(candidate.accessCode)}>
+                                  <Copy className="h-4 w-4" />
+                              </Button>
+                            </div>
+                             <Badge variant={
+                                candidate.status === 'Completed' ? 'default' :
+                                candidate.status === 'Pending' ? 'default' :
+                                candidate.status === 'In Progress' ? 'default' : 'secondary'
+                              }
+                              className={`mt-1 ${
+                                candidate.status === 'Completed' ? 'bg-green-600 hover:bg-green-600/80' :
+                                candidate.status === 'Pending' ? 'bg-orange-600 hover:bg-orange-600/80' :
+                                candidate.status === 'In Progress' ? 'bg-blue-600 hover:bg-blue-600/80' : ''
+                              }`}
+                              >
+                              {candidate.status}
+                            </Badge>
                           </div>
-                           <Badge variant={
-                              candidate.status === 'Completed' ? 'default' :
-                              candidate.status === 'Pending' ? 'default' :
-                              candidate.status === 'In Progress' ? 'default' : 'secondary'
-                            }
-                            className={`mt-1 ${
-                              candidate.status === 'Completed' ? 'bg-green-600 hover:bg-green-600/80' :
-                              candidate.status === 'Pending' ? 'bg-orange-600 hover:bg-orange-600/80' :
-                              candidate.status === 'In Progress' ? 'bg-blue-600 hover:bg-blue-600/80' : ''
-                            }`}
-                            >
-                            {candidate.status}
-                          </Badge>
                         </div>
-                      </div>
-                      <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              aria-haspopup="true"
-                              size="icon"
-                              variant="ghost"
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Toggle menu</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                             <DropdownMenuItem asChild>
-                              <Link href={`/admin/candidates/${candidate.id}/edit`}>
-                                <Pencil className="mr-2 h-4 w-4" />
-                                Edit
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                              <Link href={`/admin/candidates/${candidate.id}`}>
-                                <Eye className="mr-2 h-4 w-4" />
-                                View
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="text-destructive"
-                              onClick={() => setCandidateToDelete(candidate)}
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Remove
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                   </div>
-                </Card>
-                 )
-                })}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                aria-haspopup="true"
+                                size="icon"
+                                variant="ghost"
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Toggle menu</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                               <DropdownMenuItem asChild>
+                                <Link href={`/admin/candidates/${candidate.id}/edit`}>
+                                  <Pencil className="mr-2 h-4 w-4" />
+                                  Edit
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <Link href={`/admin/candidates/${candidate.id}`}>
+                                  <Eye className="mr-2 h-4 w-4" />
+                                  View
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() => setCandidateToDelete(candidate)}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Remove
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                     </div>
+                  </Card>
+                   )
+                  })
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">No candidates found.</p>
+                )}
             </div>
           </CardContent>
         </Card>
@@ -435,3 +445,5 @@ export default function CandidatesPage() {
     </>
   );
 }
+
+    
