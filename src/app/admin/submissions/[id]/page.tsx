@@ -94,7 +94,7 @@ export default function ViewSubmissionPage() {
 
     try {
         const submissionRef = doc(firestore, 'submissions', submission.id);
-        const newRemark = {
+        const newRemark: Remark = {
             userId: user.uid,
             userName: adminUser.name || 'Admin',
             userEmail: adminUser.email,
@@ -240,7 +240,7 @@ export default function ViewSubmissionPage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                     {submission?.remarks && submission.remarks.length > 0 ? (
-                    submission.remarks.map((r, index) => (
+                    submission.remarks.map((r: Remark, index) => (
                       <div key={index} className="flex items-start gap-4">
                           <Avatar>
                             <AvatarImage src={`https://avatar.vercel.sh/${r.userEmail}.png`} />
@@ -316,3 +316,5 @@ export default function ViewSubmissionPage() {
     </div>
   );
 }
+
+    

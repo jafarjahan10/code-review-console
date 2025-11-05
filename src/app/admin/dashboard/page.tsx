@@ -57,7 +57,10 @@ export default function AdminDashboard() {
     const pendingReviews = submissions?.filter(s => (s.remarks?.length ?? 0) === 0).length ?? 0;
     const reviewedToday = submissions?.filter(s => {
         if (!s.remarks || s.remarks.length === 0) return false;
-        const latestRemarkDate = toDate(s.remarks[s.remarks.length-1].createdAt);
+        // This assumes remarks are sorted by date, which they are if pushed via arrayUnion.
+        const latestRemark = s.remarks[s.remarks.length-1];
+        if (!latestRemark || !latestRemark.createdAt) return false;
+        const latestRemarkDate = toDate(latestRemark.createdAt);
         if (!latestRemarkDate) return false;
         const today = new Date();
         return latestRemarkDate.getDate() === today.getDate() &&
@@ -174,7 +177,7 @@ export default function AdminDashboard() {
                             <p className="text-sm text-muted-foreground">Submitted: {submissionTime ? new Date(submissionTime).toLocaleString() : 'N/A'}</p>
                             </div>
                             <div className="flex items-center gap-2">
-                                <p className={`text-sm font-semibold ${isPending ? 'text-accent-foreground' : 'text-green-600'}`}>
+                                <p className={`text-sm font-semibold ${isPending ? 'text-orange-600' : 'text-green-600'}`}>
                                     {isPending ? 'Pending' : `${sub.remarks.length} Review(s)`}
                                 </p>
                                 <Button asChild variant="outline" size="sm">
@@ -194,3 +197,5 @@ export default function AdminDashboard() {
     </div>
   )
 }
+
+    
