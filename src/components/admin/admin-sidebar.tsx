@@ -2,7 +2,7 @@
 "use client"
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, FileCode, Users, BookCopy, LogOut, Settings, Layers, Briefcase, ChevronDown } from "lucide-react";
+import { Home, FileCode, Users, BookCopy, LogOut, Settings, Layers, Briefcase, ChevronDown, SlidersHorizontal } from "lucide-react";
 import Logo from "@/components/logo";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
@@ -74,7 +74,10 @@ export default function AdminSidebar() {
         <Accordion type="single" collapsible defaultValue={isManagementRouteActive ? "admin-management" : undefined} className="w-full">
             <AccordionItem value="admin-management" className="border-b-0">
                  <AccordionTrigger className="py-2 px-4 text-sm font-medium hover:bg-muted rounded-md hover:no-underline [&[data-state=open]>svg]:rotate-180">
-                    <span className="flex items-center">Admin Management</span>
+                    <span className="flex items-center">
+                      <SlidersHorizontal className="mr-2 h-4 w-4" />
+                      Admin Management
+                    </span>
                 </AccordionTrigger>
                 <AccordionContent className="pt-1">
                     <div className="flex flex-col space-y-1 pl-6 border-l ml-4">
