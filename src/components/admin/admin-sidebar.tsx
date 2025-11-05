@@ -2,7 +2,7 @@
 "use client"
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, FileCode, Users, BookCopy, LogOut, Settings, Layers, Briefcase, ChevronDown, SlidersHorizontal } from "lucide-react";
+import { Home, FileCode, Users, BookCopy, LogOut, Settings, Layers, Briefcase, ChevronDown, SlidersHorizontal, Building } from "lucide-react";
 import Logo from "@/components/logo";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
@@ -24,6 +24,7 @@ const adminManagementItems = [
   { href: "/admin/interview-panel", icon: Users, label: "Interview Panel" },
   { href: "/admin/technologies", icon: Layers, label: "Technologies" },
   { href: "/admin/positions", icon: Briefcase, label: "Positions" },
+  { href: "/admin/departments", icon: Building, label: "Departments" },
   { href: "/admin/settings", icon: Settings, label: "Settings" },
 ];
 
