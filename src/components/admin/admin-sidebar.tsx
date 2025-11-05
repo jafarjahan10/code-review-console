@@ -43,7 +43,7 @@ export default function AdminSidebar() {
       <div className="p-4 border-b">
         <Logo />
       </div>
-      <nav className="flex-1 p-4 space-y-2">
+      <nav className="flex-1 p-4 space-y-2 flex flex-col">
         {navItems.map((item) => {
            const isActive = pathname === item.href || (item.href !== "/admin/dashboard" && String(pathname).startsWith(item.href));
            return (
@@ -63,8 +63,11 @@ export default function AdminSidebar() {
             </Button>
            )
         })}
+         <div className="mt-auto">
+          <ThemeToggle />
+        </div>
       </nav>
-      <div className="p-4 border-t mt-auto space-y-2">
+      <div className="p-4 border-t space-y-2">
         <Button variant="ghost" className="w-full justify-start" onClick={handleSignOut}>
           <LogOut className="mr-2 h-4 w-4" />
           Sign Out
