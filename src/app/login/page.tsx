@@ -118,7 +118,7 @@ export default function CandidateLoginPage() {
               <Label htmlFor="access-code">Access Code</Label>
               <Input 
                 id="access-code" 
-                type="password" 
+                type="text" 
                 placeholder="Enter your access code" 
                 required 
                 value={accessCode}
