@@ -11,6 +11,7 @@ import { useAuth, useUser } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from '@/components/ui/skeleton';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 
 export default function CandidateLayout({
@@ -86,6 +87,7 @@ export default function CandidateLayout({
           <Logo />
           <div className="flex-1">
           </div>
+          <ThemeToggle />
           {user && (
             <Button variant="ghost" size="icon" onClick={handleLogout}>
               <LogOut className="h-5 w-5" />

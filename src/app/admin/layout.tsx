@@ -10,6 +10,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { Menu } from "lucide-react";
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 
 export default function AdminLayout({
@@ -138,6 +139,8 @@ export default function AdminLayout({
                     <AdminSidebar />
                     </SheetContent>
                 </Sheet>
+                <div className="flex-1"></div>
+                <ThemeToggle />
                 </header>
                 {children}
             </main>
