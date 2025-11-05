@@ -65,10 +65,6 @@ export default function AdminSidebar() {
         })}
       </nav>
       <div className="p-4 border-t mt-auto space-y-2">
-         <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Theme</span>
-            <ThemeToggle />
-        </div>
         <Button variant="ghost" className="w-full justify-start" onClick={handleSignOut}>
           <LogOut className="mr-2 h-4 w-4" />
           Sign Out
