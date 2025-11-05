@@ -1,52 +1,47 @@
+
 'use client';
 
-import React, { useEffect, useRef, useState, type ReactNode } from 'react';
+import React, { useEffect, useState, type ReactNode } from 'react';
 import { FirebaseProvider } from '@/firebase/provider';
 import { initializeFirebase } from '@/firebase';
 import { setPersistence, browserLocalPersistence } from 'firebase/auth';
 
-interface FirebaseClientProviderProps {
-  children: ReactNode;
-}
-
-// Initialize Firebase services once at module level to prevent re-initialization
-const firebaseServices = initializeFirebase();
-
-export function FirebaseClientProvider({ children }: FirebaseClientProviderProps) {
-  const [isPersistenceReady, setIsPersistenceReady] = useState(false);
-  const persistenceSetRef = useRef(false);
+// This component ensures that Firebase is initialized on the client and that
+// auth persistence is set before rendering the rest of the app.
+export function FirebaseClientProvider({ children }: { children: ReactNode }) {
+  const [isFirebaseReady, setIsFirebaseReady] = useState(false);
 
   useEffect(() => {
-    // Only set persistence once
-    if (persistenceSetRef.current) {
-      setIsPersistenceReady(true);
-      return;
-    }
+    // Initialize Firebase services
+    const { auth, firestore, firebaseApp } = initializeFirebase();
 
-    persistenceSetRef.current = true;
-    
-    // Set auth persistence as soon as the component mounts
-    setPersistence(firebaseServices.auth, browserLocalPersistence)
+    // Set auth persistence
+    setPersistence(auth, browserLocalPersistence)
       .then(() => {
-        setIsPersistenceReady(true);
+        // Firebase is ready
+        setIsFirebaseReady(true);
       })
       .catch((error) => {
         console.error('Error setting auth persistence:', error);
-        // Still mark as ready to not block the app
-        setIsPersistenceReady(true);
+        // Even if persistence fails, we can still proceed.
+        setIsFirebaseReady(true);
       });
   }, []);
 
-  // Don't render children until persistence is set
-  if (!isPersistenceReady) {
+  // Don't render children until Firebase setup is complete
+  if (!isFirebaseReady) {
+    // You can render a global loading spinner here if you like
     return null;
   }
 
+  // Once ready, get the initialized instances and pass them to the provider
+  const { auth, firestore, firebaseApp } = initializeFirebase();
+
   return (
     <FirebaseProvider
-      firebaseApp={firebaseServices.firebaseApp}
-      auth={firebaseServices.auth}
-      firestore={firebaseServices.firestore}
+      firebaseApp={firebaseApp}
+      auth={auth}
+      firestore={firestore}
     >
       {children}
     </FirebaseProvider>

@@ -1,61 +1,46 @@
+
 'use client';
 
 import { firebaseConfig } from '@/firebase/config';
-import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getAuth, Auth } from 'firebase/auth';
-import { getFirestore, Firestore } from 'firebase/firestore'
+import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
+import { getAuth, type Auth } from 'firebase/auth';
+import { getFirestore, type Firestore } from 'firebase/firestore'
 
-// Cache the SDKs to ensure they're only created once
-let cachedAuth: Auth | null = null;
-let cachedFirestore: Firestore | null = null;
+let app: FirebaseApp;
+let auth: Auth;
+let firestore: Firestore;
 
-// IMPORTANT: DO NOT MODIFY THIS FUNCTION
-export function initializeFirebase() {
-  if (!getApps().length) {
-    // Important! initializeApp() is called without any arguments because Firebase App Hosting
-    // integrates with the initializeApp() function to provide the environment variables needed to
-    // populate the FirebaseOptions in production. It is critical that we attempt to call initializeApp()
-    // without arguments.
-    let firebaseApp;
-    try {
-      // Attempt to initialize via Firebase App Hosting environment variables
-      firebaseApp = initializeApp();
-    } catch (e) {
-      // Only warn in production because it's normal to use the firebaseConfig to initialize
-      // during development
-      if (process.env.NODE_ENV === "production") {
-        console.warn('Automatic initialization failed. Falling back to firebase config object.', e);
-      }
-      firebaseApp = initializeApp(firebaseConfig);
+// This function ensures Firebase is initialized only once.
+const initializeAppOnce = () => {
+  if (getApps().length > 0) {
+    return getApp();
+  }
+  
+  try {
+    // Attempt to initialize via Firebase App Hosting environment variables
+    return initializeApp();
+  } catch (e) {
+    if (process.env.NODE_ENV === "production") {
+      console.warn('Automatic initialization failed. Falling back to firebase config object.', e);
     }
-
-    return getSdks(firebaseApp);
+    // Fallback to local config for development or if auto-init fails
+    return initializeApp(firebaseConfig);
   }
+};
 
-  // If already initialized, return the SDKs with the already initialized App
-  return getSdks(getApp());
-}
+app = initializeAppOnce();
+auth = getAuth(app);
+firestore = getFirestore(app);
 
-export function getSdks(firebaseApp: FirebaseApp) {
-  // Return cached instances if they exist
-  if (cachedAuth && cachedFirestore) {
-    return {
-      firebaseApp,
-      auth: cachedAuth,
-      firestore: cachedFirestore
-    };
-  }
-
-  // Create and cache new instances
-  cachedAuth = getAuth(firebaseApp);
-  cachedFirestore = getFirestore(firebaseApp);
-
+// This function now returns the already-initialized instances.
+export function initializeFirebase() {
   return {
-    firebaseApp,
-    auth: cachedAuth,
-    firestore: cachedFirestore
+    firebaseApp: app,
+    auth: auth,
+    firestore: firestore,
   };
 }
+
 
 export * from './provider';
 export * from './client-provider';
