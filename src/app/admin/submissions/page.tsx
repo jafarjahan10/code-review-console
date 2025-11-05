@@ -244,7 +244,8 @@ export default function SubmissionsPage() {
                           <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
                       </TableRow>
                   ))
-                ) : paginatedSubmissions.map((submission: any) => {
+                ) : paginatedSubmissions.length > 0 ? (
+                  paginatedSubmissions.map((submission: any) => {
                   return (
                   <TableRow key={submission.id}>
                     <TableCell className="whitespace-nowrap">
@@ -298,7 +299,14 @@ export default function SubmissionsPage() {
                       </DropdownMenu>
                     </TableCell>
                   </TableRow>
-                )})}
+                )})
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">
+                      No submissions found.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </CardContent>
@@ -319,7 +327,7 @@ export default function SubmissionsPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => setPage(p => Math.min(p + 1, totalPages))}
-                  disabled={page >= totalPages}
+                  disabled={page >= totalPages || totalPages === 0}
               >
                   Next
               </Button>
