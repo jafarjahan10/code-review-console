@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -14,7 +15,7 @@ import {
 } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Briefcase, Building, Loader2 } from 'lucide-react';
+import { ArrowLeft, Briefcase, Building, Loader2, MessageSquareCheck, MessageSquarePlus } from 'lucide-react';
 import Link from 'next/link';
 import Editor from "react-simple-code-editor";
 import { highlight, languages } from "prismjs/components/prism-core";
@@ -263,37 +264,57 @@ export default function ViewSubmissionPage() {
                 </CardContent>
             </Card>
             
-            {!hasAlreadyRemarked && (
-                <Card>
-                    <form onSubmit={handleAddRemark}>
-                        <CardHeader>
-                            <CardTitle>Add Your Remark</CardTitle>
-                            <CardDescription>Provide your feedback on this submission.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="grid w-full gap-2">
-                                <Label htmlFor="remark">Your Feedback</Label>
-                                <Textarea
-                                id="remark"
-                                placeholder="e.g., 'The solution is well-structured but could be optimized for performance...'"
-                                value={remark}
-                                onChange={(e) => setRemark(e.target.value)}
-                                rows={5}
-                                disabled={isSubmittingRemark}
-                                />
-                            </div>
-                        </CardContent>
-                        <CardFooter>
-                            <Button type="submit" disabled={isSubmittingRemark}>
-                                {isSubmittingRemark && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Submit Remark
-                            </Button>
-                        </CardFooter>
-                    </form>
-                </Card>
-            )}
+            <Card>
+                <form onSubmit={hasAlreadyRemarked ? (e) => e.preventDefault() : handleAddRemark}>
+                    <CardHeader>
+                        <CardTitle className="flex items-center">
+                             {hasAlreadyRemarked ? (
+                                <>
+                                    <MessageSquareCheck className="mr-2 h-5 w-5 text-green-600"/>
+                                    Remark Submitted
+                                </>
+                             ) : (
+                                <>
+                                    <MessageSquarePlus className="mr-2 h-5 w-5"/>
+                                    Add Your Remark
+                                </>
+                             )}
+                        </CardTitle>
+                        <CardDescription>
+                            {hasAlreadyRemarked 
+                                ? "You have already provided feedback for this submission."
+                                : "Provide your feedback on this submission."
+                            }
+                        </CardDescription>
+                    </CardHeader>
+                    {!hasAlreadyRemarked && (
+                        <>
+                            <CardContent>
+                                <div className="grid w-full gap-2">
+                                    <Label htmlFor="remark">Your Feedback</Label>
+                                    <Textarea
+                                    id="remark"
+                                    placeholder="e.g., 'The solution is well-structured but could be optimized for performance...'"
+                                    value={remark}
+                                    onChange={(e) => setRemark(e.target.value)}
+                                    rows={5}
+                                    disabled={isSubmittingRemark}
+                                    />
+                                </div>
+                            </CardContent>
+                            <CardFooter>
+                                <Button type="submit" disabled={isSubmittingRemark}>
+                                    {isSubmittingRemark && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    Submit Remark
+                                </Button>
+                            </CardFooter>
+                        </>
+                    )}
+                </form>
+            </Card>
         </div>
       </div>
     </div>
   );
 }
+
