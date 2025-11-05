@@ -2,7 +2,7 @@
 "use client"
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, FileCode, Users, BookCopy, LogOut, Settings, Layers, Briefcase } from "lucide-react";
+import { Home, FileCode, Users, BookCopy, LogOut, Settings, Layers, Briefcase, ChevronDown } from "lucide-react";
 import Logo from "@/components/logo";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
@@ -11,14 +11,18 @@ import { signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { ThemeToggle } from "../theme-toggle";
 import { Separator } from "../ui/separator";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
-const navItems = [
+const mainNavItems = [
   { href: "/admin/dashboard", icon: Home, label: "Dashboard" },
   { href: "/admin/problems", icon: FileCode, label: "Problems" },
-  { href: "/admin/technologies", icon: Layers, label: "Technologies" },
-  { href: "/admin/positions", icon: Briefcase, label: "Positions" },
   { href: "/admin/candidates", icon: Users, label: "Candidates" },
   { href: "/admin/submissions", icon: BookCopy, label: "Submissions" },
+];
+
+const adminManagementItems = [
+  { href: "/admin/technologies", icon: Layers, label: "Technologies" },
+  { href: "/admin/positions", icon: Briefcase, label: "Positions" },
   { href: "/admin/settings", icon: Settings, label: "Settings" },
 ];
 
@@ -39,13 +43,16 @@ export default function AdminSidebar() {
     }
   }
 
+  const isManagementRouteActive = adminManagementItems.some(item => pathname.startsWith(item.href));
+
+
   return (
     <aside className="w-full h-full flex-shrink-0 border-r bg-card text-card-foreground flex flex-col md:w-64">
       <div className="p-4 border-b">
         <Logo />
       </div>
       <nav className="flex-1 p-4 space-y-2 flex flex-col">
-        {navItems.map((item) => {
+        {mainNavItems.map((item) => {
            const isActive = pathname === item.href || (item.href !== "/admin/dashboard" && String(pathname).startsWith(item.href));
            return (
             <Button
@@ -64,6 +71,36 @@ export default function AdminSidebar() {
             </Button>
            )
         })}
+        <Accordion type="single" collapsible defaultValue={isManagementRouteActive ? "admin-management" : undefined} className="w-full">
+            <AccordionItem value="admin-management" className="border-b-0">
+                 <AccordionTrigger className="py-2 px-4 text-sm font-medium hover:bg-muted rounded-md hover:no-underline [&[data-state=open]>svg]:rotate-180">
+                    <span className="flex items-center">Admin Management</span>
+                </AccordionTrigger>
+                <AccordionContent className="pt-1">
+                    <div className="flex flex-col space-y-1 pl-6 border-l ml-4">
+                        {adminManagementItems.map((item) => {
+                             const isActive = pathname.startsWith(item.href);
+                             return (
+                                <Button
+                                key={item.href}
+                                variant="ghost"
+                                className={cn(
+                                    "w-full justify-start",
+                                    isActive && "bg-accent text-accent-foreground hover:bg-accent/80 hover:text-accent-foreground"
+                                )}
+                                asChild
+                                >
+                                <Link href={item.href}>
+                                    <item.icon className="mr-2 h-4 w-4" />
+                                    {item.label}
+                                </Link>
+                                </Button>
+                             )
+                        })}
+                    </div>
+                </AccordionContent>
+            </AccordionItem>
+        </Accordion>
       </nav>
       <div className="p-4 border-t space-y-3">
         <div className="flex items-center justify-between">
