@@ -1,6 +1,6 @@
 
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useUser } from '@/firebase';
 import AdminSidebar from "@/components/admin/admin-sidebar";
@@ -20,38 +20,50 @@ export default function AdminLayout({
   const router = useRouter();
   const { user, adminUser, isUserLoading } = useUser();
   const { toast } = useToast();
+  const hasShownErrorRef = useRef(false);
+  const [hasAttemptedAuth, setHasAttemptedAuth] = useState(false);
 
   const isLoginPage = pathname === '/admin' || pathname === '/admin/login';
 
   useEffect(() => {
-    // Don't run auth checks on the login page itself or while the user state is loading.
-    if (isUserLoading || isLoginPage) {
+    // Don't run auth checks on the login page itself
+    if (isLoginPage) {
+      // Reset flags when on login page
+      hasShownErrorRef.current = false;
+      setHasAttemptedAuth(false);
       return;
     }
 
-    // After loading, if there's no authenticated user, redirect to login.
+    // Wait for auth state to be fully loaded
+    if (isUserLoading) {
+      return;
+    }
+
+    // Mark that we've completed at least one auth check
+    if (!hasAttemptedAuth) {
+      setHasAttemptedAuth(true);
+    }
+
+    // After loading completes, if there's no authenticated user, redirect to login silently
     if (!user) {
       router.push('/admin/login');
       return;
     }
 
-    // If there is a user, but we're still waiting for their admin role to be confirmed,
-    // we don't do anything yet. The loading skeleton will be displayed.
-    if (!adminUser) {
-        // However, if the user object is loaded and the admin check is also done (isUserLoading is false)
-        // and there's STILL no adminUser, then they are not authorized.
-        if (!isUserLoading) {
-             toast({
-                variant: "destructive",
-                title: "Permission Denied",
-                description: "You are not authorized to access this page."
-            });
-            router.push('/admin/login');
-        }
-        return;
+    // If user exists but adminUser is not loaded, they are not authorized
+    // Only check this after we've attempted auth at least once to avoid race conditions
+    if (user && !adminUser && hasAttemptedAuth) {
+      router.push('/admin/login');
+      return;
     }
 
-  }, [isUserLoading, user, adminUser, isLoginPage, router, toast]);
+    // User is authenticated and authorized
+    if (user && adminUser) {
+      // Reset error flag on successful auth
+      hasShownErrorRef.current = false;
+    }
+
+  }, [isUserLoading, user, adminUser, isLoginPage, router, toast, pathname, hasAttemptedAuth]);
 
 
   // Show a loading skeleton while the user and their role are being verified for any protected route.

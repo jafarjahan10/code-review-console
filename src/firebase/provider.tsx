@@ -96,19 +96,21 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
         setUserAuthState({ user: null, isUserLoading: false, userError: error });
       }
     );
-    return () => unsubscribe(); // Cleanup
+    return () => unsubscribe();
   }, [auth]); // Depends on the auth instance
   
   const adminUserDocRef = useMemoFirebase(
     () => (firestore && userAuthState.user?.uid ? doc(firestore, 'admins', userAuthState.user.uid) : null),
     [firestore, userAuthState.user]
   );
-  const { data: adminUser, isLoading: isAdminUserLoading } = useDoc<AdminUser>(adminUserDocRef);
+  const { data: adminUser, isLoading: isAdminUserLoading, error: adminUserError } = useDoc<AdminUser>(adminUserDocRef);
 
   // Memoize the context value
   const contextValue = useMemo((): FirebaseContextState => {
     const servicesAvailable = !!(firebaseApp && firestore && auth);
-    const isOverallLoading = userAuthState.isUserLoading || (userAuthState.user && isAdminUserLoading);
+    // Keep loading state true until we have a definitive answer about the admin user
+    // If there's a user and we're still loading the admin doc, or if there's an error, keep loading
+    const isOverallLoading = userAuthState.isUserLoading || (!!userAuthState.user && isAdminUserLoading);
 
     return {
       areServicesAvailable: servicesAvailable,
@@ -116,11 +118,11 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       firestore: servicesAvailable ? firestore : null,
       auth: servicesAvailable ? auth : null,
       user: userAuthState.user,
-      adminUser: adminUser,
-      isUserLoading: isOverallLoading,
+      adminUser: adminUser ?? null,
+      isUserLoading: !!isOverallLoading,
       userError: userAuthState.userError,
     };
-  }, [firebaseApp, firestore, auth, userAuthState, adminUser, isAdminUserLoading]);
+  }, [firebaseApp, firestore, auth, userAuthState, adminUser, isAdminUserLoading, adminUserError]);
 
   return (
     <FirebaseContext.Provider value={contextValue}>

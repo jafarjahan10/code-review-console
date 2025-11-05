@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,8 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Logo from "@/components/logo";
 import { useRouter } from "next/navigation";
-import { useAuth, useFirestore } from '@/firebase';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { useAuth, useFirestore, useUser } from '@/firebase';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { doc, getDocs, collection, setDoc, query, limit } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
@@ -24,16 +24,27 @@ export default function AdminLoginPage() {
   const router = useRouter();
   const auth = useAuth();
   const firestore = useFirestore();
+  const { user, adminUser, isUserLoading } = useUser();
   const { toast } = useToast();
   const [email, setEmail] = useState('admin@echologyx.com');
   const [password, setPassword] = useState('Echologyx@1234');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Redirect to dashboard if already logged in
+  useEffect(() => {
+    if (!isUserLoading && user && adminUser) {
+      router.push('/admin/dashboard');
+    }
+  }, [isUserLoading, user, adminUser, router]);
 
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
     setIsLoading(true);
 
     try {
+      // Set persistence to LOCAL so the user stays logged in after page refresh
+      await setPersistence(auth, browserLocalPersistence);
+      
       // Attempt to sign in first
       await signInWithEmailAndPassword(auth, email, password);
       router.push('/admin/dashboard');

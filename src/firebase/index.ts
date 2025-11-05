@@ -2,8 +2,12 @@
 
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore'
+import { getAuth, Auth } from 'firebase/auth';
+import { getFirestore, Firestore } from 'firebase/firestore'
+
+// Cache the SDKs to ensure they're only created once
+let cachedAuth: Auth | null = null;
+let cachedFirestore: Firestore | null = null;
 
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
 export function initializeFirebase() {
@@ -33,10 +37,23 @@ export function initializeFirebase() {
 }
 
 export function getSdks(firebaseApp: FirebaseApp) {
+  // Return cached instances if they exist
+  if (cachedAuth && cachedFirestore) {
+    return {
+      firebaseApp,
+      auth: cachedAuth,
+      firestore: cachedFirestore
+    };
+  }
+
+  // Create and cache new instances
+  cachedAuth = getAuth(firebaseApp);
+  cachedFirestore = getFirestore(firebaseApp);
+
   return {
     firebaseApp,
-    auth: getAuth(firebaseApp),
-    firestore: getFirestore(firebaseApp)
+    auth: cachedAuth,
+    firestore: cachedFirestore
   };
 }
 
