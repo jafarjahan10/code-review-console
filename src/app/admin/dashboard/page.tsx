@@ -175,7 +175,7 @@ export default function AdminDashboard() {
                             </div>
                             <div className="flex items-center gap-2">
                                 <p className={`text-sm font-semibold ${isPending ? 'text-accent-foreground' : 'text-green-600'}`}>
-                                    {isPending ? 'Pending' : 'Reviewed'}
+                                    {isPending ? 'Pending' : `${sub.remarks.length} Review(s)`}
                                 </p>
                                 <Button asChild variant="outline" size="sm">
                                     <Link href={`/admin/submissions/${sub.id}`}>View</Link>
