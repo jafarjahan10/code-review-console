@@ -10,6 +10,7 @@ import { useAuth } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { ThemeToggle } from "../theme-toggle";
+import { Separator } from "../ui/separator";
 
 const navItems = [
   { href: "/admin/dashboard", icon: Home, label: "Dashboard" },
@@ -69,6 +70,7 @@ export default function AdminSidebar() {
             <span className="text-sm text-muted-foreground">Theme</span>
             <ThemeToggle />
         </div>
+        <Separator />
         <Button variant="ghost" className="w-full justify-start" onClick={handleSignOut}>
           <LogOut className="mr-2 h-4 w-4" />
           Sign Out
