@@ -24,7 +24,7 @@ const toDate = (timestamp: any): Date | undefined => {
 
 const TimerContext = createContext<TimerContextProps | undefined>(undefined);
 
-export const TimerProvider: React.FC<{ children: React.ReactNode; scheduledTime: any }> = ({ children, scheduledTime }) => {
+export const TimerProvider: React.FC<{ children: React.ReactNode; scheduledTime: any; submitTime: any; }> = ({ children, scheduledTime, submitTime }) => {
     const [time, setTime] = useState(0);
     const [isRunning, setIsRunning] = useState(false);
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -36,17 +36,29 @@ export const TimerProvider: React.FC<{ children: React.ReactNode; scheduledTime:
     }, [isRunning]);
 
     const stopTimer = useCallback(() => {
-        setIsRunning(false);
-    }, []);
+        if (isRunning) {
+            setIsRunning(false);
+        }
+    }, [isRunning]);
 
     useEffect(() => {
         const startTime = toDate(scheduledTime);
+        const endTime = toDate(submitTime);
+
         if (startTime) {
-            const initialSeconds = Math.floor((new Date().getTime() - startTime.getTime()) / 1000);
-            setTime(initialSeconds > 0 ? initialSeconds : 0);
-            startTimer();
+            if (endTime) {
+                // If there is a submit time, calculate final duration and stop.
+                const duration = Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
+                setTime(duration > 0 ? duration : 0);
+                stopTimer();
+            } else {
+                // No submit time, start a running timer.
+                const initialSeconds = Math.floor((new Date().getTime() - startTime.getTime()) / 1000);
+                setTime(initialSeconds > 0 ? initialSeconds : 0);
+                startTimer();
+            }
         }
-    }, [scheduledTime, startTimer]);
+    }, [scheduledTime, submitTime, startTimer, stopTimer]);
 
 
     useEffect(() => {
