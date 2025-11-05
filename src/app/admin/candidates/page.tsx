@@ -41,6 +41,17 @@ import type { Candidate, Position, Problem } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 
+const toDate = (timestamp: any): Date | undefined => {
+    if (!timestamp) return undefined;
+    if (timestamp?.toDate) {
+      return timestamp.toDate();
+    }
+    if (typeof timestamp === 'string' || typeof timestamp === 'number') {
+      return new Date(timestamp);
+    }
+    return timestamp;
+};
+
 export default function CandidatesPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
@@ -85,11 +96,28 @@ export default function CandidatesPage() {
     });
 
     filtered.sort((a, b) => {
-        const aValue = a[sortConfig.key as keyof Candidate] ?? '';
-        const bValue = b[sortConfig.key as keyof Candidate] ?? '';
+        let valA, valB;
         
-        if (aValue < bValue) return sortConfig.direction === 'ascending' ? -1 : 1;
-        if (aValue > bValue) return sortConfig.direction === 'ascending' ? 1 : -1;
+        switch (sortConfig.key) {
+            case 'positionId':
+                valA = positionsMap.get(a.positionId) || '';
+                valB = positionsMap.get(b.positionId) || '';
+                break;
+            case 'problemId':
+                valA = problemsMap.get(a.problemId) || '';
+                valB = problemsMap.get(b.problemId) || '';
+                break;
+            case 'scheduledTime':
+                valA = toDate(a.scheduledTime)?.getTime() || 0;
+                valB = toDate(b.scheduledTime)?.getTime() || 0;
+                break;
+            default:
+                valA = a[sortConfig.key as keyof Candidate] ?? '';
+                valB = b[sortConfig.key as keyof Candidate] ?? '';
+        }
+        
+        if (valA < valB) return sortConfig.direction === 'ascending' ? -1 : 1;
+        if (valA > valB) return sortConfig.direction === 'ascending' ? 1 : -1;
         return 0;
     });
 
@@ -103,7 +131,7 @@ export default function CandidatesPage() {
     return filteredAndSortedCandidates.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredAndSortedCandidates, page, itemsPerPage]);
   
-  const requestSort = (key: keyof Candidate) => {
+  const requestSort = (key: string) => {
     let direction = 'ascending';
     if (sortConfig.key === key && sortConfig.direction === 'ascending') {
       direction = 'descending';
@@ -202,12 +230,18 @@ export default function CandidatesPage() {
                     <TableHead className="whitespace-nowrap cursor-pointer" onClick={() => requestSort('name')}>
                         Candidate <ArrowUpDown className="ml-2 h-4 w-4 inline-block" />
                     </TableHead>
-                    <TableHead className="whitespace-nowrap">Position</TableHead>
-                    <TableHead className="whitespace-nowrap">Problem Assigned</TableHead>
+                    <TableHead className="whitespace-nowrap cursor-pointer" onClick={() => requestSort('positionId')}>
+                        Position <ArrowUpDown className="ml-2 h-4 w-4 inline-block" />
+                    </TableHead>
+                    <TableHead className="whitespace-nowrap cursor-pointer" onClick={() => requestSort('problemId')}>
+                        Problem Assigned <ArrowUpDown className="ml-2 h-4 w-4 inline-block" />
+                    </TableHead>
                     <TableHead className="whitespace-nowrap cursor-pointer" onClick={() => requestSort('status')}>
                         Status <ArrowUpDown className="ml-2 h-4 w-4 inline-block" />
                     </TableHead>
-                    <TableHead className="whitespace-nowrap">Access Code</TableHead>
+                    <TableHead className="whitespace-nowrap cursor-pointer" onClick={() => requestSort('accessCode')}>
+                        Access Code <ArrowUpDown className="ml-2 h-4 w-4 inline-block" />
+                    </TableHead>
                     <TableHead className="whitespace-nowrap cursor-pointer" onClick={() => requestSort('scheduledTime')}>
                         Scheduled For <ArrowUpDown className="ml-2 h-4 w-4 inline-block" />
                     </TableHead>
@@ -446,4 +480,3 @@ export default function CandidatesPage() {
   );
 }
 
-    

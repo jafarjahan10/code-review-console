@@ -73,15 +73,24 @@ export default function ProblemsPage() {
     });
 
     filtered.sort((a, b) => {
-        const aValue = a[sortConfig.key as keyof Problem] ?? '';
-        const bValue = b[sortConfig.key as keyof Problem] ?? '';
+        let valA, valB;
+
+        switch (sortConfig.key) {
+            case 'positionId':
+                valA = positionsMap.get(a.positionId) || '';
+                valB = positionsMap.get(b.positionId) || '';
+                break;
+            case 'tags':
+                valA = a.tags.join(', ');
+                valB = b.tags.join(', ');
+                break;
+            default:
+                valA = a[sortConfig.key as keyof Problem] ?? '';
+                valB = b[sortConfig.key as keyof Problem] ?? '';
+        }
         
-        if (aValue < bValue) {
-            return sortConfig.direction === 'ascending' ? -1 : 1;
-        }
-        if (aValue > bValue) {
-            return sortConfig.direction === 'ascending' ? 1 : -1;
-        }
+        if (valA < valB) return sortConfig.direction === 'ascending' ? -1 : 1;
+        if (valA > valB) return sortConfig.direction === 'ascending' ? 1 : -1;
         return 0;
     });
 
@@ -94,7 +103,7 @@ export default function ProblemsPage() {
     return filteredAndSortedProblems.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredAndSortedProblems, page, itemsPerPage]);
 
-  const requestSort = (key: keyof Problem) => {
+  const requestSort = (key: string) => {
     let direction = 'ascending';
     if (sortConfig.key === key && sortConfig.direction === 'ascending') {
       direction = 'descending';
@@ -168,8 +177,12 @@ export default function ProblemsPage() {
                   <TableHead className="cursor-pointer" onClick={() => requestSort('title')}>
                     Title <ArrowUpDown className="ml-2 h-4 w-4 inline-block" />
                   </TableHead>
-                  <TableHead>Position</TableHead>
-                  <TableHead>Technologies</TableHead>
+                  <TableHead className="cursor-pointer" onClick={() => requestSort('positionId')}>
+                    Position <ArrowUpDown className="ml-2 h-4 w-4 inline-block" />
+                  </TableHead>
+                  <TableHead className="cursor-pointer" onClick={() => requestSort('tags')}>
+                    Technologies <ArrowUpDown className="ml-2 h-4 w-4 inline-block" />
+                  </TableHead>
                   <TableHead className="cursor-pointer" onClick={() => requestSort('difficulty')}>
                     Difficulty <ArrowUpDown className="ml-2 h-4 w-4 inline-block" />
                   </TableHead>
@@ -319,5 +332,3 @@ export default function ProblemsPage() {
     </>
   );
 }
-
-    
