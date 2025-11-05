@@ -25,6 +25,7 @@ import { useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase
 import { doc, updateDoc, collection } from 'firebase/firestore';
 import type { Candidate, Department, Position, Problem } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 export default function EditCandidatePage() {
   const router = useRouter();
@@ -66,6 +67,8 @@ export default function EditCandidatePage() {
       setAccessCode(candidate.accessCode);
       if (candidate.scheduledTime?.toDate) {
           setScheduledTime(candidate.scheduledTime.toDate());
+      } else if (candidate.scheduledTime) {
+          setScheduledTime(new Date(candidate.scheduledTime));
       }
     }
   }, [candidate]);
@@ -117,7 +120,14 @@ export default function EditCandidatePage() {
       setIsCalendarOpen(false);
       return;
     }
-    const newDateWithTime = setYear(setMonth(setDate(scheduledTime || new Date(), date.getDate()), date.getMonth()), date.getFullYear());
+    const currentScheduledTime = scheduledTime || new Date();
+    const newDateWithTime = setYear(
+        setMonth(
+            setDate(currentScheduledTime, date.getDate()), 
+            date.getMonth()
+        ), 
+        date.getFullYear()
+    );
     setScheduledTime(newDateWithTime);
     setIsCalendarOpen(false);
   };
@@ -160,25 +170,20 @@ export default function EditCandidatePage() {
     if (!firestore || !candidateId) return;
 
     setIsSaving(true);
-    try {
-        const candidateDoc = doc(firestore, 'candidates', candidateId);
-        await updateDoc(candidateDoc, { 
-            name, email, status, departmentId, positionId, problemId, scheduledTime 
-        });
-        toast({
-            title: 'Candidate Updated!',
-            description: `The details for "${name}" have been successfully updated.`,
-        });
-        router.push('/admin/candidates');
-    } catch(error: any) {
-        toast({
-            variant: 'destructive',
-            title: 'Update Failed',
-            description: error.message,
-        });
-    } finally {
-        setIsSaving(false);
-    }
+    
+    const candidateDoc = doc(firestore, 'candidates', candidateId);
+    const updatedData = { 
+        name, email, status, departmentId, positionId, problemId, scheduledTime 
+    };
+
+    updateDocumentNonBlocking(candidateDoc, updatedData);
+
+    toast({
+        title: 'Candidate Updated!',
+        description: `The details for "${name}" have been successfully updated.`,
+    });
+    router.push('/admin/candidates');
+    setIsSaving(false);
   };
 
   const isLoading = isLoadingCandidate || isLoadingDepts || isLoadingPos || isLoadingProblems;
@@ -408,3 +413,5 @@ export default function EditCandidatePage() {
     </div>
   );
 }
+
+    
