@@ -160,15 +160,6 @@ export default function ProblemDisplay() {
     );
   }
 
-  if (accessState === 'error') {
-    return (
-      <Alert variant="destructive" className="max-w-2xl">
-        <AlertTitle>Error</AlertTitle>
-        <AlertDescription>{reason}</AlertDescription>
-      </Alert>
-    );
-  }
-
   if (accessState === 'completed' && candidate) {
     return (
       <Card className="w-full max-w-2xl text-center">

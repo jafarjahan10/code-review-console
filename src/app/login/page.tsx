@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Logo from "@/components/logo";
 import { useRouter } from "next/navigation";
-import { useAuth, useFirestore } from "@/firebase";
+import { useAuth, useFirestore, useUser } from "@/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
@@ -24,11 +24,20 @@ export default function CandidateLoginPage() {
   const router = useRouter();
   const firestore = useFirestore();
   const auth = useAuth();
+  const { user, adminUser, isUserLoading } = useUser();
   const { toast } = useToast();
 
   const [email, setEmail] = useState('');
   const [accessCode, setAccessCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Redirect to home if candidate is already logged in
+  useEffect(() => {
+    if (!isUserLoading && user && !adminUser) {
+      // User is logged in but not an admin (i.e., a candidate)
+      router.push('/');
+    }
+  }, [isUserLoading, user, adminUser, router]);
 
 
   const handleLogin = async (event: React.FormEvent) => {

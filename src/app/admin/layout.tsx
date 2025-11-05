@@ -2,7 +2,8 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { useUser } from '@/firebase';
+import { useUser, useAuth } from '@/firebase';
+import { signOut } from 'firebase/auth';
 import AdminSidebar from "@/components/admin/admin-sidebar";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -18,6 +19,7 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const auth = useAuth();
   const { user, adminUser, isUserLoading } = useUser();
   const { toast } = useToast();
   const hasShownErrorRef = useRef(false);
@@ -50,10 +52,26 @@ export default function AdminLayout({
       return;
     }
 
-    // If user exists but adminUser is not loaded, they are not authorized
+    // If user exists but adminUser is not loaded, they are not authorized (likely a candidate)
     // Only check this after we've attempted auth at least once to avoid race conditions
     if (user && !adminUser && hasAttemptedAuth) {
-      router.push('/admin/login');
+      // Candidate trying to access admin area - sign them out and redirect back
+      signOut(auth).then(() => {
+        toast({
+          variant: "destructive",
+          title: "Access Denied",
+          description: "This area is restricted to administrators only. You have been signed out."
+        });
+        router.back();
+      }).catch((error) => {
+        console.error('Error signing out:', error);
+        toast({
+          variant: "destructive",
+          title: "Access Denied",
+          description: "This area is restricted to administrators only."
+        });
+        router.back();
+      });
       return;
     }
 
@@ -63,7 +81,7 @@ export default function AdminLayout({
       hasShownErrorRef.current = false;
     }
 
-  }, [isUserLoading, user, adminUser, isLoginPage, router, toast, pathname, hasAttemptedAuth]);
+  }, [isUserLoading, user, adminUser, isLoginPage, router, toast, pathname, hasAttemptedAuth, auth]);
 
 
   // Show a loading skeleton while the user and their role are being verified for any protected route.
