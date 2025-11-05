@@ -10,9 +10,21 @@ interface TimerContextProps {
     stopTimer: () => void;
 }
 
+const toDate = (timestamp: any): Date | undefined => {
+    if (!timestamp) return undefined;
+    if (timestamp?.toDate) {
+      return timestamp.toDate();
+    }
+    if (typeof timestamp === 'string' || typeof timestamp === 'number') {
+      return new Date(timestamp);
+    }
+    return timestamp;
+};
+
+
 const TimerContext = createContext<TimerContextProps | undefined>(undefined);
 
-export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const TimerProvider: React.FC<{ children: React.ReactNode; scheduledTime: any }> = ({ children, scheduledTime }) => {
     const [time, setTime] = useState(0);
     const [isRunning, setIsRunning] = useState(false);
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -26,6 +38,16 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const stopTimer = useCallback(() => {
         setIsRunning(false);
     }, []);
+
+    useEffect(() => {
+        const startTime = toDate(scheduledTime);
+        if (startTime) {
+            const initialSeconds = Math.floor((new Date().getTime() - startTime.getTime()) / 1000);
+            setTime(initialSeconds > 0 ? initialSeconds : 0);
+            startTimer();
+        }
+    }, [scheduledTime, startTimer]);
+
 
     useEffect(() => {
         if (isRunning) {

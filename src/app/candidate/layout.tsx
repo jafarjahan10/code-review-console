@@ -52,6 +52,8 @@ export default function CandidateLayout({
   }
 
   const isLoginPage = pathname === '/login' || pathname.startsWith('/admin');
+  const isProblemPage = pathname === '/candidate/problem';
+
 
   // While checking for user, show a loading skeleton UI for any protected route
   if (isUserLoading && !isLoginPage) {
@@ -79,6 +81,11 @@ export default function CandidateLayout({
   if (isLoginPage) {
     return <>{children}</>;
   }
+  
+  if (isProblemPage) {
+    return <>{children}</>;
+  }
+
 
   // If user is authenticated, show the main layout for candidate routes
   return (
