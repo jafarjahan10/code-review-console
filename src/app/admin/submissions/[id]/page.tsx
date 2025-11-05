@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Briefcase, Building, Loader2, MessageSquareCheck, MessageSquarePlus } from 'lucide-react';
+import { ArrowLeft, Briefcase, Building, Loader2, CheckSquare, MessageSquarePlus } from 'lucide-react';
 import Link from 'next/link';
 import Editor from "react-simple-code-editor";
 import { highlight, languages } from "prismjs/components/prism-core";
@@ -270,7 +270,7 @@ export default function ViewSubmissionPage() {
                         <CardTitle className="flex items-center">
                              {hasAlreadyRemarked ? (
                                 <>
-                                    <MessageSquareCheck className="mr-2 h-5 w-5 text-green-600"/>
+                                    <CheckSquare className="mr-2 h-5 w-5 text-green-600"/>
                                     Remark Submitted
                                 </>
                              ) : (
@@ -317,4 +317,3 @@ export default function ViewSubmissionPage() {
     </div>
   );
 }
-
