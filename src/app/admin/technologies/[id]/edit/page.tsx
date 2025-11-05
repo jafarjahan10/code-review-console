@@ -30,12 +30,10 @@ type AdminUser = {
 
 export default function EditTechnologyPage() {
   const router = useRouter();
-  const params = useParams();
+  const { id: techId } = useParams() as { id: string };
   const { toast } = useToast();
   const firestore = useFirestore();
   const { user: currentUser } = useUser();
-  
-  const techId = params.id as string;
   
   const [name, setName] = useState('');
   const [isLoading, setIsLoading] = useState(true);

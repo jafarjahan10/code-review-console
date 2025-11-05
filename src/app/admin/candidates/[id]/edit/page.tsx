@@ -39,10 +39,9 @@ const toDate = (timestamp: any): Date | undefined => {
 
 export default function EditCandidatePage() {
   const router = useRouter();
-  const params = useParams();
+  const { id: candidateId } = useParams() as { id: string };
   const { toast } = useToast();
   const firestore = useFirestore();
-  const candidateId = params.id as string;
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');

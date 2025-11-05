@@ -28,10 +28,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function EditPositionPage() {
   const router = useRouter();
-  const params = useParams();
+  const { id: positionId } = useParams() as { id: string };
   const { toast } = useToast();
   const firestore = useFirestore();
-  const positionId = params.id as string;
 
   const [title, setTitle] = useState('');
   const [departmentId, setDepartmentId] = useState('');
@@ -169,5 +168,3 @@ export default function EditPositionPage() {
     </div>
   );
 }
-
-    

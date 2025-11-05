@@ -52,11 +52,10 @@ const getLanguage = (tech: string) => {
 
 export default function ViewSubmissionPage() {
   const router = useRouter();
-  const params = useParams();
+  const { id: submissionId } = useParams() as { id: string };
   const { toast } = useToast();
   const firestore = useFirestore();
   const { user, adminUser } = useUser();
-  const submissionId = params.id as string;
 
   const [remark, setRemark] = useState("");
   const [isSubmittingRemark, setIsSubmittingRemark] = useState(false);

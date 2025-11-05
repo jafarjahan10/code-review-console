@@ -21,10 +21,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ViewPositionPage() {
   const router = useRouter();
-  const params = useParams();
+  const { id: positionId } = useParams() as { id: string };
   const { toast } = useToast();
   const firestore = useFirestore();
-  const positionId = params.id as string;
 
   const positionDocRef = useMemoFirebase(() => (firestore && positionId ? doc(firestore, 'positions', positionId) : null), [firestore, positionId]);
   const { data: position, isLoading: isLoadingPosition, error: positionError } = useDoc<Position>(positionDocRef);
@@ -112,5 +111,3 @@ export default function ViewPositionPage() {
     </div>
   );
 }
-
-    

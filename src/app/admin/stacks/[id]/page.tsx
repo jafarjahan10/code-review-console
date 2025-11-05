@@ -20,13 +20,12 @@ import ClientDateTime from '@/components/client-date-time';
 
 export default function ViewTechnologyPage() {
   const router = useRouter();
-  const params = useParams();
+  const { id: techId } = useParams() as { id: string };
   const { toast } = useToast();
   const [technology, setTechnology] = useState<Technology | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const techId = params.id as string;
     if (techId) {
         setIsLoading(true);
         fetch(`/api/technologies/${techId}`)
@@ -46,7 +45,7 @@ export default function ViewTechnologyPage() {
             })
             .finally(() => setIsLoading(false));
     }
-  }, [params.id, router, toast]);
+  }, [techId, router, toast]);
 
 
   if (isLoading) {

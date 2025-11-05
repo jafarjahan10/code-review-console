@@ -23,10 +23,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ViewProblemPage() {
   const router = useRouter();
-  const params = useParams();
+  const { id: problemId } = useParams() as { id: string };
   const { toast } = useToast();
   const firestore = useFirestore();
-  const problemId = params.id as string;
 
   const problemDocRef = useMemoFirebase(() => (firestore && problemId ? doc(firestore, 'problems', problemId) : null), [firestore, problemId]);
   const { data: problem, isLoading: isLoadingProblem, error } = useDoc<Problem>(problemDocRef);

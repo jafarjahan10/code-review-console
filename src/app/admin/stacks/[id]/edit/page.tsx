@@ -18,14 +18,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function EditTechnologyPage() {
   const router = useRouter();
-  const params = useParams();
+  const { id: techId } = useParams() as { id: string };
   const { toast } = useToast();
   const [name, setName] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    const techId = params.id as string;
     if (!techId) return;
     
     setIsLoading(true);
@@ -46,7 +45,7 @@ export default function EditTechnologyPage() {
             });
             router.push('/admin/stacks');
         });
-  }, [params.id, router, toast]);
+  }, [techId, router, toast]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -60,7 +59,7 @@ export default function EditTechnologyPage() {
     }
     setIsSaving(true);
     try {
-        const response = await fetch(`/api/technologies/${params.id}`, {
+        const response = await fetch(`/api/technologies/${techId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name }),

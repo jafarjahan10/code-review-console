@@ -22,11 +22,10 @@ import { doc } from 'firebase/firestore';
 
 export default function ViewTechnologyPage() {
   const router = useRouter();
-  const params = useParams();
+  const { id: techId } = useParams() as { id: string };
   const { toast } = useToast();
   const firestore = useFirestore();
   
-  const techId = params.id as string;
   const techDocRef = useMemoFirebase(() => (firestore && techId ? doc(firestore, 'technologies', techId) : null), [firestore, techId]);
   const { data: technology, isLoading, error } = useDoc<Technology>(techDocRef);
 

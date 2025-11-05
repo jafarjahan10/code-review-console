@@ -37,10 +37,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function EditProblemPage() {
   const router = useRouter();
-  const params = useParams();
+  const { id: problemId } = useParams() as { id: string };
   const { toast } = useToast();
   const firestore = useFirestore();
-  const problemId = params.id as string;
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
