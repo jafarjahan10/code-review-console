@@ -12,6 +12,7 @@ import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 
 export default function Home() {
@@ -71,6 +72,7 @@ export default function Home() {
         <Logo />
         <div className="flex-1 text-center">
         </div>
+        <ThemeToggle />
         <Button variant="ghost" size="icon" onClick={handleLogout}>
             <LogOut className="h-5 w-5" />
             <span className="sr-only">Log Out</span>
