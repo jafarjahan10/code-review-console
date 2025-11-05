@@ -209,7 +209,6 @@ export default function ProblemDisplay() {
         <Card className="w-full max-w-2xl">
         <CardHeader>
             <CardTitle className="font-headline text-3xl">{problem.title}</CardTitle>
-            <CardDescription>Difficulty: {problem.difficulty}</CardDescription>
         </CardHeader>
         <CardContent>
         </CardContent>
