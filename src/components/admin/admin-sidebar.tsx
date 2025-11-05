@@ -65,7 +65,7 @@ export default function AdminSidebar() {
         })}
       </nav>
       <div className="p-4 border-t mt-auto space-y-2">
-        <div className="flex items-center justify-between">
+         <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Theme</span>
             <ThemeToggle />
         </div>
