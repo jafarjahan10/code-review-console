@@ -22,16 +22,6 @@ import { doc } from 'firebase/firestore';
 import type { Candidate, Position, Department, Problem } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
-const toDate = (timestamp: any): Date | undefined => {
-    if (timestamp?.toDate) {
-      return timestamp.toDate();
-    }
-    if (typeof timestamp === 'string' || typeof timestamp === 'number') {
-      return new Date(timestamp);
-    }
-    return timestamp;
-};
-
 export default function ViewCandidatePage() {
   const router = useRouter();
   const { id: candidateId } = useParams() as { id: string };
@@ -155,7 +145,7 @@ export default function ViewCandidatePage() {
             </div>
              <div className="space-y-2">
                 <p className="text-sm font-medium flex items-center"><Calendar className="mr-2 h-4 w-4 text-muted-foreground" /> Scheduled For</p>
-                <p className="text-muted-foreground"><ClientDateTime date={toDate(candidate.scheduledTime)} /></p>
+                <p className="text-muted-foreground"><ClientDateTime date={candidate.scheduledTime?.toDate ? candidate.scheduledTime.toDate() : candidate.scheduledTime} /></p>
             </div>
              <div className="space-y-2">
                 <p className="text-sm font-medium flex items-center"><FileCode className="mr-2 h-4 w-4 text-muted-foreground" /> Problem Assigned</p>

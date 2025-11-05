@@ -41,16 +41,6 @@ import type { Candidate, Position, Problem } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 
-const toDate = (timestamp: any): Date | undefined => {
-    if (timestamp?.toDate) {
-      return timestamp.toDate();
-    }
-    if (typeof timestamp === 'string' || typeof timestamp === 'number') {
-      return new Date(timestamp);
-    }
-    return timestamp;
-};
-
 export default function CandidatesPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
@@ -283,7 +273,7 @@ export default function CandidatesPage() {
                             </Button>
                         </div>
                       </TableCell>
-                      <TableCell className="whitespace-nowrap"><ClientDateTime date={toDate(candidate.scheduledTime)} /></TableCell>
+                      <TableCell className="whitespace-nowrap"><ClientDateTime date={candidate.scheduledTime?.toDate ? candidate.scheduledTime.toDate() : candidate.scheduledTime} /></TableCell>
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -334,7 +324,7 @@ export default function CandidatesPage() {
                           <p className="font-medium">{candidate.name}</p>
                           <p className="text-sm text-muted-foreground">{position || 'N/A'}</p>
                           <p className="text-sm text-muted-foreground">{problemsMap.get(candidate.problemId) || 'N/A'}</p>
-                           <p className="text-sm text-muted-foreground">Scheduled: <ClientDateTime date={toDate(candidate.scheduledTime)} /></p>
+                           <p className="text-sm text-muted-foreground">Scheduled: <ClientDateTime date={candidate.scheduledTime?.toDate ? candidate.scheduledTime.toDate() : candidate.scheduledTime} /></p>
                           <div className="flex items-center gap-2 mt-1 font-mono text-sm">
                             <span>{candidate.accessCode}</span>
                             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCopy(candidate.accessCode)}>
@@ -445,5 +435,3 @@ export default function CandidatesPage() {
     </>
   );
 }
-
-    

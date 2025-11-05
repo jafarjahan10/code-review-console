@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { format, setHours, setMinutes, getDate, getMonth, getYear } from 'date-fns';
+import { format, setHours, setMinutes, setDate, setMonth, setYear } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { doc, setDoc, collection } from 'firebase/firestore';
@@ -90,16 +90,8 @@ export default function InviteCandidatePage() {
       setIsCalendarOpen(false);
       return;
     }
-    const currentHours = scheduledTime ? scheduledTime.getHours() : 9; // Default to 9 AM
-    const currentMinutes = scheduledTime ? scheduledTime.getMinutes() : 0;
-    const newDate = new Date(
-      getYear(date),
-      getMonth(date),
-      getDate(date),
-      currentHours,
-      currentMinutes
-    );
-    setScheduledTime(newDate);
+    const newDateWithTime = setYear(setMonth(setDate(scheduledTime || new Date(), date.getDate()), date.getMonth()), date.getFullYear());
+    setScheduledTime(newDateWithTime);
     setIsCalendarOpen(false);
   };
   
@@ -342,7 +334,7 @@ export default function InviteCandidatePage() {
                   </Popover>
                   <Select
                       onValueChange={(value) => handleTimeChange(value, 'hour')}
-                      value={String(scheduledTime ? scheduledTime.getHours() % 12 || 12 : '').padStart(2, '0')}
+                      value={String(scheduledTime ? scheduledTime.getHours() % 12 || 12 : '09').padStart(2, '0')}
                       disabled={!scheduledTime || isSaving}
                   >
                       <SelectTrigger>
@@ -356,7 +348,7 @@ export default function InviteCandidatePage() {
                   </Select>
                   <Select
                       onValueChange={(value) => handleTimeChange(value, 'minute')}
-                      value={String(scheduledTime?.getMinutes() ?? '').padStart(2, '0')}
+                      value={String(scheduledTime?.getMinutes() ?? '00').padStart(2, '0')}
                       disabled={!scheduledTime || isSaving}
                   >
                       <SelectTrigger>
@@ -370,7 +362,7 @@ export default function InviteCandidatePage() {
                   </Select>
                   <Select
                       onValueChange={(value) => handleTimeChange(value, 'ampm')}
-                      value={scheduledTime && scheduledTime.getHours() >= 12 ? 'PM' : 'AM'}
+                      value={(scheduledTime && scheduledTime.getHours() >= 12) ? 'PM' : 'AM'}
                       disabled={!scheduledTime || isSaving}
                   >
                       <SelectTrigger>

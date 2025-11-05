@@ -19,23 +19,12 @@ import Link from 'next/link';
 import { ArrowLeft, Copy, Calendar as CalendarIcon, Loader2 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { format, setHours, setMinutes, getDate, getMonth, getYear } from 'date-fns';
+import { format, setHours, setMinutes, setDate, setMonth, setYear } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
 import { doc, updateDoc, collection } from 'firebase/firestore';
 import type { Candidate, Department, Position, Problem } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
-
-const toDate = (timestamp: any): Date | undefined => {
-    if (timestamp?.toDate) {
-      return timestamp.toDate();
-    }
-    if (typeof timestamp === 'string' || typeof timestamp === 'number') {
-      return new Date(timestamp);
-    }
-    return timestamp;
-};
-
 
 export default function EditCandidatePage() {
   const router = useRouter();
@@ -75,8 +64,8 @@ export default function EditCandidatePage() {
       setPositionId(candidate.positionId);
       setProblemId(candidate.problemId);
       setAccessCode(candidate.accessCode);
-      if (candidate.scheduledTime) {
-          setScheduledTime(toDate(candidate.scheduledTime));
+      if (candidate.scheduledTime?.toDate) {
+          setScheduledTime(candidate.scheduledTime.toDate());
       }
     }
   }, [candidate]);
@@ -124,18 +113,12 @@ export default function EditCandidatePage() {
   
   const handleDateSelect = (date: Date | undefined) => {
     if (!date) {
-      setScheduledTime(date);
+      setScheduledTime(undefined);
       setIsCalendarOpen(false);
       return;
     }
-    const newDate = new Date(
-      getYear(date),
-      getMonth(date),
-      getDate(date),
-      scheduledTime?.getHours() ?? 9,
-      scheduledTime?.getMinutes() ?? 0
-    );
-    setScheduledTime(newDate);
+    const newDateWithTime = setYear(setMonth(setDate(scheduledTime || new Date(), date.getDate()), date.getMonth()), date.getFullYear());
+    setScheduledTime(newDateWithTime);
     setIsCalendarOpen(false);
   };
   
