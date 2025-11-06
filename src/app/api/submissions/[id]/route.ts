@@ -5,15 +5,17 @@ import { doc, getDoc } from 'firebase-admin/firestore';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!params.id) {
+  const { id } = await params;
+  
+  if (!id) {
     return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
   }
 
   try {
     const { firestore } = initializeFirebase();
-    const submissionRef = doc(firestore, 'submissions', params.id);
+    const submissionRef = doc(firestore, 'submissions', id);
     const docSnap = await getDoc(submissionRef);
 
     if (docSnap.exists()) {
@@ -22,7 +24,7 @@ export async function GET(
       return NextResponse.json({ error: 'Submission not found' }, { status: 404 });
     }
   } catch (error: any) {
-    console.error(`Error fetching submission ${params.id}:`, error);
+    console.error(`Error fetching submission ${id}:`, error);
     return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
   }
 }

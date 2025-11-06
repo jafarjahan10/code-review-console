@@ -22,8 +22,13 @@ export default function Home() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // If auth state is done loading and there's no user, redirect.
-    if (!isUserLoading && !user) {
+    // Wait for auth state to finish loading
+    if (isUserLoading) {
+      return;
+    }
+    
+    // If there's no user after loading is complete, redirect to login
+    if (!user) {
       router.push('/login');
     }
   }, [isUserLoading, user, router]);
