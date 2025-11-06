@@ -8,7 +8,7 @@ import { Card, CardHeader } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Send, Loader2 } from "lucide-react";
 import Editor from "react-simple-code-editor";
-import { highlight, languages } from "prismjs/components/prism-core";
+import Prism from "prismjs";
 import "prismjs/components/prism-clike";
 import "prismjs/components/prism-javascript";
 import "prismjs/components/prism-css";
@@ -203,7 +203,7 @@ export default function CodeEditor({ problem, candidate }: CodeEditorProps) {
                             <Editor
                             value={codes[lowerTech] || ''}
                             onValueChange={(code) => handleCodeChange(lowerTech, code)}
-                            highlight={(code) => highlight(code, languages[language] || languages.clike, language)}
+                            highlight={(code) => Prism.highlight(code, Prism.languages[language] || Prism.languages.clike, language)}
                             padding={10}
                             style={editorStyles}
                             className="font-code h-full resize-none text-sm !p-0"

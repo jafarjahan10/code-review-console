@@ -22,7 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { ArrowLeft, Info, Loader2 } from 'lucide-react';
 import Editor from "react-simple-code-editor";
-import { highlight, languages } from "prismjs/components/prism-core";
+import Prism from "prismjs";
 import "prismjs/components/prism-clike";
 import "prismjs/components/prism-javascript";
 import 'prismjs/themes/prism-tomorrow.css';
@@ -243,7 +243,7 @@ export default function NewProblemPage() {
                         <Editor
                             value={description}
                             onValueChange={(code) => setDescription(code)}
-                            highlight={(code) => highlight(code, languages.js, "javascript")}
+                            highlight={(code) => Prism.highlight(code, Prism.languages.javascript, "javascript")}
                             padding={10}
                             style={editorStyles}
                             className="font-code h-full resize-none text-sm !p-0"

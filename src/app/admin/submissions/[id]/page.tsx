@@ -18,7 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Briefcase, Building, Loader2, CheckSquare, MessageSquarePlus } from 'lucide-react';
 import Link from 'next/link';
 import Editor from "react-simple-code-editor";
-import { highlight, languages } from "prismjs/components/prism-core";
+import Prism from "prismjs";
 import "prismjs/components/prism-clike";
 import "prismjs/components/prism-javascript";
 import "prismjs/components/prism-css";
@@ -218,7 +218,7 @@ export default function ViewSubmissionPage() {
                                 <Editor
                                     value={getCodeForTech(tech)}
                                     onValueChange={() => {}}
-                                    highlight={(code) => highlight(code, languages[language] || languages.clike, language)}
+                                    highlight={(code) => Prism.highlight(code, Prism.languages[language] || Prism.languages.clike, language)}
                                     padding={10}
                                     style={editorStyles}
                                     readOnly

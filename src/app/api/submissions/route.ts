@@ -37,22 +37,22 @@ export async function GET(req: NextRequest) {
         firestore.collection('problems').get()
     ]);
 
-    const candidatesMap = new Map(candidatesSnap.docs.map(doc => [doc.id, doc.data()]));
-    const problemsMap = new Map(problemsSnap.docs.map(doc => [doc.id, doc.data()]));
+    const candidatesMap = new Map(candidatesSnap.docs.map((doc: any) => [doc.id, doc.data()]));
+    const problemsMap = new Map(problemsSnap.docs.map((doc: any) => [doc.id, doc.data()]));
 
-    let allSubmissions = submissionsSnap.docs.map(doc => {
+    let allSubmissions = submissionsSnap.docs.map((doc: any) => {
       const data = doc.data();
       return {
         id: doc.id,
         ...data,
         candidate: candidatesMap.get(data.candidateId),
         problem: problemsMap.get(data.problemId),
-      };
+      } as any;
     });
 
     // Server-side search
     if (search) {
-        allSubmissions = allSubmissions.filter(sub => {
+        allSubmissions = allSubmissions.filter((sub: any) => {
             const candidateName = sub.candidate?.name?.toLowerCase() || '';
             const candidateEmail = sub.candidate?.email?.toLowerCase() || '';
             const problemTitle = sub.problem?.title?.toLowerCase() || '';
@@ -63,7 +63,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Server-side sort
-    allSubmissions.sort((a, b) => {
+    allSubmissions.sort((a: any, b: any) => {
         let valA, valB;
         
         switch (sortBy) {
@@ -100,7 +100,7 @@ export async function GET(req: NextRequest) {
     const hasNextPage = endIndex < allSubmissions.length;
 
     // Convert Timestamps to ISO strings for JSON serialization
-    const serializableSubmissions = paginatedSubmissions.map(sub => ({
+    const serializableSubmissions = paginatedSubmissions.map((sub: any) => ({
         ...sub,
         submissionTime: toDate(sub.submissionTime)?.toISOString() || null,
         candidate: {

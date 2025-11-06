@@ -271,7 +271,7 @@ export default function SubmissionsPage() {
                       {submission.remarks?.length || 0}
                     </TableCell>
                     <TableCell className="whitespace-nowrap hidden md:table-cell">
-                      <ClientDateTime date={toDate(submission.submissionTime)} />
+                      <ClientDateTime date={toDate(submission.submissionTime) || new Date()} />
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>

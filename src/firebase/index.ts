@@ -6,14 +6,20 @@ import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore'
 
-let app: FirebaseApp;
-let auth: Auth;
-let firestore: Firestore;
+let cachedAuth: Auth | null = null;
+let cachedFirestore: Firestore | null = null;
 
 // This function ensures Firebase is initialized only once.
 const initializeAppOnce = () => {
   if (getApps().length > 0) {
     return getApp();
+  }
+  
+  // Check if we're in a build environment or if config is not available
+  if (typeof window === 'undefined' && !firebaseConfig.projectId) {
+    // During build time, return a placeholder that won't be used
+    console.warn('Firebase config not available during build, skipping initialization');
+    return null;
   }
   
   try {
@@ -28,18 +34,38 @@ const initializeAppOnce = () => {
   }
 };
 
-app = initializeAppOnce();
-auth = getAuth(app);
-firestore = getFirestore(app);
-
 // This function now returns the already-initialized instances.
 export function initializeFirebase() {
+  // Return cached instances if they exist
+  if (cachedAuth && cachedFirestore) {
+    return {
+      firebaseApp: getApp(),
+      auth: cachedAuth,
+      firestore: cachedFirestore,
+    };
+  }
+
+  const app = initializeAppOnce();
+  
+  // If app is null (build time), return placeholder values
+  if (!app) {
+    return {
+      firebaseApp: null as any,
+      auth: null as any,
+      firestore: null as any,
+    };
+  }
+
+  cachedAuth = getAuth(app);
+  cachedFirestore = getFirestore(app);
+
   return {
     firebaseApp: app,
-    auth: auth,
-    firestore: firestore,
+    auth: cachedAuth,
+    firestore: cachedFirestore,
   };
 }
+
 
 
 export * from './provider';
